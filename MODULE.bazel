@@ -1,0 +1,15 @@
+
+module(
+    name = "riscv_transforms",
+    version = "0.1",
+)
+http_archive = use_repo_rule("@@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "ghidra",
+    build_file = "//:BUILD.ghidra",
+    urls = ["https://github.com/NationalSecurityAgency/ghidra/archive/refs/tags/Ghidra_11.3.1_build.tar.gz"],
+    sha256="f81d7b964d106daf4987a72e5fa0f189c3a0b17695a66a0e9b3cd6de2410c4fc",
+    strip_prefix = "ghidra-Ghidra_11.3.1_build/",
+    patches = ["ghidra.pat"],
+    patch_strip = 1,
+)

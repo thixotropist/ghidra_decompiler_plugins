@@ -1,0 +1,17 @@
+# ignore generated bazel files
+bazel-bin
+bazel-out
+bazel-ghidra_decompiler_user_plugins
+bazel-testlogs
+MODULE.bazel.lock
+# ignore the Git repo used to track plugin manager patches
+ghidra_release
+# ignore generated Doxygen docs describing the decompiler's API
+doxydocs
+# ignore generated Hugo web site
+public
+resources
+.hugo_build.lock
+go.sum
+# ignore vscode settings
+.vscode
