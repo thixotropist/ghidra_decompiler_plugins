@@ -1,7 +1,7 @@
 # ignore generated bazel files
 bazel-bin
 bazel-out
-bazel-ghidra_decompiler_user_plugins
+bazel-ghidra_decompiler_plugins
 bazel-testlogs
 MODULE.bazel.lock
 # ignore the Git repo used to track plugin manager patches
