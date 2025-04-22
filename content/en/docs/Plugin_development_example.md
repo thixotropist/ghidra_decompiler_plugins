@@ -412,7 +412,7 @@ void memcpy_i15(void *to,void *from,ulong size)
   return;
 }
 ```
-It's raw form is:
+Its raw form is:
 
 ```text
 Basic Block 0 0x00000036-0x00000046
@@ -461,7 +461,7 @@ That breaks down into several survey steps:
 5. Explore the lifetime rules and consistency checks that apply when creating and deleting
    Rules, PcodeOps, and Varnodes.
     * The lifetimes of Rules and Architectures is unclear, especially as Rules created by
-      a plugin may be cloned, and their clones surviving the destruction of the creating
+      a plugin may be cloned, with their clones surviving the destruction of the creating
       Architecture.  This implies we don't know when we can safely unload a plugin, as unloading
       a plugin will unmap any Rule destructor code and so force a segfault on exit.
     * This will only become clear with trial and error - and a lot of segfaults. Further research
@@ -490,11 +490,10 @@ The sample plugin (currently) consists of three components:
     * Entry points called by the plugin manager, such as `plugin_init` and `plugin_getrules`
     * One or more std::vector collections of instruction names we may want to track.
       This includes vector instruction names like `vsetivli_e8m1tama`.
-    * A shared std::map of vector instruction names to `UserPcodeOp` pointers.  This map is
+    * A shared `std::map` of vector instruction names to `UserPcodeOp` pointers.  This map is
       constructed after plugin loading from the SLEIGH definitions provided.  The decompiler
       console program retrieves this information from a Ghidra distribution's Processor/* directories.
       The Ghidra decompiler process retrieves this information from the Ghidra GUI's Java implementation.
-* `vectorsequence.hh` provides a struct holding various data used in analyzing an instruction sequence.
 * `vectorcopy.{hh,cc}` provides the Rules for transforming vector instruction sequences into
   calls to `builtin_memcpy` calls. Provided capabilities include
     * `displayPcodeOp`, `displayVarnode`, and `displayVectorSequence` for diagnostics and survey work.
@@ -536,11 +535,11 @@ it in /tmp.  We can pass this plugin location with the `DECOMP_PLUGIN` environme
 ```console
 $ bazel build -c dbg  plugins:riscv_vector
 ...
-$ cp bazel-bin/plugins/libriscv_vector.so /tmp
+$ cp -f bazel-bin/plugins/libriscv_vector.so /tmp
 
 $ SLEIGHHOME=/opt/ghidra_11.4_DEV/ \
   DECOMP_PLUGIN=/tmp/libriscv_vector.so \
-> valgrind /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/memcpy_exemplars.ghidra
+  valgrind /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/memcpy_exemplars.ghidra
 ...
 [decomp]> restore test/memcpy_exemplars_save.xml
 test/memcpy_exemplars_save.xml successfully loaded: RISC-V 64 little general purpose compressed
@@ -574,10 +573,11 @@ Basic Block 0 0x00000000-0x0000000c
 
 So the simplest transform via plugin works in this simplest of test cases.
 
+>TODO: add code to copy the decompiler subsystem into the path the Ghidra GUI expects.
 To exercise the plugin with the Ghidra GUI, just launch Ghidra with:
 
 ```console
-DECOMP_PLUGIN=/tmp/libriscv_vector.so ghidraRUn
+DECOMP_PLUGIN=/tmp/libriscv_vector.so ghidraRun
 ```
 
 ## Next steps

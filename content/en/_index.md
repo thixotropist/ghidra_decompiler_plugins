@@ -31,12 +31,12 @@ Current instances of gcc can convert calls to the standard function `memcpy` to 
 copy operation.  The instruction sequence generated will vary, based on what the compiler
 can determine about alignment and number of bytes to copy.  
 
-For example, `gcc` with `-march=rv64gcv` can compile `__builtin_memcpy(to,from, 8)` into a vector instruction sequence like
+For example, `gcc` with `-march=rv64gcv` can compile `__builtin_memcpy(to, from, 8)` into a vector instruction sequence like
 
 ```as
     vsetivli  zero,0x8,e8,mf2,ta,ma  # 0x8 = number of 8 bit elements 
-    vle8.v    v1,(a1)                # a1 = from
-    vse8.v    v1,(a0)                # a0 = to
+    vle8.v    v1,(a1)                # a1 = from address
+    vse8.v    v1,(a0)                # a0 = to address
 ```
 
 If gcc has compile-time information that `to` and `from` are both arrays of four 16 bit elements,
@@ -87,11 +87,14 @@ testing decompiler plugins capable of adding new rules, actions, and transformat
 Notes:
 
 * Bazel will fetch and locally cache the Ghidra source archive on the first build.
-    * If you later want to alter the decompiler patch file `ghidra.pat`, you should execute `bazel clean --expunge` to update the cached and patched archive.
+    * If you later want to alter the decompiler patch file `ghidra.pat`, you should execute `bazel clean --expunge` to update the cached and patched
+      archive.
 * You can compile the patched decompiler with optimization by replacing `dbg` with `opt` in the
   last 2 steps.
 * The Bazel build file `BUILD.ghidra` controls the Ghidra decompiler elements made available to
   any plugin.  The default is to make all symbols available.
+* Isolating new rules to a decompiler plugin makes the code/test cycle time very fast.  We want good logging capabilities for the plugin,
+  so we include a `spdlog` module in the plugin build, and switch all builds from the c++14 standard to the c++20 standard.
 
 ## Plugin development and usage
 

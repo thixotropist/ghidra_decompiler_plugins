@@ -15,3 +15,5 @@ resources
 go.sum
 # ignore vscode settings
 .vscode
+# ignore Doxygen generated output
+plugins/html

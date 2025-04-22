@@ -62,10 +62,10 @@ index 436b8431..4116abe3 100644
  
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 new file mode 100644
-index 00000000..2afffd9f
+index 00000000..b40037f9
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,117 @@
 +#include <iostream>
 +#include "plugin_manager.hh"
 +#include "architecture.hh"
@@ -73,8 +73,10 @@ index 00000000..2afffd9f
 +namespace ghidra
 +{
 +extern "C" {
-+    typedef int (*plugin_init_func)(const Architecture* arch); ///< A plugin initializer
++    typedef int (*plugin_init_func)(Architecture* arch); ///< A plugin initializer
 +    typedef int (*plugin_getrules_func)(std::vector<Rule*>& new_rules); ///< Fetches plugin rules
++    typedef DatatypeUserOp* (*plugin_registerBuiltin_func)(Architecture* arch, int4 i); ///<@brief Register a new builtin
++    typedef void (*plugin_cleanup_func)(); ///<@brief release any heap resources
 +}
 +
 +std::ofstream pluginLog;
@@ -100,32 +102,29 @@ index 00000000..2afffd9f
 +    return 0;
 +}
 +
-+int PluginManager::initPlugin(const Architecture* arch)
++int PluginManager::initPlugin(Architecture* arch)
 +{
 +    if (! loaded) {
 +        return 1;
 +    }
-+    // only continue if the current architecture is for RISCV systems
++    architecture = arch;
++    // quit early if we can be sure the current architecture is *not* a RISC-V architecture
 +    string arch_description = arch->getDescription();
 +    if ((arch_description.find("RISC-V") == std::string::npos) &&
 +        (arch_description.find("ghidra") == std::string::npos)) {
 +        pluginLog << "Description " << arch_description << " is not RISC-V" << std::endl;
-+        pluginLog.flush();
 +        return 0;
 +    }
-+    //std::cout << "Found a RISCV Architecture description:" << arch_description << std::endl;
 +    plugin_init_func f_init = reinterpret_cast<plugin_init_func>(dlsym(handle, "plugin_init"));
 +    if (f_init == NULL)
 +    {
 +        pluginLog << "Could not find plugin_init: " << dlerror() << std::endl;
-+        pluginLog.flush();
 +        return 1;
 +    }
 +    int initialization_result = f_init(arch);
 +    if (initialization_result != 0)
 +    {
 +        pluginLog << "Plugin initialization failed with return value: " << initialization_result << std::endl;
-+        pluginLog.flush();
 +        return 1;
 +    }
 +    return initialization_result;
@@ -134,14 +133,37 @@ index 00000000..2afffd9f
 +int PluginManager::initRules(const Architecture* arch) {
 +    if (!loaded) return 0;
 +    // TODO: verify that this architecture is compatible with RISCV vector instructions
-+    pluginLog << "Adding one or more new plugin rules" << std::endl;
 +    plugin_getrules_func f_getrules =  reinterpret_cast<plugin_getrules_func>(dlsym(handle, "plugin_getrules"));
 +    f_getrules(rules);
 +    pluginLog << "Now have " << rules.size() << " plugin rules ready" <<std::endl;
-+    pluginLog.flush();
 +    return 0;
 +}
 +
++DatatypeUserOp* PluginManager::registerBuiltin(int4 i) {
++    if (!loaded) return nullptr;
++    pluginLog << "Registering a new typed builtin" << std::endl;
++    plugin_registerBuiltin_func f_register = reinterpret_cast<plugin_registerBuiltin_func>(dlsym(handle, "plugin_registerBuiltin"));
++    if (f_register == nullptr)
++    {
++        pluginLog << "Plugin registerBuiltin failed to find the implementing plugin function" << std::endl;
++        return nullptr;
++    }
++    return f_register(architecture, i);
++}
++
++void PluginManager::cleanup()
++{
++    pluginLog << "Releasing plugin resources" << std::endl;
++    if (!loaded) return;
++    plugin_cleanup_func f_cleanup = reinterpret_cast<plugin_cleanup_func>(dlsym(handle, "plugin_exit"));
++    if (f_cleanup != nullptr)
++    {
++        f_cleanup();
++    }
++    return;
++}
++
++/// @todo This method can't be called until we are sure all destructors have been called for all clones
 +void PluginManager::unloadPlugin()
 +{
 +    if (loaded)
@@ -149,14 +171,25 @@ index 00000000..2afffd9f
 +        dlclose(handle);
 +    loaded = false;
 +}
++
++PluginManager::~PluginManager()
++{
++    pluginLog << "Plugin destructor called" << std::endl;
++    if (loaded)
++    {
++        cleanup();
++        handle = nullptr;
++        loaded = false;
++    }
++}
 +}
 \ No newline at end of file
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
 new file mode 100644
-index 00000000..a81ed622
+index 00000000..92bde3eb
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,99 @@
 +/* ###
 + * IP: GHIDRA
 + *
@@ -182,6 +215,7 @@ index 00000000..a81ed622
 +#include <vector>
 +#include <dlfcn.h>
 +#include "ruleaction.hh"
++#include "userop.hh"
 +
 +namespace ghidra {
 +
@@ -202,11 +236,9 @@ index 00000000..a81ed622
 +    void* handle;
 +    bool loaded;
 +    std::vector<Rule*> rules;
++    Architecture* architecture;
 +    PluginManager() : handle(nullptr), loaded(false) {};
-+    ~PluginManager() {
-+        handle = nullptr;
-+        loaded = false;
-+        };
++    ~PluginManager();
 +
 +    /**
 +     * @brief Load a plugin defined by the environment variable DECOMP_PLUGIN.
@@ -218,6 +250,7 @@ index 00000000..a81ed622
 +     * @return 0 on success, 1 on failure
 +     */
 +    int loadPlugin();
++
 +    /**
 +     * @brief Initialize the plugin once the program Architecture is partially constructed.
 +     * @details The Architecture description is checked to see if the plugin is relevant,
@@ -227,7 +260,7 @@ index 00000000..a81ed622
 +     * the getDescription() member function.
 +     * @return int 0 on success.
 +     */
-+    int initPlugin(const Architecture* arch);
++    int initPlugin(Architecture* arch);
 +
 +    /**
 +     * @brief Make available plugin-specific rules
@@ -243,6 +276,45 @@ index 00000000..a81ed622
 +     * objects remain active after this call.
 +     */
 +    void unloadPlugin();
++
++    /**
++     * @brief Register a new builtin function from the plugin
++     */
++    DatatypeUserOp* registerBuiltin(int4 i);
++
++    /**
++     * @brief Release any resources other than code
++     */
++    void cleanup();
 +};
 +}
 +#endif /* __PLUGIN_MANAGER_HH__ */
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
+index 9fe8b78d..47a1b57f 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
+@@ -477,7 +477,11 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
+       break;
+     }
+     default:
+-      throw LowlevelError("Bad built-in userop id");
++    {
++      res = glb->pm.registerBuiltin(i);
++      if (res == nullptr)
++        throw LowlevelError("Bad built-in userop id");
++    }
+   }
+   builtinmap[i] = res;
+   return res;
+diff --git a/MODULE.bazel b/MODULE.bazel
+new file mode 100644
+index 00000000..00bb1836
+--- /dev/null
++++ b/MODULE.bazel
+@@ -0,0 +1,6 @@
++###############################################################################
++# Bazel now uses Bzlmod by default to manage external dependencies.
++# Please consider migrating your external dependencies from WORKSPACE to MODULE.bazel.
++#
++# For more details, please check https://github.com/bazelbuild/bazel/issues/18958
++###############################################################################

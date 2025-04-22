@@ -1,252 +1,27 @@
-
 #include <iostream>
 #include <fstream>
+
+#include "spdlog/spdlog.h"
+
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
-#include "vectorsequence.hh"
+#include "riscv.hh"
+#include "diagnostics.hh"
 #include "vectorcopy.hh"
+#include "vector_tree_match.hh"
+#include "utility.hh"
 
 namespace ghidra {
 
-static const bool DO_TRACING = false;
-extern std::ofstream logFile;
-
-/**
- * @brief Introduce an experimental rule to transform vector
- * sequences into builtin_memcpy calls
- */
-
-void displayPcodeOp(PcodeOp* p, const string& label)
-{
-    logFile << label << " PcodeOp" << std::endl << "\tRaw: " ;
-    p->printRaw(logFile);
-    logFile << ";\tAddr: 0x" << std::hex << p->getAddr().getOffset() << std::dec;
-    logFile << ";\tNumIn: " << p->numInput() << std::endl;
-}
-
-void displayVarnode(Varnode* v, const string& label)
-{
-    logFile << label << " Varnode:" << "\tRaw: ";
-    v->printRaw(logFile);
-    logFile << ";\tflags = 0x" << std::hex << v->getFlags();
-    logFile << ";\ttype = " << v->getType()->getName();
-    logFile << ";\tspace = " << v->getSpace()->getName();
-    logFile << ";\toffset = 0x" << v->getOffset() << std::dec << std::endl;
-    logFile << "\tDescendents:" << std::endl;
-    for (std::list<PcodeOp*>::const_iterator it=v->beginDescend();it!=v->endDescend();++it)
-    {
-        logFile <<"\t\t";
-        (*it)->printRaw(logFile);
-        logFile << std::endl;
-    }
-}
-
-PcodeOp* insertBuiltin(VectorSequence& context, Varnode* destVn, Varnode* srcVn, Varnode* sizeVn)
-{
-    Funcdata* data = context.data;
-    PcodeOp *copyOp = data->newOp(4,*context.firstOpAddr);
-    data->opSetOpcode(copyOp, CPUI_CALLOTHER);
-    data->opSetInput(copyOp, data->newConstant(4, UserPcodeOp::BUILTIN_MEMCPY), 0);
-    data->opSetInput(copyOp, destVn, 1);
-    data->opSetInput(copyOp, srcVn, 2);
-    data->opSetInput(copyOp, sizeVn, 3);
-    data->opInsertBefore(copyOp, context.rootOp); 
-    return copyOp;
-}
-
-static void handleVectorLoad(PcodeOp* op, VectorSequence& context)
-{
-    context.vector_loads.push_back(op);
-}
-
-static void handleVectorStore(PcodeOp* op, VectorSequence& context)
-{
-    context.vector_stores.push_back(op);
-}
-
-static void handleAddition(PcodeOp* op, VectorSequence& context)
-{
-    context.other_ops.push_back(op);
-}
-
-static void handleSubtraction(PcodeOp* op, VectorSequence& context)
-{
-    context.other_ops.push_back(op);
-}
-
-static void handleNotEqual(PcodeOp* op, VectorSequence& context)
-{
-    context.other_ops.push_back(op);
-}
-
-static void handleConditionalBranch(PcodeOp *op, VectorSequence &context)
-{
-    displayPcodeOp(op, "Conditional Branch");
-    displayVarnode(op->getIn(0), "Branch Destination");
-    displayVarnode(op->getIn(1), "TBD");
-    uint64_t branch_target = op->getIn(0)->getOffset();
-    context.hasLoop = (branch_target < op->getAddr().getOffset()) &&
-                      (branch_target >= context.firstOpOffset);
-    context.other_ops.push_back(op);
-    return;
-}
-
-void displayVectorSequence(VectorSequence& context)
-{
-    logFile << "VectorSequence:" << std::endl;
-    logFile << "\tFirst Operation: " << context.firstOperation << std::endl;
-    if (context.hasLoop)
-    {
-        logFile << "\thasLoop: True" << std::endl;
-    }
-    else{
-        logFile << "\thasLoop: False" << std::endl;
-    }
-    displayVarnode(context.size_varnode, "Vector size");
-    logFile << "\tNumber of vector loads: " << context.vector_loads.size() << std::endl;
-    for (auto iter: context.vector_loads) 
-    {
-        displayPcodeOp(iter, "Vector Load");
-        displayVarnode(iter->getIn(1), "Source Addr");
-        displayVarnode(iter->getOut(), "Destination Register");
-    }
-    logFile << "\tNumber of vector stores: " << context.vector_stores.size() << std::endl;
-    for (auto iter: context.vector_stores) 
-    {
-        displayPcodeOp(iter, "Vector Store");
-        displayVarnode(iter->getIn(1), "Source Register");
-        displayVarnode(iter->getIn(2), "Destination Addr");
-    }
-    logFile << "Other pcode operations:" << std::endl;
-    for (auto iter: context.other_ops)
-    {
-        displayPcodeOp(iter, "Other Op");
-        for (int i=0; i < iter->numInput(); i++)
-        {
-            displayVarnode(iter->getIn(i), "Input");
-        }
-        Varnode* out = iter->getOut();
-        if (out != nullptr)
-            displayVarnode(iter->getOut(), "Output");
-    }
-}
-
-/**
- * @brief Execute any transforms matching the VectorSequence provided
- * 
- * @param context Information extracted from a sequence of vector operations
- * @return int 1 if transforms executed, 0 otherwise
- */
-int transform(VectorSequence& context)
-{
-    const bool SIMPLE_DEBUG = false;
-    const bool LOOPED_DEBUG = true;
-
-    // Transform a simple vector load/store pair into a builtin_memcpy
-    if ((context.firstOperation == VSET_IMMEDIATE) &&
-        (!context.hasLoop) && 
-        (context.vector_loads.size() == 1) &&
-        (context.vector_stores.size() == 1) &&
-        (context.vector_loads[0]->getOut() == context.vector_stores[0]->getIn(1)))
-        {
-            if (SIMPLE_DEBUG || DO_TRACING)
-                displayVectorSequence(context);
-            context.dest_varnode = context.vector_stores[0]->getIn(2);
-            context.source_varnode = context.vector_loads[0]->getIn(1);
-            if (SIMPLE_DEBUG || DO_TRACING)
-                logFile << "Constructing a new builtin_memcpy" << std::endl;
-            // This is the simplest vector copy operation
-            PcodeOp* oldRoot = context.rootOp;
-            context.rootOp = insertBuiltin(context, context.dest_varnode, 
-                           context.source_varnode, context.size_varnode);
-            if (SIMPLE_DEBUG || DO_TRACING)
-                logFile << "unlinking component pcodes" << std::endl;
-            context.data->opUnlink(oldRoot);
-            context.data->opUnlink(context.vector_loads[0]);
-            context.data->opUnlink(context.vector_stores[0]);
-            if (SIMPLE_DEBUG || DO_TRACING)
-                logFile.flush();
-            return 1;
-        }
-    // Transform a simple loop of vector load/store ops into a builtin_memcpy
-    if ((context.firstOperation == VSET_REGISTER) &&
-        (context.hasLoop) && 
-        (context.vector_loads.size() == 1) &&
-        (context.vector_stores.size() == 1) &&
-        (context.vector_loads[0]->getOut() == context.vector_stores[0]->getIn(1)))
-        {
-            if (LOOPED_DEBUG || DO_TRACING)
-            {
-                logFile << "Funcdata.printRaw:" << std::endl;
-                context.data->printRaw(logFile);
-                logFile << std::endl;
-                displayVectorSequence(context);
-            }
-            context.dest_varnode = context.vector_stores[0]->getIn(2);
-            context.source_varnode = context.vector_loads[0]->getIn(1);
-            if (LOOPED_DEBUG || DO_TRACING)
-                logFile << "Constructing a new builtin_memcpy" << std::endl;
-            PcodeOp* oldRoot = context.rootOp;
-            logFile.flush();
-            //TODO: this is a stub
-            return 0;
-            /*
-            context.rootOp = insertBuiltin(context, context.dest_varnode, 
-                context.source_varnode, context.size_varnode);
-            context.data->opUnlink(oldRoot);
-            context.data->opUnlink(context.vector_loads[0]);
-            context.data->opUnlink(context.vector_stores[0]);
-            return 1;
-            */
-        }
-        if (DO_TRACING)
-            logFile << "Failed to recognize a transform:" << std::endl;
-    displayVectorSequence(context);
-    return 0;
-}
-
-extern std::map<std::string, UserPcodeOp*>userOpMap;
-
-FirstOp RuleVectorCopy::getFirstOp(uintb userop_index)
-{
-    if ((userop_index == op_vsetvli_e8m8tama) ||
-        (userop_index == op_vsetvli_e8m1tama))
-        {
-            return VSET_REGISTER;
-        }
-    if ((userop_index == op_vsetivli_e8m8tama) ||
-    (userop_index == op_vsetivli_e8m1tama) ||
-    (userop_index == op_vsetivli_e8mf2tama) ||
-    (userop_index == op_vsetivli_e8mf4tama) ||
-    (userop_index == op_vsetivli_e8mf8tama))
-    {
-        return VSET_IMMEDIATE;
-    }
-    return OTHER;
-}
-
 RuleVectorCopy::RuleVectorCopy(const string &g) : 
-    Rule(g, 0, "vectorcopy"),
-    // userops that can begin a memcpy block
-    op_vsetvli_e8m8tama(userOpMap["vsetvli_e8m8tama"]->getIndex()),
-    op_vsetivli_e8m8tama(userOpMap["vsetivli_e8m8tama"]->getIndex()),
-    op_vsetvli_e8m1tama(userOpMap["vsetvli_e8m1tama"]->getIndex()),
-    op_vsetivli_e8m1tama(userOpMap["vsetivli_e8m1tama"]->getIndex()),
-    op_vsetivli_e8mf2tama(userOpMap["vsetivli_e8mf2tama"]->getIndex()),
-    op_vsetivli_e8mf4tama(userOpMap["vsetivli_e8mf4tama"]->getIndex()),
-    op_vsetivli_e8mf8tama(userOpMap["vsetivli_e8mf8tama"]->getIndex()),
-
-    // userops that can occur within a memcpy block
-    op_vle8_v(userOpMap["vle8_v"]->getIndex()),
-    op_vse8_v(userOpMap["vse8_v"]->getIndex())
-    {}
+    Rule(g, 0, "vectorcopy") {}
 
 Rule* RuleVectorCopy::clone(const ActionGroupList &grouplist) const
 {
     if (!grouplist.contains(getGroup())) {
-        logFile << "RuleVectorCopy::clone failed for lack of a group" << std::endl;
+        logger->error("RuleVectorCopy::clone failed for lack of a group");
         return (Rule *)0;
     }
     return new RuleVectorCopy(getGroup());
@@ -263,157 +38,109 @@ void RuleVectorCopy::getOpList(vector<uint4> &oplist) const {
 }
 
 /**
- * @brief does the current block match a vector copy rule?
+ * @brief Does the current block match a vector copy or memset rule?
+ * @details Currently only handles loop-free sequences commonly found
+ *          in initialization code.
  * 
- * @param op 
- * @param data 
+ * @param firstOp a CALLOTHER opcode that *might* reference a vset userPcodeop
+ * @param data Context for the enclosing function
  * @return int4 
  */
-int4 RuleVectorCopy::applyOp(PcodeOp *op, Funcdata &data) {
+int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
 
-    const bool DEBUG = false;
-    VectorSequence context;
+    int4 returnCode = 0;
+    bool vsetImmediate;
+    bool vsetRegister;
+    bool trace = logger->should_log(spdlog::level::trace);
 
-    if (false && DEBUG)
-    {
-        logFile << "RuleVectorCopy::applyOp called:" << std::endl;
-        logFile << "\tFunction start addr: " << std::hex << data.getAddress() << std::dec << std::endl;
-        op->printRaw(logFile);
-        logFile << std::endl;
-        logFile << "pcodeop = \n";
-    }
-    // The first input arg to CALLOTHER identifies the pcodeop
-    const Varnode* varnode_userop = op->getIn(0);
-    // This varnode points to a pcode function
-
-    // user pcodeop index can be retrieved from the varnode 
-    uintb userop_index = varnode_userop->getOffset();
     // require one of several vset* instructions to begin this pattern,
     // adjusting the maximum number of pcode ops to examine
-    context.firstOperation = getFirstOp(userop_index);
-    switch(context.firstOperation) {
-        case OTHER: return 0;
-        case VSET_IMMEDIATE:
-            context.search_max = 5;
-            break;
-        case VSET_REGISTER:
-            context.search_max = 10;
-            break;
-        default:
-        std::cerr << "Unrecognized first Operation classification!" << std::endl;
-            return 0;
-    }
-    if (context.firstOperation == OTHER)
+    const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*firstOp);
+    if (vsetInfo == nullptr) return 0;
+    vsetImmediate = vsetInfo->isVseti;
+    vsetRegister = vsetInfo->isVset;
+    if (!(vsetImmediate || vsetRegister)) return 0;
+    // we have a vsetivli or a vsetvli instruction
+    logger->trace("Entering applyOp with a recognized vset* user pcode op");
+    // The size, or total number of elements to process, will be a constant
+    // for vsetivli instructions or a register for vsetvl instructions
+    Varnode* size_varnode = firstOp->getIn(1);
+    // Examine the vsetivli instr to get multiplier and element size
+    if (vsetImmediate && !size_varnode->isConstant())
+    {
+        logger->warn("Found a vseti instruction with a non-constant argument");
         return 0;
-    // we have a vsetivli or vsetvli instruction
-    context.data = &data;
-    context.rootOp = op;
-    context.firstOpAddr = &op->getAddr();
-    context.firstOpOffset = op->getAddr().getOffset();
-    if (DEBUG)
-    {
-        displayPcodeOp(op, "Initial Op");
-        displayVarnode(op->getIn(0), "Initial Op In(0)");
-        displayVarnode(op->getIn(1), "Initial Op In(1)");
-        if (op->getOut() != nullptr)
-        {
-            displayVarnode(op->getOut(), "Initial Op Out");
-        }
     }
-    if (DEBUG)
-        logFile << "Found a valid first userop of the stanza" << std::endl;
-    // There is an optional output variable, the number of elements processed
-    // by vector ops - aka the stride
-    context.current_stride_varnode =  op->getOut();
-    // the vset* instruction sets the number of elements and the current stride
-    // The size, or total number of elements to process, can be either a register or a constant
-    context.size_varnode = op->getIn(1);
-    if (context.size_varnode == nullptr) return 0;
-    if (DEBUG && (context.current_stride_varnode != nullptr))
+    int4 numBytesPerPass = vsetInfo->multiplier * vsetInfo->elementSize;
+    int4 numBytes;
+    if (vsetImmediate)
     {
-        displayVarnode(context.current_stride_varnode, "Stride");
-    }
-    // make sure we have memcpy registered as a builtin
-    data.getArch()->userops.registerBuiltin(UserPcodeOp::BUILTIN_MEMCPY);
-    int opCounter = 1;
-    context.source_varnode = nullptr;
-    for (PcodeOp* next = op->nextOp(); next != nullptr; next = next->nextOp())
-    {
-        if (DEBUG) {
-            logFile << "Pcode (code, opcode_name):\t" << next->code() << "," << next->getOpName() << std::endl;
-            next->printRaw(logFile);
-            logFile << std::endl;
-        }
-        if (next->code() == CPUI_CALLOTHER)
+        numBytes = size_varnode->getOffset() * numBytesPerPass;
+        // search forward in the block for a PcodeOp that may begin the pattern we
+        // which to replace
+        PcodeOp* op = firstOp->nextOp();
+        std::vector<PcodeOp*> deleteSet;
+        bool noVectorOpsFound = true;
+        while ((op != nullptr))
         {
-            if (DEBUG)
-                logFile << "\tCallOther: 0x" << std::hex << next->getIn(0)->getOffset() << std::dec << std::endl;
-            if (next->getIn(0)->getOffset() == op_vle8_v)
-            {
-                handleVectorLoad(next, context);
+            const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
+            if (opInfo == nullptr) {
+                op = op->nextOp();
                 continue;
+            };
+            // fail the match if this is another vset instruction
+            if (opInfo->isVset || opInfo->isVseti) {
+                return 0;
             }
-            if (next->getIn(0)->getOffset() == op_vse8_v)
+            noVectorOpsFound = noVectorOpsFound && !opInfo->isVectorOp;
+            // is this a vector load or load immediate?
+            if (opInfo->isLoad || opInfo->isLoadImmediate)
             {
-                handleVectorStore(next, context);
-                continue;
+                if (trace) displayPcodeOp(*op, "vector sequence start op", true);
+                // find the descendents reading the output vector register
+                Varnode* sourceVn = op->getIn(1);
+                bool isMemset = sourceVn->isConstant() && opInfo->isLoadImmediate;
+                intb builtinOp;
+                if (isMemset) builtinOp = BUILTIN_MEMSET;
+                else builtinOp = UserPcodeOp::BUILTIN_MEMCPY;
+                Varnode* outputVn = op->getOut();
+                std::vector<std::pair<PcodeOp*,PcodeOp*>*> pcodesToBeBuilt;
+                std::list<PcodeOp*>::const_iterator enditer = outputVn->endDescend();
+                for (std::list<PcodeOp*>::const_iterator it=outputVn->beginDescend(); it!=enditer; ++it)
+                {
+                    PcodeOp* newOp;
+                    logger->info("Inserting a builtin");
+                    if (trace) displayPcodeOp(**it, "Dependent pcode:", true);
+                    Varnode * new_size_varnode = data.newConstant(1, numBytes);
+                    newOp = insertBuiltin(data, **it, builtinOp, (*it)->getIn(2), sourceVn, new_size_varnode);
+                    pcodesToBeBuilt.push_back(new std::pair<PcodeOp*,PcodeOp*>(newOp, *it));
+                    deleteSet.push_back(*it);
+                    returnCode = 1;
+                }
+                for (auto it: pcodesToBeBuilt) {
+                    data.opInsertBefore(it->first, it->second);
+                    delete it;
+                }
+                deleteSet.push_back(op);
             }
+            op = op->nextOp();
         }
-        if (next->code() == CPUI_CBRANCH)
+        if (noVectorOpsFound)
+            data.opUnlink(firstOp);
+        for (auto iter: deleteSet)
         {
-            handleConditionalBranch(next, context);
+            data.opUnlink(iter);
         }
-        // looking for addition, subtraction, and comparison ops
-        if (DEBUG)
-            logFile << "Found pcodeop: " << next->getOpName() << std::endl;
-        const std::string& opName = next->getOpName();
-        if (opName == "+")
-        {
-            handleAddition(next, context);
-            continue;
-        }
-        if (opName == "-")
-        {
-            handleSubtraction(next, context);
-            continue;
-        }
-        if (opName == "!=")
-        {
-            handleNotEqual(next, context);
-            continue;
-        }
-        if ((opCounter++ >= context.search_max) ||
-            (next->code() == CPUI_RETURN) ||
-            (next->code() == CPUI_CALL) ||
-            (next->code() == CPUI_CALLIND) ||
-            (next->code() == CPUI_BRANCH) ||
-            (next->code() == CPUI_BRANCHIND))
-        {
-            break;
-        }
+        return returnCode;
     }
-    // Evaluate the vector sequence against the set of rules,
-    // executing the first transform that matches
-    return transform(context);
-
-    //PcodeOp* newRoot = insertBuiltin(context, data, context.destination_varnode, 
-    //    context.source_varnode, context.size_varnode);
-    //for (int slot = 0; slot < context.rootOp->numInput(); slot++)
-    //{
-    //    data.opRemoveInput(context.rootOp, slot);
-    //}
-    //data.opDestroy(context.rootOp);
-    //context.rootOp = newRoot;
-    if (DEBUG)
+    // We have a vsetvl instruction and likely a loop, so
+    // construct something to start the analysis.
+    VectorTreeMatch matcher(data, firstOp);
+    matcher.analyze();
+    if (matcher.isMemcpy())
     {
-        logFile << "builtin_memcpy pattern recognized and new pcodeop inserted" << std::endl;
+        return matcher.transform();
     }
-    return 0;
-    //HeapSequence sequence(data,ct,op);
-    //if (!sequence.isValid())
-    //    return 0;
-    //if (!sequence.transform())
-    //    return 0;
     return 0;
 }
-}    
+}

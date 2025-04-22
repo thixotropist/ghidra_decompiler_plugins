@@ -18,30 +18,52 @@
 
 #include <iostream>
 #include <unordered_set>
+
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/ruleaction.hh"
-#include "vectorsequence.hh"
 
 namespace ghidra{
+/**
+ * @brief A Rule collecting vector loads and stores into builtin_memcpy
+ * and builtin_memset
+ */
 class RuleVectorCopy : public Rule
 {
 public:
+    /**
+     * @brief Construct a new Rule Vector Copy object
+     * 
+     * @param g the name of an existing Ghidra rule group
+     */
     explicit RuleVectorCopy(const string &g); ///< Constructor
+    /**
+     * @brief Allow the ActionDatabase to clone this rule
+     * 
+     * @param grouplist 
+     * @return Rule* 
+     */
     virtual Rule *clone(const ActionGroupList &grouplist) const override;
+    /**
+     * @brief Register the Ghidra ops for which we want callbacks
+     * 
+     * @param oplist
+     */
     virtual void getOpList(vector<uint4> &oplist) const override;
+    /**
+     * @brief the callback function telling us of a relevant Ghidra op
+     * 
+     * @param op the PcodeOp triggering this callback
+     * @param data the Funcdata object of the enclosing function
+     * @return int4 0 if no changes made, 1 if changes made
+     */
     virtual int4 applyOp(PcodeOp *op, Funcdata &data) override;
 
 private:
-    uintb op_vsetvli_e8m8tama;
-    uintb op_vsetivli_e8m8tama;
-    uintb op_vsetvli_e8m1tama;
-    uintb op_vsetivli_e8m1tama;
-    uintb op_vsetivli_e8mf2tama;
-    uintb op_vsetivli_e8mf4tama;
-    uintb op_vsetivli_e8mf8tama;
-    uintb op_vle8_v;
-    uintb op_vse8_v;
-    FirstOp getFirstOp(uintb userop_index);
+
+    /**
+     * @brief Is this PcodeOp likely to begin a builtin_memcpy or builtin_memset sequence?
+     */
+    bool validVectorLoadOrLoadImmed(PcodeOp& p);
 };
 }
 #endif /* __VECTORCOPY_HH__ */

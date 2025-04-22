@@ -169,7 +169,6 @@ cc_library(
         SRCDIR + "types.h",
     ],
     copts = [
-        "-std=c++11",
         "-Wall",
         "-Wno-sign-compare",
     ],
@@ -208,10 +207,10 @@ cc_binary(
         ]
     ],
     copts = [
-        "-std=c++11",
         "-O2",
         "-Wall",
         "-Wno-sign-compare",
+        "-std=c++20",
     ],
     linkopts = [
         "-Wl,-export-dynamic",
@@ -269,9 +268,9 @@ cc_binary(
         ]
     ],
     copts = [
-        "-std=c++11",
         "-Wall",
         "-Wno-sign-compare",
+        "-std=c++20",
     ],
     defines = [
         "__TERMINAL__",
@@ -335,9 +334,9 @@ cc_binary(
         ]
     ],
     copts = [
-        "-std=c++11",
         "-Wall",
         "-Wno-sign-compare",
+        "-std=c++20",
     ],
     defines = [
         "__TERMINAL__",

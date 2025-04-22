@@ -4,11 +4,11 @@ map function 0x0000e memcpy_i4
 map function 0x00022 memcpy_i8
 map function 0x00036 memcpy_i15
 map function 0x00048 memcpy_v1
-parse line extern void memcpy_i2(void* to, void* from, ulong size);
-parse line extern void memcpy_i4(void* to, void* from, ulong size);
-parse line extern void memcpy_i8(void* to, void* from, ulong size);
-parse line extern void memcpy_i15(void* to, void* from, ulong size);
-parse line extern void memcpy_v1(void* to, void* from, ulong size);
+parse line extern void memcpy_i2(void* to, void* from, long size);
+parse line extern void memcpy_i4(void* to, void* from, long size);
+parse line extern void memcpy_i8(void* to, void* from, long size);
+parse line extern void memcpy_i15(void* to, void* from, long size);
+parse line extern void memcpy_v1(void* to, void* from, long size);
 load function memcpy_i2
 decompile memcpy_i2
 print C

@@ -1,16 +1,26 @@
 cc_library(
     name = "riscv_vector",
     srcs = [
+        "diagnostics.hh",
+        "diagnostics.cc",
+        "riscv.hh",
         "riscv.cc",
-        "vectorsequence.hh",
         "vectorcopy.hh",
         "vectorcopy.cc",
+        "vector_tree_match.hh",
+        "vector_tree_match.cc",
+        "utility.hh",
+        "utility.cc",
     ],
     copts = [
-        "-std=c++11",
         "-Wno-sign-compare",
+        "-std=c++20",
+    ],
+    defines = [
+        "SPDLOG_USE_STD_FORMAT",
     ],
     deps = [
-        "@ghidra//:decomp_lib"
+        "@ghidra//:decomp_lib",
+        "@spdlog//:spdlog",
     ],
 )

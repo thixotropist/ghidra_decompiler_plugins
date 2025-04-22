@@ -8,8 +8,8 @@ especially in support of instruction set architecture extensions like the RISC-V
 
 This is a research project intended to show what *may* be done with the Ghidra decompiler and at what complexity.
 We can avoid the complexity of full Ghidra decompiler PR reviews by proposing no enduring changes to the decompiler
-itself.  Instead, the first decompiler plugin build triggers a download of Ghidra sources, which are patched to provide a minimal
-plugin manager.  Exploratory development then proceeds within the plugin, using the decompiler's native datatest framework for
+itself.  Instead, the first decompiler plugin build triggers a download of Ghidra sources, which are patched to provide the decompiler
+with a minimal plugin manager.  Exploratory development then proceeds within the plugin, using the decompiler's native datatest framework for
 rapid build/test iterations.
 
 A secondary goal is to supplement @caheckman's excellent Doxygen documentation of the decompiler source code, for instance

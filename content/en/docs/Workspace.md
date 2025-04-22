@@ -13,7 +13,8 @@ The primary components are:
     * The patched `decompile` executable is built with a command like `bazel build -c opt @ghidra//:decompile`,
       with the executable found in `bazel-bin/external/+_repo_rules+ghidra/decompile`
       The Ghidra source tarball will be fetched and patched if not already in the cache.
-* A plugin loaded into the decompiler at Ghidra initialization
+    * All C++ compilations use `-std=c++20`.
+* A plugin loaded into the decompiler at Ghidra decompiler initialization
     * Plugin source code is found in the `plugins` directory.
     * The plugin can be built with `bazel build -c opt  plugins:riscv_vector` and installed anywhere,
       typically `/tmp/libriscv_vector.so`.
@@ -26,7 +27,7 @@ The primary components are:
 
 Using a new plugin is simple:
 * replace `Ghidra/Features/Decompiler/os/linux_x86_64/decompile` with the plugin-enabled executable built by `bazel build -c opt @ghidra//:decompile`.
-* invoke ghidraRun with the plugin's location as an environment value:
+* invoke `ghidraRun` with the plugin's location as an environment value:
 
 ```console
 $ DECOMP_PLUGIN=/tmp/libriscv_vector.so ghidraRun

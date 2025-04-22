@@ -1,0 +1,7 @@
+restore test/whisperInit_save.xml
+map function 0x100000 main
+parse line extern long main(int argc, char* argv, void* allocator);
+load function main
+decompile main
+print C
+print raw
