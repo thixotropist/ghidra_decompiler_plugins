@@ -6,6 +6,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 
 #include "riscv.hh"
 #include "vector_tree_match.hh"

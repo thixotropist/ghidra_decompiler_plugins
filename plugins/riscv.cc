@@ -121,7 +121,7 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
         Datatype *vType = glb->types->getTypeVoid();
         Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
         Datatype *intType = glb->types->getBase(wordSize,TYPE_UINT);
-        res = new DatatypeUserOp("builtin_memset",glb,BUILTIN_MEMSET,ptrType,ptrType,ptrType,intType);
+        res = new DatatypeUserOp("builtin_memset",glb,BUILTIN_MEMSET,ptrType,ptrType,intType,intType);
         logger->trace("Creation complete");
         break;
       }
