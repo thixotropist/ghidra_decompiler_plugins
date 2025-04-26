@@ -4,7 +4,6 @@ weight: 30
 ---
 
 >Note: This is a stub to be expanded with more examples and diagnostic probes of the objects supporting `printRaw` methods.
->      Understanding Indirect varnodes and varnode lifetime and references in the presence of simple loops is next on the TODO list.
 
 Ghidra's Actions and transformation work at the pcode level.  The decompiler's console tool has a useful command `print raw`, which displays
 a function's pcode representation after all rules have been applied and the pcode has stabilized.

@@ -62,11 +62,13 @@ index 436b8431..4116abe3 100644
  
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 new file mode 100644
-index 00000000..b40037f9
+index 00000000..59c593fa
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
-@@ -0,0 +1,117 @@
+@@ -0,0 +1,119 @@
 +#include <iostream>
++#include "spdlog/spdlog.h"
++#include "spdlog/sinks/basic_file_sink.h"
 +#include "plugin_manager.hh"
 +#include "architecture.hh"
 +
@@ -79,23 +81,25 @@ index 00000000..b40037f9
 +    typedef void (*plugin_cleanup_func)(); ///<@brief release any heap resources
 +}
 +
-+std::ofstream pluginLog;
++std::shared_ptr<spdlog::logger> logger;
 +
 +int PluginManager::loadPlugin()
 +{
-+    pluginLog.open("/tmp/decomp.log");
++    logger = spdlog::basic_logger_mt("pluginManager", "/tmp/ghidraPluginManager.log");
++    logger->set_level(spdlog::level::warn);
++    logger->info("Initialized PluginManager");
++
 +    loaded = false;
 +    const char* plugin_path  = getenv("DECOMP_PLUGIN");
 +    if (plugin_path == nullptr) {
-+        pluginLog << "Failed to find plugin" << std::endl;
++        logger->warn("Failed to find a plugin");
 +        return 1;
 +    }
-+    pluginLog << "Plugin loaded" << std::endl;
-+    pluginLog.flush();
++    logger->info("Plugin loaded");
 +    handle = dlopen(plugin_path, RTLD_NOW);
 +    if (handle == NULL)
 +    {
-+        pluginLog << "Could not open plugin: " << dlerror() << std::endl;
++        logger->error("Could not open plugin: {0}", dlerror());
 +        return 1;
 +    }
 +    loaded = true;
@@ -112,19 +116,19 @@ index 00000000..b40037f9
 +    string arch_description = arch->getDescription();
 +    if ((arch_description.find("RISC-V") == std::string::npos) &&
 +        (arch_description.find("ghidra") == std::string::npos)) {
-+        pluginLog << "Description " << arch_description << " is not RISC-V" << std::endl;
++        logger->warn("Description {0} is not RISC-V", arch_description);
 +        return 0;
 +    }
 +    plugin_init_func f_init = reinterpret_cast<plugin_init_func>(dlsym(handle, "plugin_init"));
 +    if (f_init == NULL)
 +    {
-+        pluginLog << "Could not find plugin_init: " << dlerror() << std::endl;
++        logger->warn("Could not find plugin_init: {0}", dlerror());
 +        return 1;
 +    }
 +    int initialization_result = f_init(arch);
 +    if (initialization_result != 0)
 +    {
-+        pluginLog << "Plugin initialization failed with return value: " << initialization_result << std::endl;
++        logger->error("Plugin initialization failed with return value: {0}", initialization_result);
 +        return 1;
 +    }
 +    return initialization_result;
@@ -135,17 +139,17 @@ index 00000000..b40037f9
 +    // TODO: verify that this architecture is compatible with RISCV vector instructions
 +    plugin_getrules_func f_getrules =  reinterpret_cast<plugin_getrules_func>(dlsym(handle, "plugin_getrules"));
 +    f_getrules(rules);
-+    pluginLog << "Now have " << rules.size() << " plugin rules ready" <<std::endl;
++    logger->trace("Now have {0:d} plugin rules ready",rules.size());
 +    return 0;
 +}
 +
 +DatatypeUserOp* PluginManager::registerBuiltin(int4 i) {
 +    if (!loaded) return nullptr;
-+    pluginLog << "Registering a new typed builtin" << std::endl;
++    logger->info("Registering a new typed builtin");
 +    plugin_registerBuiltin_func f_register = reinterpret_cast<plugin_registerBuiltin_func>(dlsym(handle, "plugin_registerBuiltin"));
 +    if (f_register == nullptr)
 +    {
-+        pluginLog << "Plugin registerBuiltin failed to find the implementing plugin function" << std::endl;
++        logger->error("Plugin registerBuiltin failed to find the implementing plugin function");
 +        return nullptr;
 +    }
 +    return f_register(architecture, i);
@@ -153,7 +157,7 @@ index 00000000..b40037f9
 +
 +void PluginManager::cleanup()
 +{
-+    pluginLog << "Releasing plugin resources" << std::endl;
++    logger->trace("Releasing plugin resources");
 +    if (!loaded) return;
 +    plugin_cleanup_func f_cleanup = reinterpret_cast<plugin_cleanup_func>(dlsym(handle, "plugin_exit"));
 +    if (f_cleanup != nullptr)
@@ -167,14 +171,12 @@ index 00000000..b40037f9
 +void PluginManager::unloadPlugin()
 +{
 +    if (loaded)
-+    //std::cout << "closing the plugin" << std::endl;
-+        dlclose(handle);
-+    loaded = false;
++        loaded = false;
 +}
 +
 +PluginManager::~PluginManager()
 +{
-+    pluginLog << "Plugin destructor called" << std::endl;
++    logger->trace("Plugin destructor called");
 +    if (loaded)
 +    {
 +        cleanup();

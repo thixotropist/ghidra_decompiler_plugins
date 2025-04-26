@@ -23,7 +23,7 @@
 
 namespace ghidra{
 
-extern std::shared_ptr<spdlog::logger> logger;
+extern std::shared_ptr<spdlog::logger> pluginLogger;
 extern std::ofstream logFile;
 /**
  * @brief Group RISC-V user pcodes according to their generic roles

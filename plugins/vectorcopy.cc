@@ -21,9 +21,11 @@ RuleVectorCopy::RuleVectorCopy(const string &g) :
 Rule* RuleVectorCopy::clone(const ActionGroupList &grouplist) const
 {
     if (!grouplist.contains(getGroup())) {
-        logger->error("RuleVectorCopy::clone failed for lack of a group");
+        pluginLogger->error("RuleVectorCopy::clone failed for lack of a group");
         return (Rule *)0;
     }
+    pluginLogger->trace("Prepared a new RuleVectorCopy for Action database");
+    pluginLogger->flush();
     return new RuleVectorCopy(getGroup());
 }
 
@@ -51,8 +53,8 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
     int4 returnCode = 0;
     bool vsetImmediate;
     bool vsetRegister;
-    bool trace = logger->should_log(spdlog::level::trace);
-
+    bool trace = pluginLogger->should_log(spdlog::level::trace);
+    pluginLogger->trace("Vector context discovered");
     // require one of several vset* instructions to begin this pattern,
     // adjusting the maximum number of pcode ops to examine
     const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*firstOp);
@@ -61,14 +63,14 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
     vsetRegister = vsetInfo->isVset;
     if (!(vsetImmediate || vsetRegister)) return 0;
     // we have a vsetivli or a vsetvli instruction
-    logger->trace("Entering applyOp with a recognized vset* user pcode op");
+    pluginLogger->trace("Entering applyOp with a recognized vset* user pcode op");
     // The size, or total number of elements to process, will be a constant
     // for vsetivli instructions or a register for vsetvl instructions
     Varnode* size_varnode = firstOp->getIn(1);
     // Examine the vsetivli instr to get multiplier and element size
     if (vsetImmediate && !size_varnode->isConstant())
     {
-        logger->warn("Found a vseti instruction with a non-constant argument");
+        pluginLogger->warn("Found a vseti instruction with a non-constant argument");
         return 0;
     }
     int4 numBytesPerPass = vsetInfo->multiplier * vsetInfo->elementSize;
@@ -109,7 +111,7 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
                 for (std::list<PcodeOp*>::const_iterator it=outputVn->beginDescend(); it!=enditer; ++it)
                 {
                     PcodeOp* newOp;
-                    logger->info("Inserting a builtin");
+                    pluginLogger->info("Inserting a builtin");
                     if (trace) displayPcodeOp(**it, "Dependent pcode:", true);
                     Varnode * new_size_varnode = data.newConstant(1, numBytes);
                     newOp = insertBuiltin(data, **it, builtinOp, (*it)->getIn(2), sourceVn, new_size_varnode);

@@ -105,8 +105,8 @@ VectorTreeMatch::VectorTreeMatch(Funcdata& fData, PcodeOp* vsetOp) :
     vLoadImmVn(nullptr),
     vStoreVn(nullptr)
 {
-    bool trace = logger->should_log(spdlog::level::trace);
-    bool info = logger->should_log(spdlog::level::info);
+    bool trace = pluginLogger->should_log(spdlog::level::trace);
+    bool info = pluginLogger->should_log(spdlog::level::info);
     if (vsetOp == nullptr) return;
     // PcodeOps we believe to be part of this vector loop
     std::set<PcodeOp*> visited;
@@ -214,7 +214,7 @@ VectorTreeMatch::~VectorTreeMatch()
 
 void VectorTreeMatch::analyze()
 {
-    bool info = logger->should_log(spdlog::level::info);
+    bool info = pluginLogger->should_log(spdlog::level::info);
     numPcodes = pcodeOpSelection.size();
     PcodeOp* firstOp = *(pcodeOpSelection.begin());
     PcodeOp* lastOp = *(--pcodeOpSelection.end());
@@ -265,7 +265,7 @@ void VectorTreeMatch::analyze()
                     elementSize = opInfo->elementSize;
                     vNumElem = op->getIn(1);
                     vNumPerLoop = op->getOut();
-                    logger->trace("Vset found: numElementsRegister=0x{0:x}",
+                    pluginLogger->trace("Vset found: numElementsRegister=0x{0:x}",
                         vNumElem->getOffset());
                 }
                 else if ((opInfo->isLoad) && (vLoadVn == nullptr))
@@ -273,20 +273,20 @@ void VectorTreeMatch::analyze()
                     const Varnode* vLoopLoadVn = op->getIn(1);
                     vLoadVn = getExternalVn(vLoopLoadVn);
                     vectorLoadRegisterVn = op->getOut();
-                    logger->trace("Vload found: register=0x{0:x}",
+                    pluginLogger->trace("Vload found: register=0x{0:x}",
                         vectorLoadRegisterVn->getOffset());
                 }
                 else if ((opInfo->isLoadImmediate) && (vLoadImmVn == nullptr))
                 {
                     vLoadImmVn = op->getIn(2);
-                    logger->trace("VloadImmediate found: numElem={0:d}", vLoadImmVn->getOffset());
+                    pluginLogger->trace("VloadImmediate found: numElem={0:d}", vLoadImmVn->getOffset());
                 }
                 else if ((opInfo->isStore) && (vStoreVn == nullptr))
                 {
                     vectorStoreRegisterVn = op->getIn(1);
                     Varnode* vLoopStoreVn = op->getIn(2);
                     vStoreVn = getExternalVn(vLoopStoreVn);
-                    logger->trace("Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
+                    pluginLogger->trace("Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
                         vectorStoreRegisterVn->getOffset(), vLoopStoreVn->getOffset());
                 }
                 else foundOtherUserPcodes = true;
@@ -324,7 +324,7 @@ void VectorTreeMatch::analyze()
                 intb aAddress = a->getAddr().getOffset();
                 if (isRelevant && bIsInput)
                 {
-                    logger->trace("Adding Phi node: register=0x{0:x}; a=0x{1:x}; b=input",
+                    pluginLogger->trace("Adding Phi node: register=0x{0:x}; a=0x{1:x}; b=input",
                         reg, aAddress);
                     phiNodes.push_back(new PhiNode(reg, b, a));
                 }
@@ -338,14 +338,14 @@ void VectorTreeMatch::analyze()
                 foundUnexpectedOp = true;
                 displayPcodeOp(*op, "Unexpected op found in analysis", false);
                 int opcode = op->code();
-                logger->warn("Unexpected op found in analysis: {0:d}", opcode);
+                pluginLogger->warn("Unexpected op found in analysis: {0:d}", opcode);
             }
             break;
         }
     }
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
     vNumElem = getExternalVn(vNumElem);
-    logger->trace("vNumElem Varnode adjusted");
+    pluginLogger->trace("vNumElem Varnode adjusted");
     if (info)
     {
         logFile << "Analysis:" << std::endl;
@@ -390,7 +390,7 @@ bool VectorTreeMatch::isMemcpy()
 }
 int VectorTreeMatch::transform()
 {
-    logger->info("Transforming selection into builtin_memcpy");
+    pluginLogger->info("Transforming selection into builtin_memcpy");
     // todo: compute number of bytes to move, generate a new varnode
     PcodeOp* newOp = insertBuiltin(data, *vsetOp, UserPcodeOp::BUILTIN_MEMCPY, vStoreVn, vLoadVn, vNumElem);
     data.opInsertBefore(newOp, vsetOp);

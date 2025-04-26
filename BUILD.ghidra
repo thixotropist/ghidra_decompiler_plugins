@@ -172,6 +172,9 @@ cc_library(
         "-Wall",
         "-Wno-sign-compare",
     ],
+    deps = [
+        "@spdlog//:spdlog",
+    ],
 )
 
 # The decompiler process invoked by ghidra and fed via a socket,
@@ -210,7 +213,6 @@ cc_binary(
         "-O2",
         "-Wall",
         "-Wno-sign-compare",
-        "-std=c++20",
     ],
     linkopts = [
         "-Wl,-export-dynamic",
@@ -218,6 +220,7 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
+        "@spdlog//:spdlog",
     ],
 )
 
@@ -270,7 +273,6 @@ cc_binary(
     copts = [
         "-Wall",
         "-Wno-sign-compare",
-        "-std=c++20",
     ],
     defines = [
         "__TERMINAL__",
@@ -281,6 +283,7 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
+        "@spdlog//:spdlog",
     ],
 )
 
@@ -336,7 +339,6 @@ cc_binary(
     copts = [
         "-Wall",
         "-Wno-sign-compare",
-        "-std=c++20",
     ],
     defines = [
         "__TERMINAL__",
@@ -345,5 +347,8 @@ cc_binary(
         "-Wl,-export-dynamic",
         "-Wl,-lz",
     ],
-    deps = [":decomp_lib"],
+    deps = [
+        ":decomp_lib",
+        "@spdlog//:spdlog",
+    ],
 )

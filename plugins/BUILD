@@ -14,10 +14,6 @@ cc_library(
     ],
     copts = [
         "-Wno-sign-compare",
-        "-std=c++20",
-    ],
-    defines = [
-        "SPDLOG_USE_STD_FORMAT",
     ],
     deps = [
         "@ghidra//:decomp_lib",

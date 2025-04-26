@@ -4,13 +4,13 @@ weight: 40
 ---
 
 Vector instructions commonly appear in surprising places.  Let's generate a Ghidra decompiler plugin that
-recognizes one of the simplest vector sequences and replaces it with something more user-friendly.
+recognizes some of the simplest vector sequences and replaces them with something more user-friendly.
 Initialization code often initializes stack variables with default values.  If the compiler sees two adjacent
 8 bit variables or fields initialized from adjacent sources, it can issue two pairs of 8 bit loads and stores.  It can't generally
 issue a single 16 bit load and store, due to memory alignment restrictions.  But it can issue three vector instructions to complete
 the initialization, saving one instruction slot.  This example shows the development sequence for a plugin to transform that kind
 of vector sequence into a call to `builtin_memcpy`, something that should be a lot more accessible to most Ghidra users than
-RISC-V vector instruction encodings.
+RISC-V vector instruction encodings.  Along the way we will add a new builtin function `builtin_memset`, as the patterns can be quite similar.
 
 ## Building a test
 
@@ -19,7 +19,7 @@ console interface can work with.  We definitely don't want to have to rebuild Gh
 Ghidra's decompiler supports this natively, providing a console-driven version of the decompiler and a data test framework.  A data test provides a short
 byte sequence, a processor/language description, function signature, basic type definitions, and decompiler output assertions.
 
-The good example of an existing Ghidra decompiler data test is `Ghidra/Features/Decompiler/src/decompile/datatests/heapstring.xml` from the Ghidra source
+A good example of an existing Ghidra decompiler data test is `Ghidra/Features/Decompiler/src/decompile/datatests/heapstring.xml` from the Ghidra source
 repo.  This test verifies that the `RuleStringCopy` class of `constseq.cc` is correctly transforming sequences of x86_64 loads and stores into a single
 call to `builtin_memcpy`.  That's almost exactly what we want to do for RISC-V vector loads and stores.
 
@@ -114,11 +114,11 @@ map function 0x0000e memcpy_i4
 map function 0x00022 memcpy_i8
 map function 0x00036 memcpy_i15
 map function 0x00048 memcpy_v1
-parse line extern void memcpy_i2(void* to, void* from, ulong size);
-parse line extern void memcpy_i4(void* to, void* from, ulong size);
-parse line extern void memcpy_i8(void* to, void* from, ulong size);
-parse line extern void memcpy_i15(void* to, void* from, ulong size);
-parse line extern void memcpy_v1(void* to, void* from, ulong size);
+parse line extern void memcpy_i2(void* to, void* from, long size);
+parse line extern void memcpy_i4(void* to, void* from, long size);
+parse line extern void memcpy_i8(void* to, void* from, long size);
+parse line extern void memcpy_i15(void* to, void* from, long size);
+parse line extern void memcpy_v1(void* to, void* from, long size);
 load function memcpy_i2
 decompile memcpy_i2
 print C
@@ -238,11 +238,11 @@ test/memcpy_exemplars_save.xml successfully loaded: RISC-V 64 little general pur
 [decomp]> map function 0x00022 memcpy_i8
 [decomp]> map function 0x00036 memcpy_i15
 [decomp]> map function 0x00048 memcpy_v1
-[decomp]> parse line extern void memcpy_i2(void* to, void* from, ulong size);
-[decomp]> parse line extern void memcpy_i4(void* to, void* from, ulong size);
-[decomp]> parse line extern void memcpy_i8(void* to, void* from, ulong size);
-[decomp]> parse line extern void memcpy_i15(void* to, void* from, ulong size);
-[decomp]> parse line extern void memcpy_v1(void* to, void* from, ulong size);
+[decomp]> parse line extern void memcpy_i2(void* to, void* from, long size);
+[decomp]> parse line extern void memcpy_i4(void* to, void* from, long size);
+[decomp]> parse line extern void memcpy_i8(void* to, void* from, long size);
+[decomp]> parse line extern void memcpy_i15(void* to, void* from, long size);
+[decomp]> parse line extern void memcpy_v1(void* to, void* from, long size);
 [decomp]> load function memcpy_i2
 Function memcpy_i2: 0x00000000
 [decomp]> decompile memcpy_i2
@@ -250,11 +250,10 @@ Decompiling memcpy_i2
 Decompilation complete
 [decomp]> print C
 
-void memcpy_i2(void *to,void *from,ulong size)
+void memcpy_i2(void *to,void *from,long size)
 
 {
   undefined auVar1 [256];
-  
   vsetivli_e8mf8tama(2);
   auVar1 = vle8_v(from);
   vse8_v(auVar1,to);
@@ -274,11 +273,10 @@ Decompiling memcpy_i4
 Decompilation complete
 [decomp]> print C
 
-void memcpy_i4(void *to,void *from,ulong size)
+void memcpy_i4(void *to,void *from,long size)
 
 {
   undefined auVar1 [256];
-  
   vsetivli_e8mf4tama(4);
   auVar1 = vle8_v(from);
   vse8_v(auVar1,to);
@@ -298,11 +296,10 @@ Decompiling memcpy_i8
 Decompilation complete
 [decomp]> print C
 
-void memcpy_i8(void *to,void *from,ulong size)
+void memcpy_i8(void *to,void *from,long size)
 
 {
   undefined auVar1 [256];
-  
   vsetivli_e8mf2tama(8);
   auVar1 = vle8_v(from);
   vse8_v(auVar1,to);
@@ -322,11 +319,10 @@ Decompiling memcpy_i15
 Decompilation complete
 [decomp]> print C
 
-void memcpy_i15(void *to,void *from,ulong size)
+void memcpy_i15(void *to,void *from,long size)
 
 {
   undefined auVar1 [256];
-  
   vsetivli_e8m1tama(0xf);
   auVar1 = vle8_v(from);
   vse8_v(auVar1,to);
@@ -403,7 +399,7 @@ The `print raw` output shows us what our new rule plugin will be working with.  
 the function copying 15 bytes decompiles as:
 
 ```c
-void memcpy_i15(void *to,void *from,ulong size)
+void memcpy_i15(void *to,void *from,long size)
 {
   undefined auVar1 [256];
   vsetivli_e8m1tama(0xf);
@@ -474,13 +470,13 @@ That breaks down into several survey steps:
     * The first `PluginManager` iteration will then be owned by `Architecture` and initialized just
       before the default or universal action groups are initialized in `ActionDatabase`.  The
       `PluginManager` object will use `dlopen` to load a single plugin named in an environment
-      variable, initialize the plugin, and give the plugin the chance to add new Rules.
+      variable, initialize the plugin, and give the plugin the chance to add new Rules and builtin functions.
     * Patch `ActionDatabase::universalAction` to add those new Rules from `PluginManager` just after
       the `constsequence` rules are added to the cleanup group.
     * Establish a basic logging output stream for use during debugging.  We could use `std::cout` for
       the console version of the decompiler, but that won't work for the Ghidra client version of the
-      decompiler as std::cout is needed for the socket to the Ghidra Java GUI.  For now, log to
-      a file under /tmp.
+      decompiler as std::cout is needed for the socket to the Ghidra Java GUI.  We'll add [spdlog](https://github.com/gabime/spdlog)spdlog
+      support to the decompiler, where it can be used by both the PluginManager and individual plugins.
 
 ## Plugin specifics
 
@@ -494,7 +490,7 @@ The sample plugin (currently) consists of three components:
       constructed after plugin loading from the SLEIGH definitions provided.  The decompiler
       console program retrieves this information from a Ghidra distribution's Processor/* directories.
       The Ghidra decompiler process retrieves this information from the Ghidra GUI's Java implementation.
-* `vectorcopy.{hh,cc}` provides the Rules for transforming vector instruction sequences into
+* `vectorcopy.{hh,cc}` provides the Rules for transforming non-loop vector instruction sequences into
   calls to `builtin_memcpy` calls. Provided capabilities include
     * `displayPcodeOp`, `displayVarnode`, and `displayVectorSequence` for diagnostics and survey work.
       These are not used in deployed systems.
@@ -505,6 +501,7 @@ The sample plugin (currently) consists of three components:
     * `RuleVectorCopy::applyOp(PcodeOp *op, Funcdata &data)` does the work.  The `op` parameter gives
       the specific `CPUI_CALLOTHER` PcodeOp found.  The `data` parameter gives the function in which
       this PcodeOp was found.
+* `vector_tree_match.{hh,cc}` provides the logic to analyze and transform loops of vector instructions.
 
 The logic implemented by `RuleVectorCopy::applyOp` follows this flow:
 
@@ -533,7 +530,7 @@ Once we have the plugin logic we can build and exercise it.  Bazel will build it
 it in /tmp.  We can pass this plugin location with the `DECOMP_PLUGIN` environment variable.
 
 ```console
-$ bazel build -c dbg  plugins:riscv_vector
+$ bazel build -c dbg plugins:riscv_vector
 ...
 $ cp -f bazel-bin/plugins/libriscv_vector.so /tmp
 
@@ -545,14 +542,14 @@ $ SLEIGHHOME=/opt/ghidra_11.4_DEV/ \
 test/memcpy_exemplars_save.xml successfully loaded: RISC-V 64 little general purpose compressed
 [decomp]> map function 0x00000 memcpy_i2
 ...
-[decomp]> parse line extern void memcpy_i2(void* to, void* from, ulong size);
+[decomp]> parse line extern void memcpy_i2(void* to, void* from, long size);
 [decomp]> load function memcpy_i2
 Function memcpy_i2: 0x00000000
 [decomp]> decompile memcpy_i2
 Decompiling memcpy_i2
 Decompilation complete
 [decomp]> print C
-void memcpy_i2(void *to,void *from,ulong size)
+void memcpy_i2(void *to,void *from,long size)
 {
   builtin_memcpy(to,from,2);
   return;
@@ -569,12 +566,12 @@ Basic Block 0 0x00000000-0x0000000c
 ==125839==      possibly lost: 0 bytes in 0 blocks
 
 ```
->Note: if diagnostics or survey printouts are enabled, the output will appear at `/tmp/ghidraPlugin.log`
+>Note: if logging is enabled, the output will appear at `/tmp/ghidra*.log`
 
 So the simplest transform via plugin works in this simplest of test cases.
 
->TODO: add code to copy the decompiler subsystem into the path the Ghidra GUI expects.
-To exercise the plugin with the Ghidra GUI, just launch Ghidra with:
+To exercise the plugin with the Ghidra GUI, just launch Ghidra with the plugin-enabled decompiler and an
+environment variable naming the plugin:
 
 ```console
 DECOMP_PLUGIN=/tmp/libriscv_vector.so ghidraRun

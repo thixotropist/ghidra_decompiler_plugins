@@ -24,7 +24,6 @@ static const int MAX_USER_PCODES = 10000;  ///< limit the number of user pcode o
 namespace ghidra {
 
 std::ofstream logFile;
-std::shared_ptr<spdlog::logger> logger;
 
 RiscvUserPcode::RiscvUserPcode(const string& op, int index) :
     asmOpcode(op),
@@ -70,6 +69,7 @@ const RiscvUserPcode* RiscvUserPcode::getUserPcode(PcodeOp& op)
 }
 
 std::map<int, RiscvUserPcode*> riscvPcodeMap;
+std::shared_ptr<spdlog::logger> pluginLogger;
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -77,20 +77,21 @@ std::map<int, RiscvUserPcode*> riscvPcodeMap;
  */
 extern "C" int plugin_init(void *context)
 {
-    logger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraPluginLogger.log");
+    pluginLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
-    logger->set_level(spdlog::level::info);
+    pluginLogger->set_level(spdlog::level::trace);
     logFile.open("/tmp/ghidraPluginAnalysis.log");
     logFile << "Initiating plugin analysis log" << std::endl;
     Architecture* arch = reinterpret_cast<Architecture*>(context);
-    logger->info("Plugin initialized");
+    pluginLogger->info("Plugin initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=10000; index++) {
         const UserPcodeOp* op = arch->userops.getOp(index);
         if (op == nullptr) break;
         riscvPcodeMap.insert(std::make_pair(index, new RiscvUserPcode(op->getName(), index)));
     }
-    logger->trace("Found {0} user pcode ops during plugin_init", riscvPcodeMap.size());
+    pluginLogger->trace("Found {0} user pcode ops during plugin_init", riscvPcodeMap.size());
+    pluginLogger->flush();
     return 0;
 }
 /**
@@ -99,7 +100,9 @@ extern "C" int plugin_init(void *context)
  */
 extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 {
+    pluginLogger->trace("Adding a new Rule to pluginrules");
     rules.push_back(new RuleVectorCopy("pluginrules"));
+    pluginLogger->flush();
     return 1;
 }
 
@@ -110,25 +113,26 @@ extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
 {
     DatatypeUserOp* res;
-    logger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
+    pluginLogger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
     switch(id)
     {
       case BUILTIN_MEMSET:
       {
-        logger->trace("Creating a new DatatypeUserOp");
+        pluginLogger->trace("Creating a new DatatypeUserOp");
         int4 ptrSize = glb->types->getSizeOfPointer();
         int4 wordSize = glb->getDefaultDataSpace()->getWordSize();
         Datatype *vType = glb->types->getTypeVoid();
         Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
         Datatype *intType = glb->types->getBase(wordSize,TYPE_UINT);
         res = new DatatypeUserOp("builtin_memset",glb,BUILTIN_MEMSET,ptrType,ptrType,intType,intType);
-        logger->trace("Creation complete");
+        pluginLogger->trace("Creation complete");
         break;
       }
       default:
-        logger->warn("Unrecognized new DatatypeUserOp");
+        pluginLogger->warn("Unrecognized new DatatypeUserOp");
         res = nullptr;
     }
+    pluginLogger->flush();
     return res;
 }
 
@@ -138,11 +142,12 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
  */
 extern "C" void plugin_exit()
 {
-    logger->trace("Cleaning up allocated objects");
+    pluginLogger->trace("Cleaning up allocated objects");
     for (auto p: riscvPcodeMap)
     {
         delete p.second;
     }
     riscvPcodeMap.clear();
+    pluginLogger->flush();
 }
 }
