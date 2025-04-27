@@ -79,20 +79,22 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
     {
         numBytes = size_varnode->getOffset() * numBytesPerPass;
         // search forward in the block for a PcodeOp that may begin the pattern we
-        // which to replace
+        // which to replace.  Stop the search after 30 pcode ops
         PcodeOp* op = firstOp->nextOp();
+        int numPcodes = 1;
         std::vector<PcodeOp*> deleteSet;
         bool noVectorOpsFound = true;
-        while ((op != nullptr))
+        while ((op != nullptr) && (numPcodes < 30))
         {
             const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
             if (opInfo == nullptr) {
                 op = op->nextOp();
+                ++numPcodes;
                 continue;
             };
             // fail the match if this is another vset instruction
             if (opInfo->isVset || opInfo->isVseti) {
-                return 0;
+                break;
             }
             noVectorOpsFound = noVectorOpsFound && !opInfo->isVectorOp;
             // is this a vector load or load immediate?
@@ -126,6 +128,7 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
                 deleteSet.push_back(op);
             }
             op = op->nextOp();
+            ++numPcodes;
         }
         if (noVectorOpsFound)
             data.opUnlink(firstOp);
