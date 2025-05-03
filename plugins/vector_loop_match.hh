@@ -1,5 +1,5 @@
-#ifndef VECTOR_TREE_MATCH_HH_
-#define VECTOR_TREE_MATCH_HH_
+#ifndef VECTOR_LOOP_MATCH_HH_
+#define VECTOR_LOOP_MATCH_HH_
 
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
@@ -12,21 +12,17 @@ namespace ghidra{
  */
 struct PhiNode {
   public:
-    intb registerOffset;        /// identifies the associated register
-    Varnode* externalVarnode;   /// a Varnode defined outside of the PcodeOp selection
-    Varnode* internalVarnode;   /// a Varnode defined inside of the PcodeOp selection
-    PhiNode(intb reg, Varnode* external, Varnode* internal) :
-        registerOffset(reg),
-        externalVarnode(external),
-        internalVarnode(internal) {};
+    intb registerOffset;            /// identifies the associated register
+    std::vector<Varnode*> varnodes; /// up to three varnodes
 
+    PhiNode(intb reg, Varnode* v1, Varnode* v2, Varnode* v3);
 };
 
 /**
  * @brief Methods that analyze a sequence of PcodeOps to match
  * against common patterns.
  */
-class VectorTreeMatch {
+class VectorLoopMatch {
   public:
     /**
      * @brief ordering relation for PcodeOp* based on Address
@@ -46,17 +42,23 @@ class VectorTreeMatch {
     };
     static const int MAX_DEPENDENTS = 15;
     /**
-     * @brief set of PcodeOps selected as possible transform candidates,
+     * @brief set of PcodeOps selected as possible loop transform candidates,
      * sorted with increasing Address and SeqNum
      */
     std::set<PcodeOp*, PcodeOpComparator> pcodeOpSelection;
+    /**
+     * @brief set of PcodeOps selected as possible external dependencies to be trimmed,
+     * sorted with increasing Address and SeqNum
+     */
+    std::set<PcodeOp*, PcodeOpComparator> pcodeOpDependencies;
+
     /**
      * @brief Construct a new Vector Tree Match object, populating pcodeOpSelection
      * with PcodeOps potentially implementing a vector stanza or loop
      * @param data Function context
      * @param vsetOp A vsetvl instruction that initiates a loop to be matched
      */
-    VectorTreeMatch(Funcdata& fData, PcodeOp* vsetOp);
+    VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp);
 
     Funcdata& data;          /// Function context data
     intb selectionStartAddr; /// first address found in the selection
@@ -65,6 +67,7 @@ class VectorTreeMatch {
     bool loopFound;          /// does pcodeOpSelection contain a loop?
     intb loopStartAddr;      /// location of the loop start or 0
     intb loopEndAddr;        /// location of the loop end or 0
+    BlockBasic* loopBlock;   /// the parent block of the loop
     std::vector<PhiNode*> phiNodes; /// Phi or MULTIEQUAL nodes found
     bool foundSimpleComparison; /// an integer conditional expression found
     bool foundUnexpectedOp;  /// An unexpected pcode op was found
@@ -81,6 +84,7 @@ class VectorTreeMatch {
     Varnode* vLoadVn;        /// Varnode used by a vector load
     Varnode* vLoadImmVn;     /// Varnode used by a vector load immediate
     Varnode* vStoreVn;       /// Varnode used by a vector store
+    bool analysisEnabled;    /// Construction completed successfully
     /**
      * @brief Perform basic analysis and feature extraction
      */
@@ -102,7 +106,7 @@ class VectorTreeMatch {
      * @brief Destroy the Vector Tree Match object
      * 
      */
-    ~VectorTreeMatch();
+    ~VectorLoopMatch();
 };
 }
-#endif /* VECTOR_TREE_MATCH_HH_ */
+#endif /* VECTOR_LOOP_MATCH_HH_ */

@@ -24,6 +24,7 @@
 namespace ghidra{
 
 extern std::shared_ptr<spdlog::logger> pluginLogger;
+extern std::shared_ptr<spdlog::logger> loopLogger;
 extern std::ofstream logFile;
 /**
  * @brief Group RISC-V user pcodes according to their generic roles
@@ -63,6 +64,7 @@ class RiscvUserPcode {
 extern std::map<int, RiscvUserPcode*> riscvPcodeMap;
 
 // Begin identifiers for *typed* user pcode builtins
-static const uint4 BUILTIN_MEMSET = 0x11000000;
+static const uint4 VECTOR_MEMSET = 0x11000000;
+static const uint4 VECTOR_MEMCPY = 0x11000001;
 }
 #endif /* RISCV_HH_ */

@@ -6,7 +6,7 @@
  * @section riscv_vector_transforms RISC-V Vector Transforms
  * 
  * This plugin generates additional rules and transforms intended to translate
- * common vector instruction sequences into recognizable calls to \em builtin_memcpy and \em builtin_memset.
+ * common vector instruction sequences into recognizable calls to \em vector_memcpy and \em vector_memset.
  *
  * @subsection riscv_usage Plugin Usage
  *

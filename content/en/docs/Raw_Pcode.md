@@ -281,7 +281,7 @@ Therefore these pcode ops could be replaced with a single pcode op - *if* we wer
 We should also merge Basic Block 1 into Basic Block 2, as the branch instruction is to be absorbed.
 
 ```text 
-0x00000048:XX builtin_memcpy(a0(i), a1(i), a2(i))
+0x00000048:XX vector_memcpy(a0(i), a1(i), a2(i))
 ```
 
 If this was a `builtin_memset` loop, we would likely see:

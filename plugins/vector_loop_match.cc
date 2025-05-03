@@ -9,78 +9,33 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 
 #include "riscv.hh"
-#include "vector_tree_match.hh"
+#include "vector_loop_match.hh"
 #include "diagnostics.hh"
 #include "utility.hh"
 
 namespace ghidra
 {
-static void getPcodeOpTree(std::set<PcodeOp*>& pTree, const Funcdata& data, const PcodeOp* p)
+
+PhiNode::PhiNode(intb reg, Varnode* v1, Varnode* v2, Varnode* v3)
 {
-    if (p == nullptr) return;
-    Address addr = p->getAddr();
-    PcodeOpTree::const_iterator iter = data.beginOp(addr);
-    PcodeOpTree::const_iterator enditer = data.endOp(addr);
-    while(iter!=enditer) {
-        PcodeOp *op = (*iter).second;
-        ++iter;
-        pTree.insert(op);
-    }
+    registerOffset = reg;
+    varnodes.push_back(v1);
+    varnodes.push_back(v2);
+    if (v3 != nullptr)
+    varnodes.push_back(v3);
 }
 
-static void displayPcodeOpTree(Funcdata& data, const PcodeOp* p)
-{
-    if (p == nullptr) return;
-    Address addr = p->getAddr();
-    PcodeOpTree::const_iterator iter = data.beginOp(addr);
-    PcodeOpTree::const_iterator enditer = data.endOp(addr);
-    displayComment("Listing PcodeOpTree");
-    while(iter!=enditer) {
-        PcodeOp *op = (*iter).second;
-        ++iter;
-        displayPcodeOp(*op, "", false);
-    }
-}
-
-/**
- * @brief merge treeOps into candidates unless they already exist
- * within visited or visitPending
- * 
- * @param resultSet The result of this set union 
- * @param inputSet The set to be merged if not an element of an exclude set 
- * @param excludeSet1 First of two exclusion sets
- * @param excludeSet2 Second of two exclusion sets
- */
-static void mergeUniquePcodeOps(
-    std::set<PcodeOp*>& resultSet,
-    const std::set<PcodeOp*>& inputSet,
-    const std::set<PcodeOp*>& excludeSet1,
-    const std::set<PcodeOp*>& excludeSet2
-    )
-{
-    for (std::set<PcodeOp *>::const_iterator it = inputSet.begin();
-         it != inputSet.end();
-         ++it)
-    {
-        if ((excludeSet1.find(*it) == excludeSet1.end()) &&
-            (excludeSet2.find(*it) == excludeSet2.end()))
-        {
-            resultSet.insert(*it);
-        }
-    }
-}
-
-Varnode* VectorTreeMatch::getExternalVn(const Varnode* loopVn)
+Varnode* VectorLoopMatch::getExternalVn(const Varnode* loopVn)
 {
     for (auto it: phiNodes)
     {
         if (loopVn->getOffset() == it->registerOffset)
-            return it->externalVarnode;
+            return it->varnodes[1];
     }
     return nullptr;
 }
 
-VectorTreeMatch::VectorTreeMatch(Funcdata& fData, PcodeOp* vsetOp) :
+VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
     data(fData),
     selectionStartAddr(0),
     selectionEndAddr(0),
@@ -103,108 +58,141 @@ VectorTreeMatch::VectorTreeMatch(Funcdata& fData, PcodeOp* vsetOp) :
     vNumPerLoop(nullptr),
     vLoadVn(nullptr),
     vLoadImmVn(nullptr),
-    vStoreVn(nullptr)
+    vStoreVn(nullptr),
+    analysisEnabled(true)
 {
-    bool trace = pluginLogger->should_log(spdlog::level::trace);
-    bool info = pluginLogger->should_log(spdlog::level::info);
+    bool trace = loopLogger->should_log(spdlog::level::trace);
+    bool info = loopLogger->should_log(spdlog::level::info);
     if (vsetOp == nullptr) return;
+    loopLogger->trace("Analyzing potential vector loop at 0x{0:x}",
+        vsetOp->getAddr().getOffset());
     // PcodeOps we believe to be part of this vector loop
-    std::set<PcodeOp*> visited;
+    std::set<PcodeOp*> opsInLoop;
+    // PcodeOps we believe to outside this vector loop and in need of dependency pruning
+    std::set<PcodeOp*> opsExternalToLoop;
     // PcodeOps we want to visit on this iteration,
     std::set<PcodeOp*> visitPending;
     // PcodeOps we want to visit on the next iteration,
     std::set<PcodeOp*> candidates;
     // Schedule analysis of this vset pcodeop
     visitPending.insert(vsetOp);
-    if (trace) displayComment("Listing PcodeOpTree of vset trigger");
+    loopLogger->trace("Listing PcodeOpTree of vset trigger");
     // Add any PcodeOps found in this PcodeOpTree
-    Address addr = vsetOp->getAddr();
-    PcodeOpTree::const_iterator iter = data.beginOp(addr);
-    PcodeOpTree::const_iterator enditer = data.endOp(addr);
+    loopStartAddr = vsetOp->getAddr().getOffset();
+    loopBlock = vsetOp->getParent();
+    loopEndAddr = loopBlock->getStop().getOffset();
+    const int MAX_SELECTION = 20;
+    analysisEnabled = true;
+    PcodeOpTree::const_iterator iter = data.beginOp(vsetOp->getAddr());
+    PcodeOpTree::const_iterator enditer = data.endOp(vsetOp->getAddr());
     // This loop collects PcodeOps that share an instruction address
     // with the given vsetOp, then adds PcodeOps that descend (read outputs)
     // from any of those collected PcodeOps.
     while(iter!=enditer) {
+        loopLogger->trace("  Iterating over vset phi pcodes, visitPending size = {0:d}",
+            visitPending.size());
         // iter points at a (SeqNum, PcodeOp*) pair
         PcodeOp *op = (*iter).second;
         ++iter;
-        if (trace) displayPcodeOp(*op, "vset tree peers added to Pending list", true);
-        // add the pcode to the visit pending set if not already visited
-        if (visited.find(op) == visited.end()) visitPending.insert(op);
-        // get the output varnode, if any.
-        Varnode* v = op->getOut();
-        if (v != nullptr)
-        {
-            // iterate over the descendents of this Varnode to see if a visit should be
-            // scheduled.
-            std::list<PcodeOp*>::const_iterator vnEnditer = v->endDescend();
-            for (std::list<PcodeOp*>::const_iterator it=v->beginDescend();it!=vnEnditer;++it)
-            {
-                if (trace) displayPcodeOp(*op, "vset tree peer descendent added to Pending list", true);
-                if (visited.find(*it) == visited.end()) visitPending.insert(*it);
-            }
-        }
+        //skip if we are already planning on visiting this pcodeop
+        if (visitPending.find(op) != visitPending.end())
+            continue;
+        loopLogger->trace("  Tree op at 0x{0:x}:0x{1:x}",
+            op->getAddr().getOffset(),
+            op->getSeqNum().getTime());
+        // add new pcodes to the visit pending set
+        if (trace) displayPcodeOp(*op, "vset phi pcode added to Pending list", true);
+        visitPending.insert(op);
     }
-    if (trace) displayComment("Visiting Pending nodes");
+    loopLogger->trace("Finished iterating over vset phi pcodes, visitPending size = {0:d}",
+        visitPending.size());
     std::set<PcodeOp*>::iterator it;
     static const int MAX_DEPTH = 5;
     // Iterate over visitPending to collect more PcodeOps
     for (int i=0; i < MAX_DEPTH; ++i)
     {
+        if (visitPending.size() + opsInLoop.size() > MAX_SELECTION)
+        {
+            // too much complexity - fail the analysis
+            analysisEnabled = false;
+            loopLogger->warn("Loop analysis failed with {0:d} descendents",
+                visitPending.size() + opsInLoop.size());
+            pcodeOpSelection.clear();
+            return;
+        }
+        loopLogger->trace("  Visiting {0:d} Pending nodes in iteration {1:d}", visitPending.size(),
+            i);
         it = visitPending.begin();
         // iterate over pending visits, collecting possibly related PcodeOps candidates
         while (it != visitPending.end())
         {
+            // add this pcodeop to ops we need to examine 
+            intb opOffset = (*it)->getAddr().getOffset();
+            if ((opOffset >= loopStartAddr) && (opOffset <= loopEndAddr))
+                opsInLoop.insert(*it);
+            else opsExternalToLoop.insert(*it);
             Varnode* outVn = (*it)->getOut();
             if (outVn != nullptr)
             {
+                loopLogger->trace("    Scanning varnode 0x{0:x} for descendents", outVn->getAddr().getOffset());
                 std::list<PcodeOp*>::const_iterator outVnEndIter = outVn->endDescend();
                 for (std::list<PcodeOp*>::const_iterator itDesc=outVn->beginDescend();itDesc!=outVnEndIter;++itDesc)
                 {
-                    if (trace) {
-                        logFile << "\t\t";
-                        (*itDesc)->printRaw(logFile);
-                        logFile << std::endl;
-                    }
-                    if ((visited.find(*itDesc) == visited.end()) &&
-                        (visitPending.find(*itDesc) == visitPending.end()))
+                    if ((opsInLoop.find(*itDesc) == opsInLoop.end()) &&
+                        (opsExternalToLoop.find(*itDesc) == opsExternalToLoop.end()) &&
+                        (visitPending.find(*itDesc) == visitPending.end()) &&
+                        (candidates.find(*itDesc) == candidates.end()))
                     {
+                        loopLogger->trace("    Adding a candidate PcodeOp at 0x{0:x}",
+                            (*itDesc)->getAddr().getOffset());
                         if (trace) displayPcodeOp(**itDesc, "new descendent added to pending list", false);
                         candidates.insert(*itDesc);
+                        loopLogger->trace("    Now have {0:d} candidates", candidates.size());
                     }
-                    if (trace) displayPcodeOpTree(data, *itDesc);
-                    std::set<PcodeOp*> treeOps;
-                    getPcodeOpTree(treeOps, data, *itDesc);
-                    mergeUniquePcodeOps(candidates, treeOps, visited, visitPending);
                 }
             }
             ++it;
         }
-        visited.insert(visitPending.begin(), visitPending.end());
         visitPending.clear();
         visitPending.insert(candidates.begin(), candidates.end());
         candidates.clear();
     }
-    // Copy the set of visited PcodeOps into pcodeOpSelection, which
+
+    // Copy the set of opsInLoop PcodeOps into pcodeOpSelection, which
     // has a custom ordering relation to sort the list by Address and SeqNum
-    it = visited.begin();
-    while (it != visited.end())
+    it = opsInLoop.begin();
+    while (it != opsInLoop.end())
     {
         pcodeOpSelection.insert(*it);
         ++it;
     }
+    it = opsExternalToLoop.begin();
+    while (it != opsExternalToLoop.end())
+    {
+        pcodeOpDependencies.insert(*it);
+        ++it;
+    }
     if (info) {
-        displayComment("Completed the descendent scan, finding these PcodeOps");
+        loopLogger->info("Completed the descendent scan, finding {0:d} PcodeOps in Loop",
+            pcodeOpSelection.size());
+        loopLogger->info("    and {0:d} PcodeOp external dependencies",
+                pcodeOpDependencies.size());
         it = pcodeOpSelection.begin();
         while (it != pcodeOpSelection.end())
         {
-            displayPcodeOp(**it, "", false);
+            displayPcodeOp(**it, "In Loop", false);
+            ++it;
+        }
+        it = pcodeOpDependencies.begin();
+        while (it != pcodeOpDependencies.end())
+        {
+            displayPcodeOp(**it, "Out of Loop", false);
             ++it;
         }
     }
 }
 
-VectorTreeMatch::~VectorTreeMatch()
+VectorLoopMatch::~VectorLoopMatch()
 {
     for (auto it: phiNodes)
     {
@@ -212,9 +200,9 @@ VectorTreeMatch::~VectorTreeMatch()
     }
 }
 
-void VectorTreeMatch::analyze()
+void VectorLoopMatch::analyze()
 {
-    bool info = pluginLogger->should_log(spdlog::level::info);
+    bool info = loopLogger->should_log(spdlog::level::info);
     numPcodes = pcodeOpSelection.size();
     PcodeOp* firstOp = *(pcodeOpSelection.begin());
     PcodeOp* lastOp = *(--pcodeOpSelection.end());
@@ -225,8 +213,10 @@ void VectorTreeMatch::analyze()
     foundUnexpectedOp = false;
     Varnode* vectorLoadRegisterVn = nullptr;
     Varnode* vectorStoreRegisterVn = nullptr;
-    std::set<PcodeOp*, VectorTreeMatch::PcodeOpComparator>::iterator it = pcodeOpSelection.begin();
-    while (it != pcodeOpSelection.end())
+    std::set<PcodeOp*, VectorLoopMatch::PcodeOpComparator>::iterator it = pcodeOpSelection.begin();
+    bool analysisFailed = false;
+    loopLogger->trace("Beginning vector loop analysis of {0:d} pcodes", pcodeOpSelection.size());
+    while (it != pcodeOpSelection.end() && !analysisFailed)
     {
         PcodeOp* op = *it;
         ++it;
@@ -248,6 +238,7 @@ void VectorTreeMatch::analyze()
             break;
           case CPUI_CALL:
             simpleFlowStructure = false;
+            analysisFailed = true;
             break;
           case CPUI_CALLOTHER:
             // Possible vector instruction
@@ -265,7 +256,7 @@ void VectorTreeMatch::analyze()
                     elementSize = opInfo->elementSize;
                     vNumElem = op->getIn(1);
                     vNumPerLoop = op->getOut();
-                    pluginLogger->trace("Vset found: numElementsRegister=0x{0:x}",
+                    loopLogger->trace("Vset found: numElementsRegister=0x{0:x}",
                         vNumElem->getOffset());
                 }
                 else if ((opInfo->isLoad) && (vLoadVn == nullptr))
@@ -273,20 +264,20 @@ void VectorTreeMatch::analyze()
                     const Varnode* vLoopLoadVn = op->getIn(1);
                     vLoadVn = getExternalVn(vLoopLoadVn);
                     vectorLoadRegisterVn = op->getOut();
-                    pluginLogger->trace("Vload found: register=0x{0:x}",
+                    loopLogger->trace("Vload found: register=0x{0:x}",
                         vectorLoadRegisterVn->getOffset());
                 }
                 else if ((opInfo->isLoadImmediate) && (vLoadImmVn == nullptr))
                 {
                     vLoadImmVn = op->getIn(2);
-                    pluginLogger->trace("VloadImmediate found: numElem={0:d}", vLoadImmVn->getOffset());
+                    loopLogger->trace("VloadImmediate found: numElem={0:d}", vLoadImmVn->getOffset());
                 }
                 else if ((opInfo->isStore) && (vStoreVn == nullptr))
                 {
                     vectorStoreRegisterVn = op->getIn(1);
                     Varnode* vLoopStoreVn = op->getIn(2);
                     vStoreVn = getExternalVn(vLoopStoreVn);
-                    pluginLogger->trace("Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
+                    loopLogger->trace("Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
                         vectorStoreRegisterVn->getOffset(), vLoopStoreVn->getOffset());
                 }
                 else foundOtherUserPcodes = true;
@@ -304,6 +295,9 @@ void VectorTreeMatch::analyze()
           case CPUI_INT_SUB:
             ++numArithmeticOps;
             break;
+          case CPUI_PTRADD:
+            ++numArithmeticOps;
+            break;
           case CPUI_INT_MULT:
             // Probably a multiply by -1
             break;
@@ -312,22 +306,18 @@ void VectorTreeMatch::analyze()
             break;
           case CPUI_MULTIEQUAL:
             {
-                // first argument is generally a loop varnode, second is generally the external or input varnode
+                // first argument is generally a loop varnode, second is generally the external or input varnode,
+                // an optional third argument may be a duplicate or unique.
                 Varnode* a = op->getIn(0);
                 Varnode* b = op->getIn(1);
+                Varnode* c = nullptr;
                 intb reg = op->getOut()->getOffset();
-                intb aReg = a->getOffset();
-                intb bReg = b->getOffset();
-                // all three reg values should be equal
-                bool isRelevant = (reg == aReg) && (aReg == bReg);
-                bool bIsInput = b->getFlags() & Varnode::input;
-                intb aAddress = a->getAddr().getOffset();
-                if (isRelevant && bIsInput)
+                if (op->numInput() == 3)
                 {
-                    pluginLogger->trace("Adding Phi node: register=0x{0:x}; a=0x{1:x}; b=input",
-                        reg, aAddress);
-                    phiNodes.push_back(new PhiNode(reg, b, a));
+                    c = op->getIn(2);
                 }
+                loopLogger->trace("Adding Phi node: register=0x{0:x}", reg);
+                phiNodes.push_back(new PhiNode(reg, a, b, c));
             }
             break;
           case CPUI_CAST:
@@ -338,17 +328,18 @@ void VectorTreeMatch::analyze()
                 foundUnexpectedOp = true;
                 displayPcodeOp(*op, "Unexpected op found in analysis", false);
                 int opcode = op->code();
-                pluginLogger->warn("Unexpected op found in analysis: {0:d}", opcode);
+                loopLogger->warn("Unexpected op found in analysis: {0:d}", opcode);
             }
             break;
         }
     }
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
     vNumElem = getExternalVn(vNumElem);
-    pluginLogger->trace("vNumElem Varnode adjusted");
+    loopLogger->trace("vNumElem Varnode adjusted");
     if (info)
     {
-        logFile << "Analysis:" << std::endl;
+
+        logFile << "Analysis of vector sequence beginning at 0x" << std::hex << selectionStartAddr << std::dec << std::endl;
         logFile << "\tnumPcodes = " << numPcodes <<  std::endl;
         logFile << "\telementSize = " << elementSize <<  std::endl;
         logFile << "\tmultiplier = " << multiplier <<  std::endl;
@@ -382,19 +373,52 @@ void VectorTreeMatch::analyze()
         }
     }
 }
-bool VectorTreeMatch::isMemcpy()
+bool VectorLoopMatch::isMemcpy()
 {
     return loopFound && (numPcodes > 10) && (numPcodes < 14) &&
         simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
         vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp);
 }
-int VectorTreeMatch::transform()
+int VectorLoopMatch::transform()
 {
-    pluginLogger->info("Transforming selection into builtin_memcpy");
+    loopLogger->info("Transforming selection into vector_memcpy");
     // todo: compute number of bytes to move, generate a new varnode
-    PcodeOp* newOp = insertBuiltin(data, *vsetOp, UserPcodeOp::BUILTIN_MEMCPY, vStoreVn, vLoadVn, vNumElem);
+    PcodeOp* newOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStoreVn, vLoadVn, vNumElem);
     data.opInsertBefore(newOp, vsetOp);
 
+    // purge any descendents of the deleted varnodes
+    loopLogger->info("Trimming dependencies");
+    loopLogger->trace("Searching for varnodes between {0:x} and {1:x}", loopStartAddr, loopEndAddr);
+    std::set<PcodeOp*>::iterator it = pcodeOpDependencies.begin();
+    while (it != pcodeOpDependencies.end())
+    {
+        PcodeOp* op = *it;
+        loopLogger->trace("Pcode to be trimmed has {0:d} inputs at address 0x{1:x}",
+            op->numInput(), op->getAddr().getOffset());
+        displayPcodeOp(*op, "Pcode to be trimmed", false);
+        int lastSlot = op->numInput() - 1;
+        for (int i = lastSlot; i >= 0; --i)
+        {
+            Varnode* v = op->getIn(i);
+            if ((v == nullptr) || (v->getDef() == nullptr))
+            {
+                loopLogger->warn("Tried to process a null varnode or varnode without a parent pcodeop");
+                continue;
+            }
+            intb offset = v->getDef()->getAddr().getOffset();
+            loopLogger->info("Searching for deleted varnodes: offset=0x{0:x}, addr=0x{1:x}",
+                offset, v->getAddr().getOffset());
+            if ((offset >= loopStartAddr) && (offset <= loopEndAddr))
+            {
+                data.opRemoveInput(op, i);
+                loopLogger->trace("  deleting slot {0:d} of pcode at 0x{1:x}",
+                    i, op->getAddr().getOffset());
+            }
+            loopLogger->flush();
+        }
+        displayPcodeOp(*op, "Pcode after trimming", false);
+        ++it;
+    }
     for (auto it: pcodeOpSelection)
     {
         data.opUnlink(it);

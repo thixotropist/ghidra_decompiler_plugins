@@ -10,7 +10,7 @@
 #include "riscv.hh"
 #include "diagnostics.hh"
 #include "vectorcopy.hh"
-#include "vector_tree_match.hh"
+#include "vector_loop_match.hh"
 #include "utility.hh"
 
 namespace ghidra {
@@ -63,7 +63,8 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
     vsetRegister = vsetInfo->isVset;
     if (!(vsetImmediate || vsetRegister)) return 0;
     // we have a vsetivli or a vsetvli instruction
-    pluginLogger->trace("Entering applyOp with a recognized vset* user pcode op");
+    pluginLogger->trace("Entering applyOp with a recognized vset* user pcode op at 0x{0:x}",
+        firstOp->getAddr().getOffset());
     // The size, or total number of elements to process, will be a constant
     // for vsetivli instructions or a register for vsetvl instructions
     Varnode* size_varnode = firstOp->getIn(1);
@@ -105,15 +106,20 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
                 Varnode* sourceVn = op->getIn(1);
                 bool isMemset = sourceVn->isConstant() && opInfo->isLoadImmediate;
                 intb builtinOp;
-                if (isMemset) builtinOp = BUILTIN_MEMSET;
-                else builtinOp = UserPcodeOp::BUILTIN_MEMCPY;
+                if (isMemset) builtinOp = VECTOR_MEMSET;
+                else builtinOp = VECTOR_MEMCPY;
                 Varnode* outputVn = op->getOut();
                 std::vector<std::pair<PcodeOp*,PcodeOp*>*> pcodesToBeBuilt;
                 std::list<PcodeOp*>::const_iterator enditer = outputVn->endDescend();
                 for (std::list<PcodeOp*>::const_iterator it=outputVn->beginDescend(); it!=enditer; ++it)
                 {
+                    const RiscvUserPcode* descOpInfo = RiscvUserPcode::getUserPcode(**it);
+                    // we only replace vector store opcodes
+                    if ((descOpInfo == nullptr) || !descOpInfo->isStore)
+                        continue;
                     PcodeOp* newOp;
-                    pluginLogger->info("Inserting a builtin");
+                    pluginLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
+                        builtinOp, (*it)->getAddr().getOffset());
                     if (trace) displayPcodeOp(**it, "Dependent pcode:", true);
                     Varnode * new_size_varnode = data.newConstant(1, numBytes);
                     newOp = insertBuiltin(data, **it, builtinOp, (*it)->getIn(2), sourceVn, new_size_varnode);
@@ -122,25 +128,32 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     returnCode = 1;
                 }
                 for (auto it: pcodesToBeBuilt) {
+
                     data.opInsertBefore(it->first, it->second);
                     delete it;
                 }
+                pluginLogger->info("Deleting op at 0x{0:x}", op->getAddr().getOffset());
                 deleteSet.push_back(op);
             }
             op = op->nextOp();
             ++numPcodes;
         }
         if (noVectorOpsFound)
+        {
+            pluginLogger->info("Deleting firstOp at 0x{0:x}", firstOp->getAddr().getOffset());
             data.opUnlink(firstOp);
+        }
         for (auto iter: deleteSet)
         {
+            pluginLogger->info("Deleting op at 0x{0:x}", iter->getAddr().getOffset());
             data.opUnlink(iter);
         }
         return returnCode;
     }
     // We have a vsetvl instruction and likely a loop, so
     // construct something to start the analysis.
-    VectorTreeMatch matcher(data, firstOp);
+    VectorLoopMatch matcher(data, firstOp);
+    if (!matcher.analysisEnabled) return 0;
     matcher.analyze();
     if (matcher.isMemcpy())
     {

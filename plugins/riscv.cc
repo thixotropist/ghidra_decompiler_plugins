@@ -70,6 +70,7 @@ const RiscvUserPcode* RiscvUserPcode::getUserPcode(PcodeOp& op)
 
 std::map<int, RiscvUserPcode*> riscvPcodeMap;
 std::shared_ptr<spdlog::logger> pluginLogger;
+std::shared_ptr<spdlog::logger> loopLogger;
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -79,7 +80,9 @@ extern "C" int plugin_init(void *context)
 {
     pluginLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
-    pluginLogger->set_level(spdlog::level::trace);
+    pluginLogger->set_level(spdlog::level::warn);
+    loopLogger = pluginLogger->clone("vector_loop");
+    loopLogger->set_level(spdlog::level::trace);
     logFile.open("/tmp/ghidraPluginAnalysis.log");
     logFile << "Initiating plugin analysis log" << std::endl;
     Architecture* arch = reinterpret_cast<Architecture*>(context);
@@ -116,15 +119,27 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
     pluginLogger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
     switch(id)
     {
-      case BUILTIN_MEMSET:
+      case VECTOR_MEMCPY:
+        {
+          pluginLogger->trace("Creating a new DatatypeUserOp");
+          int4 ptrSize = glb->types->getSizeOfPointer();
+          int4 wordSize = glb->getDefaultDataSpace()->getAddrSize();
+          Datatype *vType = glb->types->getTypeVoid();
+          Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
+          Datatype *intType = glb->types->getBase(wordSize,TYPE_UINT);
+          res = new DatatypeUserOp("vector_memcpy",glb,VECTOR_MEMCPY,vType,ptrType,ptrType,intType);
+          pluginLogger->trace("Creation complete");
+          break;
+        }
+      case VECTOR_MEMSET:
       {
         pluginLogger->trace("Creating a new DatatypeUserOp");
         int4 ptrSize = glb->types->getSizeOfPointer();
-        int4 wordSize = glb->getDefaultDataSpace()->getWordSize();
+        int4 wordSize = glb->getDefaultDataSpace()->getAddrSize();
         Datatype *vType = glb->types->getTypeVoid();
         Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
         Datatype *intType = glb->types->getBase(wordSize,TYPE_UINT);
-        res = new DatatypeUserOp("builtin_memset",glb,BUILTIN_MEMSET,ptrType,ptrType,intType,intType);
+        res = new DatatypeUserOp("vector_memset",glb,VECTOR_MEMSET,vType,ptrType,intType,intType);
         pluginLogger->trace("Creation complete");
         break;
       }

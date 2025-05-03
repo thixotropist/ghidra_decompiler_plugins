@@ -7,7 +7,7 @@
 namespace ghidra{
 /**
  * @brief Introduce an experimental rule to transform vector
- * sequences into builtin_memcpy calls
+ * sequences into vector_memcpy or vector_memset calls
  */
 PcodeOp* insertBuiltin(Funcdata& data, PcodeOp& op, intb builtinOpId, Varnode* param1, Varnode* param2, Varnode* param3);
 }
