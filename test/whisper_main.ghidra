@@ -1,0 +1,7 @@
+restore test/whisper_main_save.xml
+map function 0x20fd0 main
+parse line extern int main(int argc, char** argv);
+load function main
+decompile main
+print C
+print raw

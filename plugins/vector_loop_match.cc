@@ -138,6 +138,13 @@ VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
                 std::list<PcodeOp*>::const_iterator outVnEndIter = outVn->endDescend();
                 for (std::list<PcodeOp*>::const_iterator itDesc=outVn->beginDescend();itDesc!=outVnEndIter;++itDesc)
                 {
+                    // abort the transform if any dependent is a CALL operation
+                    if ((*itDesc)->code() == CPUI_CALL)
+                    {
+                        loopLogger->trace("Aborting transform due to CALL pcode in dependancy list");
+                        analysisEnabled = false;
+                        return;
+                    }
                     if ((opsInLoop.find(*itDesc) == opsInLoop.end()) &&
                         (opsExternalToLoop.find(*itDesc) == opsExternalToLoop.end()) &&
                         (visitPending.find(*itDesc) == visitPending.end()) &&

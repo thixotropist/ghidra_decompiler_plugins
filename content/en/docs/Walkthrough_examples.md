@@ -259,3 +259,122 @@ The decrease in `vector_memset` transforms is a surprise to be investigated.
 The big improvement was in fewer decompiler exceptions.  The logfile shows quite a few warnings to be investigated too.
 
 The plugin found transforms of only a small percentage of the vector stanzas, so there is quite a bit of work left to do.
+
+One of the functions that generated a decompiler exception was the `main` function, arguably the most important function
+to be evaluated in Ghidra.  Let's turn that large function into a new test case and see why the exceptions are being thrown.
+The most likely cause is a failure to handle dependencies of pcodeops removed during a transform.
+
+### Whisper-cpp Main function test case
+
+Not every vector instruction sequence is worth understanding - and the effort it takes to
+transform it into something more human-readable.  Sequences that occur in the `main` function
+are likely to be more important to the Ghidra user than vector sequences that occur in a vector
+dot product function.  Our workflow constructs vector sequence transforms only as needed,
+prioritizing sequences with a clear transform representation and sequences that occur at
+higher levels of the binary to be analyzed.
+
+>Note: other workflows could be very different.  For example, an executable built *explicitly*
+>      for a vector length of 256 bits could fail on a hardware thread limited to 128 bits.
+
+Use Ghidra to locate the `main` function within whisper-cpp and export its 8 memory segments
+into a new Ghidra datatest save file `test/whisper_main_save.xml`.  Next add a datatest script
+as `test/whisper_main.ghidra`.
+
+Exercise this datatest without a plugin as a control run without valgrind:
+
+```console
+$ SLEIGHHOME=/opt/ghidra_11.4_DEV/ /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/whisper_main.ghidra
+```
+
+Repeat with the plugin active
+
+```console
+$ SLEIGHHOME=/opt/ghidra_11.4_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/whisper_main.ghidra > /tmp/decomp_main.log
+$ cat /tmp/decomp_main.log
+[decomp]> restore test/whisper_main_save.xml
+test/whisper_main_save.xml successfully loaded: RISC-V 64 little general purpose compressed
+[decomp]> map function 0x20fd0 main
+[decomp]> parse line extern int main(int argc, char** argv);
+[decomp]> load function main
+Function main: 0x00020fd0
+[decomp]> decompile main
+Decompiling main
+Low-level ERROR: Free varnode has multiple descendants
+Unable to proceed with function: main
+[decomp]> print C
+Execution error: No function selected
+[decomp]> print raw
+Execution error: No function selected
+[decomp]> 
+```
+
+Examine the logs to decide on next steps:
+
+* The plugin completed processing in spite of the low level error thrown.  This suggests
+  that the free varnode descendant rule is only applied after all `apply` calls in a given
+  Rule or group of rules.  That means we can't immediately localize the vector stanza that
+  caused the error.
+* The messaging between `ghidraRiscvLogger.log` and `ghidraPluginAnalysis.log` needs work:
+    * We need an explicit `info` level log message when the plugin exits
+    * The two logs should display a clear demarcation and correlation tag on each new
+      vector stanza entered.
+    * Explore the possibility of merging the two logs with a `printRaw` to a
+      `std::stringstream`.
+* Add a new `TRANSFORM_LIMIT` field to the plugin to skip processing further vector
+  stanzas after a fixed number of executed transforms.  This should allow bisection
+  analysis of large functions like `main`.
+
+Add the transform limit and bisect to find the first 6 transforms complete without an error
+thrown, all of which are loop-free.  Repeat with the limit bumped to 7 transforms.
+The log file shows:
+
+```console
+$ grep -E 'Inserting|Transforming|Analyzing' ghidraRiscvLogger.log
+[2025-05-05 08:26:17.464] [riscv_vector] [info] Inserting vector op 0x11000001 at 0x210c8
+[2025-05-05 08:26:17.464] [riscv_vector] [info] Inserting vector op 0x11000001 at 0x210d4
+[2025-05-05 08:26:17.464] [riscv_vector] [info] Inserting vector op 0x11000001 at 0x210e8
+[2025-05-05 08:26:17.464] [riscv_vector] [info] Inserting vector op 0x11000000 at 0x210b4
+[2025-05-05 08:26:17.465] [riscv_vector] [info] Inserting vector op 0x11000000 at 0x211d8
+[2025-05-05 08:26:17.465] [riscv_vector] [info] Inserting vector op 0x11000001 at 0x2130a
+[2025-05-05 08:26:17.465] [vector_loop] [trace] Analyzing potential vector loop at 0x21454
+[2025-05-05 08:26:17.466] [vector_loop] [trace] Analyzing potential vector loop at 0x21552
+[2025-05-05 08:26:17.472] [vector_loop] [trace] Analyzing potential vector loop at 0x21b64
+[2025-05-05 08:26:17.472] [vector_loop] [info] Transforming selection into vector_memcpy
+```
+
+the transforms at 0x21454, 0x21552, and 0x21b64 should have succeeded.
+* 0x21454 analysis found 34 descendants, aborting the transform
+* 0x21552 analysis found 186 descendants, aborting the transform
+* 0x21b64 analysis found 12 in-loop descendants and 3 external descendants
+    * the log shows an anomaly `Pcode to be trimmed has 6 inputs at address 0x21b7a`
+
+```text
+PcodeOp: a0(0x00021b7a:a00) = call ffunc_0x000cab18(free)(s2(0x000214c6:361e),a3(0x00021b5c:9f0),a4(0x00021b46:9e0),a6(0x00021b74:9fb),a7(0x00021b6e:9f8));      OpName: call;   Addr: 0x21b7a
+```
+
+Therefore we need a better way to handle descendants appearing in CALL pcodes.
+The offending vector stanza looks like this:
+
+```text
+                     LAB_00021b64                                    XREF[1]:        00021b76(j)  
+00021b64 d7 77 05 0c     vsetvli                        a5,a0,e8,m1,ta,ma  
+00021b68 87 80 08 02     vle8.v                         v1,(a7)
+00021b6c 1d 8d           c.sub                          a0,a5
+00021b6e be 98           c.add                          a7,a5
+00021b70 a7 00 08 02     vse8.v                         v1,(a6)
+00021b74 3e 98           c.add                          a6,a5
+00021b76 7d f5           c.bnez                         a0,LAB_00021b64
+00021b78 4a 85           c.mv                           a0,s2
+                     try { // try from 00021b7a to 00021b7d has its CatchHandler @
+00021b7a ef 80 fa 79     jal                            ra,SUB_000cab18
+                     } // end try from 00021b7a to 00021b7d
+```
+
+registers a6 and a7 are valid parameter registers, but without committing the
+signature for SUB_000cab18 Ghidra guesses dependencies incorrectly.  This *may* be a case
+of a transform only succeeding after called function signatures are correctly
+committed.
+
+In any event, the immediate fix is to terminate dependency searches whenever a CALL
+pcodeop appears as a dependency.  Preventing decompiler exceptions is the most important
+goal.

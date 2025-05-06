@@ -72,6 +72,8 @@ std::map<int, RiscvUserPcode*> riscvPcodeMap;
 std::shared_ptr<spdlog::logger> pluginLogger;
 std::shared_ptr<spdlog::logger> loopLogger;
 
+int transformCount;
+
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
  * @details The binary program should be loaded with no analysis yet performed
@@ -80,9 +82,11 @@ extern "C" int plugin_init(void *context)
 {
     pluginLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
-    pluginLogger->set_level(spdlog::level::warn);
+    pluginLogger->set_level(spdlog::level::trace);
     loopLogger = pluginLogger->clone("vector_loop");
     loopLogger->set_level(spdlog::level::trace);
+    transformCount = 0;
+    pluginLogger->info("Maximum number of vector transforms: {0:d}", transformCount);
     logFile.open("/tmp/ghidraPluginAnalysis.log");
     logFile << "Initiating plugin analysis log" << std::endl;
     Architecture* arch = reinterpret_cast<Architecture*>(context);
@@ -157,7 +161,7 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
  */
 extern "C" void plugin_exit()
 {
-    pluginLogger->trace("Cleaning up allocated objects");
+    pluginLogger->trace("Exiting the RISC-V transform plugin");
     for (auto p: riscvPcodeMap)
     {
         delete p.second;

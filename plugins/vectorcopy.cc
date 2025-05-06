@@ -50,6 +50,7 @@ void RuleVectorCopy::getOpList(vector<uint4> &oplist) const {
  */
 int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
 
+    if (transformCount >= TRANSFORM_LIMIT) return 0;
     int4 returnCode = 0;
     bool vsetImmediate;
     bool vsetRegister;
@@ -125,6 +126,7 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     newOp = insertBuiltin(data, **it, builtinOp, (*it)->getIn(2), sourceVn, new_size_varnode);
                     pcodesToBeBuilt.push_back(new std::pair<PcodeOp*,PcodeOp*>(newOp, *it));
                     deleteSet.push_back(*it);
+                    ++transformCount;
                     returnCode = 1;
                 }
                 for (auto it: pcodesToBeBuilt) {
@@ -157,6 +159,7 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
     matcher.analyze();
     if (matcher.isMemcpy())
     {
+        ++transformCount;
         return matcher.transform();
     }
     return 0;
