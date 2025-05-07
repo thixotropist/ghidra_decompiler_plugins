@@ -378,3 +378,55 @@ committed.
 In any event, the immediate fix is to terminate dependency searches whenever a CALL
 pcodeop appears as a dependency.  Preventing decompiler exceptions is the most important
 goal.
+
+Install a quick fix and continue increasing TRANSFORM_LIMIT until we get 13 stable transforms and fail
+on the 14th at 0x23866.
+
+The next problem was a bad assumption about Phi or MULTILEVEL nodes.  These are used to trace dependencies
+at branch points, giving all potential histories for each register or memory address touched in a block or loop.
+In a `vector_memcpy` loop these nodes connect internal loop varnodes with external varnodes.  The loop transforms
+erase the internal loop varnodes, so we need to generate `vector_memcpy` calls using varnodes external to the loop.
+The current code now does a better job of identifying external varnodes, so that only the internal varnodes are
+erased.  Some Phi nodes involve three varnode references - one internal and two external, without clearly identifying
+which single varnode should be used in the transform.  The current code picks one randomly, while a better approach would
+generate a new Phi node connecting the two external varnodes to a temporary varnode used in the `vector_memcpy` call.
+
+Repeat the full scan of `whisper-cpp`:
+
+|Parameter | Value | Notes |
+| -------- | ----: | ----- |
+| bytes | 1956494 | unchanged |
+| instructions | 275351 | unchanged |
+| vsetvli instructions | 4119 | unchanged |
+| vsetivli instructions | 1430 | unchanged |
+| vector_memset transforms | 410 | was 124 |
+| vector_memcpy transforms | 883 | was 191 |
+| functions | 1914 |  unchanged |
+| decompiler exceptions | 15 | was 18 |
+
+The functions driving exceptions are:
+
+```text
+$ grep 'Decompiler process died' whisper_cpp_rva23.c
+Cause: Exception while decompiling 00030728: Decompiler process died
+Cause: Exception while decompiling 000307bc: Decompiler process died
+Cause: Exception while decompiling 0006d5ec: Decompiler process died
+Cause: Exception while decompiling 0007c78e: Decompiler process died
+Cause: Exception while decompiling 0007c8b2: Decompiler process died
+Cause: Exception while decompiling 00081d24: Decompiler process died
+Cause: Exception while decompiling 00090296: Decompiler process died
+Cause: Exception while decompiling 0009bd22: Decompiler process died
+Cause: Exception while decompiling 0009d7d0: Decompiler process died
+Cause: Exception while decompiling 0009f3de: Decompiler process died
+Cause: Exception while decompiling 000a0c9a: Decompiler process died
+Cause: Exception while decompiling 000b3824: Decompiler process died
+Cause: Exception while decompiling 000b97c0: Decompiler process died
+Cause: Exception while decompiling 000d7a72: Decompiler process died
+Cause: Exception while decompiling 000e9ef2: Decompiler process died
+```
+
+Add the `min` function to our integration tests and take a look at the functions where the decompiler process died.
+
+Some of these functions decompile in the Ghidra GUI after export.  That's probably due to the TRANSFORM_LIMIT being
+hit earlier.  Functions like 0x00030728 appear to be failing because more complex vector stanzas are being mis-identified
+as simple stanzas, leaving dependencies stranded after transform.

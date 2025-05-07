@@ -30,7 +30,26 @@ Varnode* VectorLoopMatch::getExternalVn(const Varnode* loopVn)
     for (auto it: phiNodes)
     {
         if (loopVn->getOffset() == it->registerOffset)
-            return it->varnodes[1];
+        {
+            // find the first varnode set outside the loop
+            if (it->varnodes.size() > 2)
+                loopLogger->warn("Three or more varnodes presented to VectorLoopMatch::getExternalVn - results undefined");
+            for (int i = 0; i < it->varnodes.size(); ++i)
+            {
+                const PcodeOp* p = it->varnodes[i]->getDef();
+                if (p == nullptr)
+                {
+                    loopLogger->trace("selecting input varnode as the external varnode");
+                    return it->varnodes[i];
+                }
+                intb offset = p->getAddr().getOffset();
+                if ((offset <= loopStartAddr) || (offset >= loopEndAddr))
+                {
+                    loopLogger->trace("selecting a varnode outside the loop of as the external varnode");
+                    return it->varnodes[i];
+                }
+            }
+        }
     }
     return nullptr;
 }

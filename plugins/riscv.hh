@@ -27,7 +27,7 @@ extern std::shared_ptr<spdlog::logger> pluginLogger;
 extern std::shared_ptr<spdlog::logger> loopLogger;
 extern std::ofstream logFile;
 
-static const int TRANSFORM_LIMIT = 14; ///<@brief maximum number of transforms to execute
+static const int TRANSFORM_LIMIT = 10000; ///<@brief maximum number of transforms to execute
 extern int transformCount;
 
 /**

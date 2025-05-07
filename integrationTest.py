@@ -105,7 +105,7 @@ class T1Datatests(unittest.TestCase):
         self.assertIn('definitely lost: 0 bytes in 0 blocks', result.stderr,
                       'Memory Leak or invalid read access detected')
 
-    def test_02_whisper_selections(self):
+    def test_02_whisper_selection_simple(self):
         """
         Verify correct behavior with more complex functions extracted from whisper-cpp
         """
@@ -121,6 +121,24 @@ class T1Datatests(unittest.TestCase):
                       'Vector_memcpy transform was not as expected')
         self.assertIn('definitely lost: 0 bytes in 0 blocks', result.stderr,
                       'Memory Leak or invalid read access detected')
+
+    def test_02_whisper_selection_complex(self):
+        """
+        Verify correct behavior with the main function of whisper-cpp
+        Note: this test skips valgrind analysis in favor of speed
+        """
+        command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_main.ghidra"
+        logger.info(f'Running {command} with output to /tmp/whisper_main.testlog')
+        result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding='utf8')
+        self.assertEqual(0, result.returncode,
+            'Datatest of whisper_main failed')
+        with open('/tmp/whisper_main.testlog', 'w', encoding='utf8') as f:
+            f.write(result.stdout)
+            f.write(result.stderr)
+        self.assertIn('vector_memset((void *)auStack_650,0,0x10)', result.stdout,
+                      'Vector_memset transform was not as expected')
+        self.assertIn('vector_memcpy((void *)&uStack_274,(void *)0x107f20,0x10)', result.stdout,
+                      'Vector_memcpy fixed length transform was not as expected')
 
 if __name__ == '__main__':
 
