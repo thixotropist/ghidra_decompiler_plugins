@@ -1,0 +1,7 @@
+restore test/whisper_sample_2_save.xml
+map function 0x30728 drwav_u8_to_s32
+parse line extern void drwav_u8_to_s32(void*, void*, undefined8);
+load function drwav_u8_to_s32
+decompile drwav_u8_to_s32
+print C
+print raw

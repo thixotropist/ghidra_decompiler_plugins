@@ -1,0 +1,7 @@
+restore test/whisper_sample_3_save.xml
+map function 0x9bd22 quantize_row_q8_K_ref
+parse line extern void quantize_row_q8_K_ref(float*, void*, undefined8);
+load function quantize_row_q8_K_ref
+decompile quantize_row_q8_K_ref
+print C
+print raw

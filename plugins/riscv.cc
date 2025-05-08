@@ -52,7 +52,9 @@ RiscvUserPcode::RiscvUserPcode(const string& op, int index) :
             multiplier = 8;
     }
     isLoad = asmOpcode.find("vle", 0) == 0;
-    isStore = (asmOpcode.find("vse", 0) == 0) && !(asmOpcode.find("vset", 0) == 0);
+    isStore = (asmOpcode.find("vse", 0) == 0) &&
+        !(asmOpcode.find("vset", 0) == 0) &&
+        !(asmOpcode.find("vsext", 0) == 0);
     isLoadImmediate = asmOpcode.find("vmv_v_i", 0) == 0;
     // fix this, not all userpcode ops are vector ops
     isVectorOp = true;

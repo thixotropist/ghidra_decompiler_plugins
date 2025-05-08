@@ -430,3 +430,75 @@ Add the `min` function to our integration tests and take a look at the functions
 Some of these functions decompile in the Ghidra GUI after export.  That's probably due to the TRANSFORM_LIMIT being
 hit earlier.  Functions like 0x00030728 appear to be failing because more complex vector stanzas are being mis-identified
 as simple stanzas, leaving dependencies stranded after transform.
+
+### Whisper-cpp false match test case
+
+Turn the function at 0x030728 (`drwav_u8_to_s32`)`drwav_u8_to_s32` into a test case where we apparently get a false match to vector_memcpy folowed
+by a decompiler exception.
+
+The relevant assembly code is:
+
+
+```as
+        LAB_00030750               XREF[1]:        00030744(j)
+00030750    li        a4,-0x80
+00030754    vsetvli   a5,zero,e8,mf4,ta,ma
+00030758    vmv.v.x   v3,a4
+        LAB_0003075c               XREF[1]:        00030780(j)
+0003075c    vsetvli   a5,a2,e8,mf4,ta,ma
+00030760    vle8.v    v2,(a1)
+00030764    c.sub     a2,a5
+00030766    c.add     a1,a5
+00030768    vadd.vv   v2,v2,v3
+0003076c    vsetvli   zero,zero,e32,m1,ta,ma
+00030770    vsext.vf4 v1,v2
+00030774    vsll.vi   v1,v1,0x18
+00030778    vse32.v   v1,(a0)
+0003077c    sh2add    a0,a5,a0
+00030780    c.bnez    a2,LAB_0003075c
+```
+
+The original C source code is:
+
+```c
+DRWAV_API void drwav_u8_to_s32(drwav_int32* pOut, const drwav_uint8* pIn, size_t sampleCount)
+{
+    size_t i;
+    if (pOut == NULL || pIn == NULL) {
+        return;
+    }
+    for (i = 0; i < sampleCount; ++i) {
+        *pOut++ = ((int)pIn[i] - 128) << 24;
+    }
+}
+```
+
+At first glance this looks like a vector_memcpy stanza with some extra vector ops.
+
+Clarify a few tests and try again
+
+|Parameter | Value | Notes |
+| -------- | ----: | ----- |
+| bytes | 1956494 | unchanged |
+| instructions | 275351 | unchanged |
+| vsetvli instructions | 4119 | unchanged |
+| vsetivli instructions | 1430 | unchanged |
+| vector_memset transforms | 416 | was 410 |
+| vector_memcpy transforms | 885 | was 883 |
+| functions | 1914 |  unchanged |
+| decompiler exceptions | 5 | was 15 |
+
+The first of the remaining exceptions appears to be another bug in the analysis loop - there are other vector instructions present in the loop
+at 0x9bdd8.  It almost looks like vector registers are not collecting dependencies.  Perhaps the problem is with the SLEIGH pcode generated for
+`vfmadd.vv  v1, v2, v31`, where register v1 is used for both input and output.  The current SLEIGH definition is:
+
+```text
+vd=vfmadd_vv(vs1,vs2);
+```
+
+A better definition would be
+
+```text
+vd=vfmadd_vv(vs1,vs2,vd);
+```
+

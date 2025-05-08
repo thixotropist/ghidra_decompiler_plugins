@@ -160,7 +160,7 @@ VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
                     // abort the transform if any dependent is a CALL operation
                     if ((*itDesc)->code() == CPUI_CALL)
                     {
-                        loopLogger->trace("Aborting transform due to CALL pcode in dependancy list");
+                        loopLogger->trace("Aborting transform due to CALL pcode in dependency list");
                         analysisEnabled = false;
                         return;
                     }
@@ -290,8 +290,17 @@ void VectorLoopMatch::analyze()
                     const Varnode* vLoopLoadVn = op->getIn(1);
                     vLoadVn = getExternalVn(vLoopLoadVn);
                     vectorLoadRegisterVn = op->getOut();
-                    loopLogger->trace("Vload found: register=0x{0:x}",
-                        vectorLoadRegisterVn->getOffset());
+                    loopLogger->trace("Vload found at 0x{0:x}", op->getAddr().getOffset());
+                    loopLogger->flush();
+                    if (vectorLoadRegisterVn == nullptr)
+                    {
+                        loopLogger->warn("Vload at 0x{0:x} has no output!",
+                            op->getAddr().getOffset());
+                            displayPcodeOp(*op, "VLoad with no output", true);
+                    }
+                    else
+                        loopLogger->trace("Vload register=0x{0:x}",
+                            vectorLoadRegisterVn->getOffset());
                 }
                 else if ((opInfo->isLoadImmediate) && (vLoadImmVn == nullptr))
                 {
@@ -403,7 +412,8 @@ bool VectorLoopMatch::isMemcpy()
 {
     return loopFound && (numPcodes > 10) && (numPcodes < 14) &&
         simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
-        vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp);
+        vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp) &&
+        (!foundOtherUserPcodes);
 }
 int VectorLoopMatch::transform()
 {

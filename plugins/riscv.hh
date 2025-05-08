@@ -18,6 +18,7 @@
 
 #include <string>
 #include <map>
+#include <climits>
 
 #include "spdlog/spdlog.h"
 
@@ -27,7 +28,7 @@ extern std::shared_ptr<spdlog::logger> pluginLogger;
 extern std::shared_ptr<spdlog::logger> loopLogger;
 extern std::ofstream logFile;
 
-static const int TRANSFORM_LIMIT = 10000; ///<@brief maximum number of transforms to execute
+static const int TRANSFORM_LIMIT = INT_MAX; ///<@brief maximum number of transforms to execute
 extern int transformCount;
 
 /**
