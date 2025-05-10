@@ -1,0 +1,7 @@
+restore test/whisper_sample_5_save.xml
+map function 0xb97c0 whisper_wrap_segment
+parse line extern void whisper_wrap_segment(void*, void*, int, int);
+load function whisper_wrap_segment
+decompile whisper_wrap_segment
+print C
+print raw

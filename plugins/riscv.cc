@@ -88,7 +88,7 @@ extern "C" int plugin_init(void *context)
     loopLogger = pluginLogger->clone("vector_loop");
     loopLogger->set_level(spdlog::level::trace);
     transformCount = 0;
-    pluginLogger->info("Maximum number of vector transforms: {0:d}", transformCount);
+    pluginLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
     logFile.open("/tmp/ghidraPluginAnalysis.log");
     logFile << "Initiating plugin analysis log" << std::endl;
     Architecture* arch = reinterpret_cast<Architecture*>(context);

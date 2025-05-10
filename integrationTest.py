@@ -5,7 +5,7 @@ Verify the correctness of the RISC-V Vector transforms Ghidra plugin
 import unittest
 import subprocess
 import logging
-import re
+import os
 import shutil
 
 logging.basicConfig(level=logging.INFO)
@@ -31,11 +31,13 @@ class T0BuildPlugin(unittest.TestCase):
         Build and install the Ghidra decompiler and its datatest framework
         """
         logger.info(f'Cleaning the executable directory {DECOMPILER_DIR}')
-        command = f"rm -f {DECOMPILER_PATH} {DATATEST_PATH}"
-        logger.info(f'Running {command}')
-        result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding='utf8')
-        self.assertEqual(0, result.returncode,
-            f'unable to clean previous decompiler executable files')
+        for f in (DECOMPILER_PATH, DATATEST_PATH):
+            if os.path.exists(f):
+                command = f"rm -f {f}"
+                logger.info(f'Running {command}')
+                result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding='utf8')
+                self.assertEqual(0, result.returncode,
+                    'unable to clean previous decompiler executable files')
 
         # build the decompiler executable used by Ghidra
         command = 'bazel build -c opt @ghidra//:decompile'
@@ -139,6 +141,21 @@ class T1Datatests(unittest.TestCase):
                       'Vector_memset transform was not as expected')
         self.assertIn('vector_memcpy((void *)&uStack_274,(void *)0x107f20,0x10)', result.stdout,
                       'Vector_memcpy fixed length transform was not as expected')
+
+    def test_03_whisper_regression(self):
+        """
+        Verify processing of several Whisper functions that previously threw exceptions
+        """
+        sample_set = (2,3,5)
+        for i in sample_set:
+            command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_sample_{i}.ghidra"
+            logger.info(f'Running {command} with output to /tmp/whisper_sample_{i}.testlog')
+            result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding='utf8')
+            self.assertEqual(0, result.returncode,
+                f'Datatest of whisper_sample_{i} failed')
+            with open(f'/tmp/whisper_sample_{i}.testlog', 'w', encoding='utf8') as f:
+                f.write(result.stdout)
+                f.write(result.stderr)
 
 if __name__ == '__main__':
 

@@ -502,3 +502,65 @@ A better definition would be
 vd=vfmadd_vv(vs1,vs2,vd);
 ```
 
+Install that and some similar changes then rebuild Ghidra and try again.
+
+
+|Parameter | Value | Notes |
+| -------- | ----: | ----- |
+| vector_memcpy transforms | 894 | was 885 |
+| decompiler exceptions | 2 | was 5 |
+
+The two remaining exceptions are in 000b3824 (`whisper_model_load`) and 000b97c0 (`whisper_wrap_segment`).  Turn these
+into two more regression tests `whisper_sample_4` and `whisper_sample_5` respectively.
+
+`whisper_sample_4` shows an anomaly - the datatest throws an assertion error whether or not
+a plugin is used.  There is likely something wrong with how the datatest is structured.
+The assertion error occurs within `ghidra::Heritage::splitByRefinement`at (heritage.cc:1748).
+Defer this until we get `whisper_sample_5` passing.
+
+Step through `whisper_sample_5` bisecting with `TRANSFORM_LIMIT` to show a problem on the 7th transform
+around 0x9bd50.  The log file shows:
+
+```text
+In Loop PcodeOp: a4(0x000b9d50:4fb) = vsetvli_e8m1tama(a0(0x000b9d50:d60));     OpName: syscall;        Addr: 0xb9d50
+In Loop PcodeOp: s1(0x000b9d50:d31) = s1(0x000b9d5a:4ff) ? s1(0x000b9c7c:487) ? s1(0x000b9c7c:487);     OpName: ?;      Addr: 0xb9d50
+In Loop PcodeOp: a0(0x000b9d50:d60) = a0(0x000b9d58:4fe) ? s2(0x000b9c94:496) ? s2(0x000b9c94:496);     OpName: ?;      Addr: 0xb9d50
+In Loop PcodeOp: a6(0x000b9d50:fcd) = a6(0x000b9d60:502) ? a5(0x000b9d48:4f8) ? s10(0x000b9cfa:106e);   OpName: ?;      Addr: 0xb9d50
+In Loop PcodeOp: a5(0x000b9d50:2017) = a5(0x000b9d50:2017) ? a5(0x000b9d48:4f8) ? s10(0x000b9cfa:106e); OpName: ?;      Addr: 0xb9d50
+In Loop PcodeOp: v1(0x000b9d54:4fd) = vle8_v(s1(0x000b9d50:d31));       OpName: syscall;        Addr: 0xb9d54
+In Loop PcodeOp: a0(0x000b9d58:4fe) = a0(0x000b9d50:d60) + u0x100000c0(0x000b9d58:11e3);        OpName: +;      Addr: 0xb9d58
+In Loop PcodeOp: u0x100000c0(0x000b9d58:11e3) = a4(0x000b9d50:4fb) * #0xffffffffffffffff;       OpName: *;      Addr: 0xb9d58
+In Loop PcodeOp: s1(0x000b9d5a:4ff) = s1(0x000b9d50:d31) + a4(0x000b9d50:4fb);  OpName: +;      Addr: 0xb9d5a
+In Loop PcodeOp: vse8_v(v1(0x000b9d54:4fd),a6(0x000b9d50:fcd)); OpName: syscall;        Addr: 0xb9d5c
+In Loop PcodeOp: a6(0x000b9d60:502) = a6(0x000b9d50:fcd) + a4(0x000b9d50:4fb);  OpName: +;      Addr: 0xb9d60
+In Loop PcodeOp: u0x00018500:1(0x000b9d62:503) = a0(0x000b9d58:4fe) != #0x0;    OpName: !=;     Addr: 0xb9d62
+In Loop PcodeOp: goto r0x000b9d50:1(free) if (u0x00018500:1(0x000b9d62:503) != 0);      OpName: goto;   Addr: 0xb9d62
+Out of Loop PcodeOp: s2(0x000b9d64:505) = s2(0x000b9c94:496) + a5(0x000b9d50:2017);     OpName: +;      Addr: 0xb9d64
+Out of Loop PcodeOp: *(ram,u0x00010d80(0x000b9d92:526)) = s2(0x000b9d64:505);   OpName: store;  Addr: 0xb9d92
+...
+Pcode to be trimmed PcodeOp: s2(0x000b9d64:505) = s2(0x000b9c94:496) + a5(0x000b9d50:2017);     OpName: +;      Addr: 0xb9d64
+Pcode after trimming PcodeOp: s2(0x000b9d64:505) = s2(0x000b9c94:496) + <null>; OpName: +;      Addr: 0xb9d64
+```
+
+The disassembly includes:
+
+```as
+LAB_000b9d4c                                    XREF[1]:        000ba45c(j)  
+    c.mv                           a6,a5
+    c.mv                           param_1,s2
+LAB_000b9d50                                    XREF[1]:        000b9d62(j)  
+    vsetvli                        a4,param_1,e8,m1,ta,ma  
+    vle8.v                         v1,(s1)
+    c.sub                          param_1,a4
+    c.add                          s1,a4
+    vse8.v                         v1,(a6)
+    c.add                          a6,a4
+    c.bnez                         param_1,LAB_000b9d50
+```
+
+The Phi nodes look like the culprit here
+* `a5(0x000b9d50:2017)` should not be deleted and should have its descendants followed.  This Phi node is not affected by the loop.
+* `a6(0x000b9d50:fcd)` is a three argument Phi node without duplicates.  It should probably be replaced with two argument Phi node
+
+It's not clear how to properly transform this vector_memcpy loop, so let's just try to minimize exceptions by failing the transform
+match if Phi registers don't match or if four or more Phi nodes are associated with the `vsetvli` instruction location.

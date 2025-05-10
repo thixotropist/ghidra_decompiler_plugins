@@ -134,7 +134,7 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     data.opInsertBefore(it->first, it->second);
                     delete it;
                 }
-                pluginLogger->info("Deleting op at 0x{0:x}", op->getAddr().getOffset());
+                pluginLogger->info("Queing deletion of op at 0x{0:x}", op->getAddr().getOffset());
                 deleteSet.push_back(op);
             }
             op = op->nextOp();

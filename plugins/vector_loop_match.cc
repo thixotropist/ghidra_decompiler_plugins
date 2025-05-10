@@ -369,13 +369,14 @@ void VectorLoopMatch::analyze()
         }
     }
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
+    int numPhiNodes = phiNodes.size();
     vNumElem = getExternalVn(vNumElem);
     loopLogger->trace("vNumElem Varnode adjusted");
     if (info)
     {
-
         logFile << "Analysis of vector sequence beginning at 0x" << std::hex << selectionStartAddr << std::dec << std::endl;
         logFile << "\tnumPcodes = " << numPcodes <<  std::endl;
+        logFile << "\tnumPhiNodes = " << numPhiNodes <<  std::endl;
         logFile << "\telementSize = " << elementSize <<  std::endl;
         logFile << "\tmultiplier = " << multiplier <<  std::endl;
         logFile << "\tLength in Bytes = " << selectionEndAddr - selectionStartAddr <<  std::endl;
@@ -411,6 +412,7 @@ void VectorLoopMatch::analyze()
 bool VectorLoopMatch::isMemcpy()
 {
     return loopFound && (numPcodes > 10) && (numPcodes < 14) &&
+        (numPhiNodes <= 3) &&
         simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
         vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp) &&
         (!foundOtherUserPcodes);

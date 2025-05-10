@@ -64,6 +64,7 @@ class VectorLoopMatch {
     intb selectionStartAddr; /// first address found in the selection
     intb selectionEndAddr;   /// last address found in the selection
     int numPcodes;           /// number of pcodeOps found in the selection
+    int numPhiNodes;         /// number of PhiNodes found bound to the vset instruction
     bool loopFound;          /// does pcodeOpSelection contain a loop?
     intb loopStartAddr;      /// location of the loop start or 0
     intb loopEndAddr;        /// location of the loop end or 0
