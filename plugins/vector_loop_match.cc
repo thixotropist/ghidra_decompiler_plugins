@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 #include <set>
 
 #include "spdlog/spdlog.h"
@@ -369,44 +370,63 @@ void VectorLoopMatch::analyze()
         }
     }
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
-    int numPhiNodes = phiNodes.size();
+    numPhiNodes = phiNodes.size();
     vNumElem = getExternalVn(vNumElem);
     loopLogger->trace("vNumElem Varnode adjusted");
     if (info)
     {
-        logFile << "Analysis of vector sequence beginning at 0x" << std::hex << selectionStartAddr << std::dec << std::endl;
-        logFile << "\tnumPcodes = " << numPcodes <<  std::endl;
-        logFile << "\tnumPhiNodes = " << numPhiNodes <<  std::endl;
-        logFile << "\telementSize = " << elementSize <<  std::endl;
-        logFile << "\tmultiplier = " << multiplier <<  std::endl;
-        logFile << "\tLength in Bytes = " << selectionEndAddr - selectionStartAddr <<  std::endl;
-        logFile << "\tloopFound = " << loopFound <<  std::endl;
-        logFile << "\tsimpleFlowStructure = " << simpleFlowStructure <<  std::endl;
-        logFile << "\tsimpleLoadStoreStructure = " << simpleLoadStoreStructure << std::endl;
-        logFile << "\tfoundOtherUserPcodes = " << foundOtherUserPcodes << std::endl;
-        logFile << "\tfoundSimpleComparison = " << foundSimpleComparison << std::endl;
-        logFile << "\tfoundUnexpectedOp = " << foundUnexpectedOp << std::endl;
-        logFile << "\tnumArithmeticOps = " << numArithmeticOps << std::endl;
-        logFile << "\tvectorRegistersMatch = " << vectorRegistersMatch << std::endl;
-        displayPcodeOp(*vsetOp, "Vset operation:", false);
-        if (vStoreVn != nullptr)
-        {
-            logFile << "Vstore parameter:" << std::endl;
-            vStoreVn->printRaw(logFile);
-            logFile << std::endl;
-        }
-        if (vLoadVn != nullptr)
-        {
-            logFile << "Vload parameter:" << std::endl;
-            vLoadVn->printRaw(logFile);
-            logFile << std::endl;
-        }
+        std::stringstream ss;
+        vsetOp->printRaw(ss);
+        loopLogger->info("Analysis of Vset operation: {0:s} at 0x{1:x}",
+            ss.str(), selectionStartAddr);
+        loopLogger->info("Analysis (part 1):\n"
+            "\tnumPcodes = {0:d}\n"
+            "\tnumPhiNodes = {1:d}\n"
+            "\telementSize = {2:d}\n"
+            "\tmultiplier = {3:d}\n"
+            "\tLength in Bytes = {4:d}",
+            numPcodes, numPhiNodes, elementSize, multiplier,
+            selectionEndAddr - selectionStartAddr);
+        loopLogger->info("Analysis (part 2):\n"
+            "\tloopFound = {0:d}\n"
+            "\tsimpleFlowStructure = {1:d}\n"
+            "\tsimpleLoadStoreStructure = {2:d}\n"
+            "\tfoundOtherUserPcodes = {3:d}\n"
+            "\tfoundSimpleComparison = {4:d}\n"
+            "\tfoundUnexpectedOp = {5:d}",
+            loopFound, simpleFlowStructure, simpleLoadStoreStructure,
+            foundOtherUserPcodes, foundSimpleComparison, foundUnexpectedOp);
+        loopLogger->info("Analysis (part 3):\n"
+            "\tnumArithmeticOps = {0:d}\n"
+            "\tvectorRegistersMatch = {1:d}",
+            numArithmeticOps, vectorRegistersMatch);
+        ss.str("");
+        string numElemString;
+        string loadString;
+        string storeString;
         if (vNumElem != nullptr)
         {
-            logFile << "VNumElem parameter:" << std::endl;
-            vNumElem->printRaw(logFile);
-            logFile << std::endl;
+            ss.str("");
+            vNumElem->printRaw(ss);
+            numElemString = ss.str();
         }
+        else numElemString = "- missing -";
+        if (vLoadVn != nullptr)
+        {
+            ss.str("");
+            vLoadVn->printRaw(ss);
+            loadString = ss.str();
+        }
+        if (vStoreVn != nullptr)
+        {
+            ss.str("");
+            vStoreVn->printRaw(ss);
+            storeString = ss.str();
+        }
+        loopLogger->info("\tvector_memcpy  varnodes:\n\tVNumElem: {0:s}\n"
+            "\tVload: {1:s}\n"
+            "\tVstore: {2:s}\n",
+            numElemString, loadString, storeString);
     }
 }
 bool VectorLoopMatch::isMemcpy()
