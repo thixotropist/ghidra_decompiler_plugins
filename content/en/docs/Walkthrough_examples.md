@@ -138,7 +138,7 @@ Perhaps we should add this as an expected arithmetic op.
 ### New test case
 
 Select the whisper function `string * __thiscall std::string::string<>(string *this,char *param_1,allocator *param_2)` at 0x209be as our test case,
-saving it to xml and converting it into `test/whisper_sample_1.xml` and `test/whisper_sample_1.ghidra`.  This sample includes two vsetvli loops,
+saving it to xml and converting it into `test/whisper_sample_1_save.xml` and `test/whisper_sample_1.ghidra`.  This sample includes two `vsetvli` loops,
 of which the second is a memcpy loop.  The control flow is relatively simple.
 
 The listing for the block we want to transform is:
@@ -433,11 +433,10 @@ as simple stanzas, leaving dependencies stranded after transform.
 
 ### Whisper-cpp false match test case
 
-Turn the function at 0x030728 (`drwav_u8_to_s32`)`drwav_u8_to_s32` into a test case where we apparently get a false match to vector_memcpy folowed
+Turn the function at 0x030728 (`drwav_u8_to_s32`) into a test case where we apparently get a false match to vector_memcpy folowed
 by a decompiler exception.
 
 The relevant assembly code is:
-
 
 ```as
         LAB_00030750               XREF[1]:        00030744(j)
@@ -504,7 +503,6 @@ vd=vfmadd_vv(vs1,vs2,vd);
 
 Install that and some similar changes then rebuild Ghidra and try again.
 
-
 |Parameter | Value | Notes |
 | -------- | ----: | ----- |
 | vector_memcpy transforms | 894 | was 885 |
@@ -516,7 +514,7 @@ into two more regression tests `whisper_sample_4` and `whisper_sample_5` respect
 `whisper_sample_4` shows an anomaly - the datatest throws an assertion error whether or not
 a plugin is used.  There is likely something wrong with how the datatest is structured.
 The assertion error occurs within `ghidra::Heritage::splitByRefinement`at (heritage.cc:1748).
-Defer this until we get `whisper_sample_5` passing.
+Defer this until we get `whisper_sample_5` passing, adding a skipped test to `integrationTest.py`.
 
 Step through `whisper_sample_5` bisecting with `TRANSFORM_LIMIT` to show a problem on the 7th transform
 around 0x9bd50.  The log file shows:
@@ -564,3 +562,40 @@ The Phi nodes look like the culprit here
 
 It's not clear how to properly transform this vector_memcpy loop, so let's just try to minimize exceptions by failing the transform
 match if Phi registers don't match or if four or more Phi nodes are associated with the `vsetvli` instruction location.
+
+Scan the entire whisper-cpp binary for results:
+
+|Parameter | Value | Notes |
+| -------- | ----: | ----- |
+| bytes | 1956494 | unchanged |
+| instructions | 275351 | unchanged |
+| vsetvli instructions | 4119 | unchanged |
+| vsetivli instructions | 1430 | unchanged |
+| vector_memset transforms | 419 | was 416 |
+| vector_memcpy transforms | 904 | was 885 |
+| functions | 1914 |  unchanged |
+| decompiler exceptions | 1 | was 5 |
+
+### Next steps
+
+1. Explore the exception thrown by the `whisper_sample_4` test, even in the absence of a plugin.  Is this due to the unusual size of the
+   datatest, some sort of version skew between the current tip of Ghidra and the released version, an anomalous vector instruction
+   used within the sample, or something else?  Opening the `whisper_model_load` function in the Ghidra GUI without a plugin shows
+   about 86 vector stanzas similar to `vector_memcpy` but with anomalous instructions included in the loop.  This may be a Ghidra decompiler
+   bug to watch out for.
+     ```c
+     do {
+       lVar55 = vsetvli_e8m1tama(lVar53);
+       auVar57 = vle8_v(psVar26);
+       lVar53 = lVar53 - lVar55;
+       psVar26 = psVar26 + lVar55;
+       vse8_v(auVar57,psVar31);
+       psVar31 = psVar31 + lVar55;
+       local_b8 = (string *)local_a8;  // this instruction does not occur within the loop and may indicate an SSA or Heritage bug
+     } while (lVar53 != 0);
+     ```
+2. Work through the other whisper samples to search for missing transforms or falsely-applied transforms.
+3. Include integration tests to gather transform counts like `grep -P '^\s+vector_memcpy' /tmp/whisper_main.testlog|wc` to see
+   if the number of transforms is as expected.
+4. Search for vector builtins worth transforming.  `vector_strlen` is a likely possibility.  How much of the vector loop analyzer would
+   be useful for these?
