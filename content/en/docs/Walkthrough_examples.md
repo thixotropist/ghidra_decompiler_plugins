@@ -599,3 +599,234 @@ Scan the entire whisper-cpp binary for results:
    if the number of transforms is as expected.
 4. Search for vector builtins worth transforming.  `vector_strlen` is a likely possibility.  How much of the vector loop analyzer would
    be useful for these?
+
+## Survey
+
+We have basic transform code working, but we don't know yet how well it is working or how to improve it.  Let's step through the
+samples we have to evaluate quality and to tune up the diagnostic logging.  For this series we will keep `TRANSFORM_LIMIT=INT_MAX`
+and `loglevel=spdlog::level::trace`.  Work through the datatests from smallest to largest.
+
+### whisper_sample_1 (string_constructor at 0x209be)
+
+This function has two vector stanzas, a `vector_strlen` stanza needing a transform and a `vector_memcpy` stanza that has a correct transform.
+The vector_strlen stanza at 0x209d2 looks like this:
+
+```as
+    c.li      a3,0x0
+    c.mv      a5,param_1
+LAB_000209d2
+    vsetvli   param_2,zero,e8,m1,ta,ma
+    c.add     a5,a3
+    vle8ff.v  v1,(a5)
+    vmseq.vi  v1,v1,0x0
+    csrrs     a3,vl,zero
+    vfirst.m  a6,v1
+    blt       a6,zero,LAB_000209d2
+    c.add     a5,a6
+    c.sub     a5,param_1
+```
+Notes:
+* we would want to translate this to `a5=vector_strlen(param_1)`
+* key features are the `zero` passed to `vsetvli`, `vle8ff.v`, and `vfirst.m`
+* the code straddles three Blocks
+* `param_2` is set but unused
+* there is a hidden dependancy where `vl` is an output of `vsetvli`
+* the result registar `a5` is passed as an input to `vector_memcpy`, which is
+  enough to abort transform analysis due to unbounded dependancies.
+* there appear to be 143 instances of this `vector_strlen` pattern in the whisper-cpp executable.
+
+If we want to build transform logic for this, we need to stop collecting
+erasable dependancies on `a5` - the second parameter of the `vle8ff.v`
+instruction -  after we find the `c.sub` instruction.
+
+### whisper_sample_2 - (drwav_u8_to_s32 at 0x30728)
+
+```as
+LAB_00030750:
+    li         a4,-0x80
+    vsetvli    a5,zero,e8,mf4,ta,ma 
+    vmv.v.x    v3,a4
+
+LAB_0003075c:
+    vsetvli    a5,a2,e8,mf4,ta,ma 
+    vle8.v     v2,(a1)
+    c.sub      a2,a5
+    c.add      a1,a5
+    vadd.vv    v2,v2,v3
+    vsetvli    zero,zero,e32,m1,ta,ma 
+    vsext.vf4  v1,v2
+    vsll.vi    v1,v1,0x18
+    vse32.v    v1,(a0)
+    sh2add     a0,a5,a0
+    c.bnez     a2,LAB_0003075c
+```
+
+The decompilation window shows:
+
+```c
+vsetvli_e8mf4tama(0);
+auVar6 = vmv_v_x(0xffffffffffffff80);
+do {
+  lVar4 = vsetvli_e8mf4tama(param_3);
+  auVar5 = vle8_v(param_2);
+  param_3 = param_3 - lVar4;
+  param_2 = param_2 + lVar4;
+  auVar5 = vadd_vv(auVar5,auVar6);
+  vsetvli_e32m1tama(0);
+  auVar5 = vsext_vf4(auVar5);
+  auVar5 = vsll_vi(auVar5,0x18);
+  vse32_v(auVar5,param_1);
+  param_1 = param_1 + lVar4 * 4;
+} while (param_3 != 0);
+```
+
+The original source code is:
+
+```c
+DRWAV_API void drwav_u8_to_s32(drwav_int32* pOut, const drwav_uint8* pIn, size_t sampleCount)
+{
+    size_t i;
+    if (pOut == NULL || pIn == NULL) {
+        return;
+    }
+    for (i = 0; i < sampleCount; ++i) {
+        *pOut++ = ((int)pIn[i] - 128) << 24;
+    }
+}
+```
+
+The interesting features include:
+
+* multiple `vsetvli` instructions with varying element sizes
+* the cast from u8 to s32 supported by the second and third `vsetvli` instructions
+* the three explicit vector ops providing addition, sign extension, and logical shift.
+
+We might eventually transform loop stanzas like this into:
+
+```c
+  std::transform(pIn.begin(), pIn.end(), pOut.begin(), [](uint8 n){ return ((int)n-2)<< 24;});
+```
+
+### whisper_sample_3 - (quantize_row_q8_K_ref at 0x9bd22)
+
+This is a larger function with many vector instructions and no completed transforms.
+
+The source code for the function is:
+
+```c
+void quantize_row_q8_K_ref(const float * restrict x, block_q8_K * restrict y, int64_t k) {
+    assert(k % QK_K == 0);
+    const int64_t nb = k / QK_K;
+    for (int i = 0; i < nb; i++) {
+        float max = 0;
+        float amax = 0;
+        for (int j = 0; j < QK_K; ++j) {
+            float ax = fabsf(x[j]);
+            if (ax > amax) {
+                amax = ax; max = x[j];
+            }
+        }
+        if (!amax) {
+            y[i].d = 0;
+            memset(y[i].qs, 0, QK_K);
+            x += QK_K;
+            continue;
+        }
+        //const float iscale = -128.f/max;
+        // We need this change for IQ2_XXS, else the AVX implementation becomes very awkward
+        const float iscale = -127.f/max;
+        for (int j = 0; j < QK_K; ++j) {
+            int v = nearest_int(iscale*x[j]);
+            y[i].qs[j] = MIN(127, v);
+        }
+        for (int j = 0; j < QK_K/16; ++j) {
+            int sum = 0;
+            for (int ii = 0; ii < 16; ++ii) {
+                sum += y[i].qs[j*16 + ii];
+            }
+            y[i].bsums[j] = sum;
+        }
+        y[i].d = 1/iscale;
+        x += QK_K;
+    }
+}
+```
+
+This one is far beyond our abilities to transform.  Key features include:
+
+* loops nested three deep in the source code, two deep in the implementation
+* the compiler unrolls at least one loop since it knows something of the
+  number of iterations
+* the compiler interleaves unrolled operations to minimize memory access latency
+
+### whisper_sample_5 - (whisper_wrap_segment at 0xb97c0)
+
+This function shows some odd behavior.  The following *should* be transformed into
+a `vector_memcpy`.
+
+```as
+LAB_000ba13a:
+    vsetvli  a4,a5,e8,m1,ta,ma  
+    vle8.v   v1,(param_4)
+    c.sub    a5,a4
+    c.add    param_4,a4
+    vse8.v   v1,(param_2)
+    c.add    param_2,a4
+    c.bnez   a5,LAB_000ba13a
+```
+
+Instead the decompiler gives:
+
+```c
+do {
+  lVar6 = vsetvli_e8m1tama(pbVar20);
+  auVar36 = vle8_v(pbVar7);
+  pbVar20 = pbVar20 + -lVar6;
+  pbVar7 = pbVar7 + lVar6;
+  vse8_v(auVar36,ppbVar12);
+  ppbVar12 = (byte **)((long)ppbVar12 + lVar6);
+  ppbVar3 = ppbVar8;
+} while (pbVar20 != (byte *)0x0);
+```
+
+The `ppbVar3 = ppbVar8` line makes little sense, as there are no corresponding instructions in the loop.
+Perhaps this is the decompiler preserving a register value in case it is needed for a subsequent CALL instruction?
+This same behavior appears when no transform plugin is active, so it is apparently something found in
+an unmodified decompiler.  Examining the `print raw` output for this function gives us some hints:
+
+* there are about 30 Phi nodes bound to `000ba13a`, some with 5 varnode slots
+LAB_000ba13a:
+* the control flow is complex, so there are many paths through the logic to reach a point like `LAB_000ba13a`
+
+The loop variable Phi nodes are also complex, referencing intermediate temporary varnodes
+
+```text
+0x000ba13a:10d3: a5(0x000ba13a:10d3) = a5(0x000ba142:323) ? a5(0x000b9966:121) ? a5(0x000b9966:121) ? a5(0x000b9966:121)
+0x000ba13a:fe9:  a3(0x000ba13a:fe9) = a3(0x000ba144:324) ? a0(0x000b993c:2526) ? a0(0x000b993c:2526) ? a0(0x000b993c:2526)
+0x000ba13a:f0c:  a1(0x000ba13a:f0c) = u0x10000594(0x000ba14c:2491) ? u0x1000059c(0x000ba134:2492) ? u0x100005a4(0x000ba360:2493) ? u0x100005ac(0x000ba244:2494)
+0x000ba13a:320:  a4(0x000ba13a:320) = vsetvli_e8m1tama(a5(0x000ba13a:10d3))
+```
+
+There appear to be many instances where `vector_memcpy` transforms are feasible but blocked due to complex dependancy or heritage relationships.
+Perhaps a more nuanced approach is needed rather than the simple erasure of any loop variable varnodes:
+
+1. separate Phi nodes anchored at the top of a block into loop variable Phi nodes and other Phi nodes affecting downstream blocks
+2. erase varnodes external to the loop that reference the output of vsetvli instructions - these won't have deterministic values and should never have
+   descendants.
+3. rewrite or generate Phi nodes capturing the expected value of registers at the end of a `vector_memcpy` transform.  For instance, the load and store
+   address registers will point to the end of their respective sequences and the counter register will be zero
+
+## Next steps
+
+We need to make the pattern recognition more robust in the presence of complex control flow and dependency/heritage relationships.
+Let's use `whisper_sample_5` as a driving test case, with some enhancements to the test framework to measure the number of completed
+transforms.  We want to refactor the handling of Phi nodes to minimize the need to exhaustively collect dependencies.
+
+This will include many iterations of a specific test:
+
+```console
+$ python integrationTest.py T1Datatests.test_03_whisper_regression
+...
+INFO:root:Running SLEIGHHOME=/opt/ghidra_11.4_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/whisper_sample_5.ghidra with output to /tmp/whisper_sample_5.testlog
+INFO:root:Found 17 vector memcpy transforms in whisper_sample_5
+```
