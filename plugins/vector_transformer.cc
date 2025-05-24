@@ -9,24 +9,24 @@
 
 #include "riscv.hh"
 #include "diagnostics.hh"
-#include "vectorcopy.hh"
-#include "vector_loop_match.hh"
+#include "vector_transformer.hh"
+#include "vector_matcher.hh"
 #include "utility.hh"
 
 namespace ghidra {
 
-RuleVectorCopy::RuleVectorCopy(const string &g) : 
-    Rule(g, 0, "vectorcopy") {}
+RuleVectorTransform::RuleVectorTransform(const string &g) : 
+    Rule(g, 0, "vectorTransforms") {}
 
-Rule* RuleVectorCopy::clone(const ActionGroupList &grouplist) const
+Rule* RuleVectorTransform::clone(const ActionGroupList &grouplist) const
 {
     if (!grouplist.contains(getGroup())) {
-        pluginLogger->error("RuleVectorCopy::clone failed for lack of a group");
+        pluginLogger->error("RuleVectorTransform::clone failed for lack of a group");
         return (Rule *)0;
     }
-    pluginLogger->trace("Prepared a new RuleVectorCopy for Action database");
+    pluginLogger->trace("Prepared a new RuleVectorTransform for Action database");
     pluginLogger->flush();
-    return new RuleVectorCopy(getGroup());
+    return new RuleVectorTransform(getGroup());
 }
 
 /**
@@ -35,7 +35,7 @@ Rule* RuleVectorCopy::clone(const ActionGroupList &grouplist) const
  * 
  * @param oplist 
  */
-void RuleVectorCopy::getOpList(vector<uint4> &oplist) const {
+void RuleVectorTransform::getOpList(vector<uint4> &oplist) const {
     oplist.push_back(CPUI_CALLOTHER);
 }
 
@@ -48,27 +48,30 @@ void RuleVectorCopy::getOpList(vector<uint4> &oplist) const {
  * @param data Context for the enclosing function
  * @return int4 
  */
-int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
+int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
 
+    const int RETURN_DO_NOTHING = 0;
+    pluginLogger->trace("Testing for early termination of the transform search");
     if (transformCount >= TRANSFORM_LIMIT) return 0;
-    int4 returnCode = 0;
-    bool vsetImmediate;
-    bool vsetRegister;
+    int4 returnCode = RETURN_DO_NOTHING;
     bool trace = pluginLogger->should_log(spdlog::level::trace);
     pluginLogger->trace("Vector context discovered");
     // require one of several vset* instructions to begin this pattern,
     // adjusting the maximum number of pcode ops to examine
     const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*firstOp);
-    if (vsetInfo == nullptr) return 0;
-    vsetImmediate = vsetInfo->isVseti;
-    vsetRegister = vsetInfo->isVset;
-    if (!(vsetImmediate || vsetRegister)) return 0;
+    if (vsetInfo == nullptr) return RETURN_DO_NOTHING;
+    bool vsetImmediate = vsetInfo->isVseti;
+    bool vsetRegister = vsetInfo->isVset;
+    if (!(vsetImmediate || vsetRegister)) return RETURN_DO_NOTHING;
     // we have a vsetivli or a vsetvli instruction
     pluginLogger->trace("Entering applyOp with a recognized vset* user pcode op at 0x{0:x}",
         firstOp->getAddr().getOffset());
+    // construct a VectorMatcher to start the analysis.
+    VectorMatcher matcher(data, firstOp);
     // The size, or total number of elements to process, will be a constant
     // for vsetivli instructions or a register for vsetvl instructions
     Varnode* size_varnode = firstOp->getIn(1);
+
     // Examine the vsetivli instr to get multiplier and element size
     if (vsetImmediate && !size_varnode->isConstant())
     {
@@ -152,9 +155,7 @@ int4 RuleVectorCopy::applyOp(PcodeOp *firstOp, Funcdata &data) {
         }
         return returnCode;
     }
-    // We have a vsetvl instruction and likely a loop, so
-    // construct something to start the analysis.
-    VectorLoopMatch matcher(data, firstOp);
+
     if (!matcher.analysisEnabled) return 0;
     matcher.analyze();
     if (matcher.isMemcpy())

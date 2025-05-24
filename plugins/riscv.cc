@@ -13,7 +13,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/ruleaction.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
-#include "vectorcopy.hh"
+#include "vector_transformer.hh"
 #include "diagnostics.hh"
 #include "riscv.hh"
 
@@ -110,7 +110,7 @@ extern "C" int plugin_init(void *context)
 extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 {
     pluginLogger->trace("Adding a new Rule to pluginrules");
-    rules.push_back(new RuleVectorCopy("pluginrules"));
+    rules.push_back(new RuleVectorTransform("pluginrules"));
     pluginLogger->flush();
     return 1;
 }

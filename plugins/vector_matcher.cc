@@ -10,7 +10,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 
 #include "riscv.hh"
-#include "vector_loop_match.hh"
+#include "vector_matcher.hh"
 #include "diagnostics.hh"
 #include "utility.hh"
 
@@ -26,7 +26,7 @@ PhiNode::PhiNode(intb reg, Varnode* v1, Varnode* v2, Varnode* v3)
     varnodes.push_back(v3);
 }
 
-Varnode* VectorLoopMatch::getExternalVn(const Varnode* loopVn)
+Varnode* VectorMatcher::getExternalVn(const Varnode* loopVn)
 {
     for (auto it: phiNodes)
     {
@@ -34,7 +34,7 @@ Varnode* VectorLoopMatch::getExternalVn(const Varnode* loopVn)
         {
             // find the first varnode set outside the loop
             if (it->varnodes.size() > 2)
-                loopLogger->warn("Three or more varnodes presented to VectorLoopMatch::getExternalVn - results undefined");
+                loopLogger->warn("Three or more varnodes presented to VectorMatcher::getExternalVn - results undefined");
             for (int i = 0; i < it->varnodes.size(); ++i)
             {
                 const PcodeOp* p = it->varnodes[i]->getDef();
@@ -55,7 +55,7 @@ Varnode* VectorLoopMatch::getExternalVn(const Varnode* loopVn)
     return nullptr;
 }
 
-VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
+VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     data(fData),
     selectionStartAddr(0),
     selectionEndAddr(0),
@@ -64,6 +64,8 @@ VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
     loopStartAddr(0),
     loopEndAddr(0),
     phiNodes(),
+    numElementsConstant(false),
+    numElementsVariable(false),
     foundSimpleComparison(false),
     foundUnexpectedOp(false),
     foundOtherUserPcodes(false),
@@ -73,7 +75,7 @@ VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
     numArithmeticOps(0),
     multiplier(1),
     elementSize(0),
-    vsetOp(nullptr),
+    vsetOp(initialVsetOp),
     vNumElem(nullptr),
     vNumPerLoop(nullptr),
     vLoadVn(nullptr),
@@ -84,11 +86,11 @@ VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
     bool trace = loopLogger->should_log(spdlog::level::trace);
     bool info = loopLogger->should_log(spdlog::level::info);
     if (vsetOp == nullptr) return;
-    loopLogger->trace("Analyzing potential vector loop at 0x{0:x}",
+    loopLogger->trace("Analyzing potential vector stanza at 0x{0:x}",
         vsetOp->getAddr().getOffset());
-    // PcodeOps we believe to be part of this vector loop
+    // PcodeOps we believe to be part of a vector loop
     std::set<PcodeOp*> opsInLoop;
-    // PcodeOps we believe to outside this vector loop and in need of dependency pruning
+    // PcodeOps we believe to outside a vector loop and in need of dependency analysis
     std::set<PcodeOp*> opsExternalToLoop;
     // PcodeOps we want to visit on this iteration,
     std::set<PcodeOp*> visitPending;
@@ -219,7 +221,7 @@ VectorLoopMatch::VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp) :
     }
 }
 
-VectorLoopMatch::~VectorLoopMatch()
+VectorMatcher::~VectorMatcher()
 {
     for (auto it: phiNodes)
     {
@@ -227,7 +229,7 @@ VectorLoopMatch::~VectorLoopMatch()
     }
 }
 
-void VectorLoopMatch::analyze()
+void VectorMatcher::analyze()
 {
     bool info = loopLogger->should_log(spdlog::level::info);
     numPcodes = pcodeOpSelection.size();
@@ -240,7 +242,7 @@ void VectorLoopMatch::analyze()
     foundUnexpectedOp = false;
     Varnode* vectorLoadRegisterVn = nullptr;
     Varnode* vectorStoreRegisterVn = nullptr;
-    std::set<PcodeOp*, VectorLoopMatch::PcodeOpComparator>::iterator it = pcodeOpSelection.begin();
+    std::set<PcodeOp*, VectorMatcher::PcodeOpComparator>::iterator it = pcodeOpSelection.begin();
     bool analysisFailed = false;
     loopLogger->trace("Beginning vector loop analysis of {0:d} pcodes", pcodeOpSelection.size());
     while (it != pcodeOpSelection.end() && !analysisFailed)
@@ -429,7 +431,7 @@ void VectorLoopMatch::analyze()
             numElemString, loadString, storeString);
     }
 }
-bool VectorLoopMatch::isMemcpy()
+bool VectorMatcher::isMemcpy()
 {
     return loopFound && (numPcodes > 10) && (numPcodes < 14) &&
         (numPhiNodes <= 3) &&
@@ -437,7 +439,7 @@ bool VectorLoopMatch::isMemcpy()
         vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp) &&
         (!foundOtherUserPcodes);
 }
-int VectorLoopMatch::transform()
+int VectorMatcher::transform()
 {
     loopLogger->info("Transforming selection into vector_memcpy");
     // todo: compute number of bytes to move, generate a new varnode

@@ -156,11 +156,11 @@ class T1Datatests(unittest.TestCase):
             with open(f"/tmp/whisper_sample_{i}.testlog", "w", encoding="utf8") as f:
                 f.write(result.stdout)
                 f.write(result.stderr)
-            command = f"grep -P '^\\s+vector_memcpy' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
+            command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
             result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
             self.assertEqual(0, result.returncode,
                 f"Transform count collection for whisper_sample_{i} failed")
-            logger.info(f"Found {result.stdout.strip()} vector memcpy transforms in whisper_sample_{i}")
+            logger.info(f"Found {result.stdout.strip()} vector transforms in whisper_sample_{i}")
 
     @unittest.skip("Throws decompiler exception")
     def test_04_whisper_failures(self):

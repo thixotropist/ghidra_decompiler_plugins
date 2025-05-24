@@ -1,5 +1,5 @@
-#ifndef VECTOR_LOOP_MATCH_HH_
-#define VECTOR_LOOP_MATCH_HH_
+#ifndef VECTOR_MATCHER_HH_
+#define VECTOR_MATCHER_HH_
 
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
@@ -22,7 +22,7 @@ struct PhiNode {
  * @brief Methods that analyze a sequence of PcodeOps to match
  * against common patterns.
  */
-class VectorLoopMatch {
+class VectorMatcher {
   public:
     /**
      * @brief ordering relation for PcodeOp* based on Address
@@ -58,7 +58,7 @@ class VectorLoopMatch {
      * @param data Function context
      * @param vsetOp A vsetvl instruction that initiates a loop to be matched
      */
-    VectorLoopMatch(Funcdata& fData, PcodeOp* vsetOp);
+    VectorMatcher(Funcdata& fData, PcodeOp* vsetOp);
 
     Funcdata& data;          /// Function context data
     intb selectionStartAddr; /// first address found in the selection
@@ -70,6 +70,8 @@ class VectorLoopMatch {
     intb loopEndAddr;        /// location of the loop end or 0
     BlockBasic* loopBlock;   /// the parent block of the loop
     std::vector<PhiNode*> phiNodes; /// Phi or MULTIEQUAL nodes found
+    bool numElementsConstant; /// vsetOp provides number of elements as a constant
+    bool numElementsVariable; /// vsetOp provides number of elements in a register
     bool foundSimpleComparison; /// an integer conditional expression found
     bool foundUnexpectedOp;  /// An unexpected pcode op was found
     bool foundOtherUserPcodes; /// An unexpected user pcode op was found
@@ -107,7 +109,7 @@ class VectorLoopMatch {
      * @brief Destroy the Vector Tree Match object
      * 
      */
-    ~VectorLoopMatch();
+    ~VectorMatcher();
 };
 }
-#endif /* VECTOR_LOOP_MATCH_HH_ */
+#endif /* VECTOR_MATCHER_HH_ */
