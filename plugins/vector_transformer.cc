@@ -50,41 +50,33 @@ void RuleVectorTransform::getOpList(vector<uint4> &oplist) const {
  */
 int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
 
-    const int RETURN_DO_NOTHING = 0;
+    const int RETURN_NO_TRANSFORM = 0;
+    const int RETURN_TRANSFORM_PERFORMED = 1;
     pluginLogger->trace("Testing for early termination of the transform search");
     if (transformCount >= TRANSFORM_LIMIT) return 0;
-    int4 returnCode = RETURN_DO_NOTHING;
+    int4 returnCode = RETURN_NO_TRANSFORM;
     bool trace = pluginLogger->should_log(spdlog::level::trace);
     pluginLogger->trace("Vector context discovered");
     // require one of several vset* instructions to begin this pattern,
     // adjusting the maximum number of pcode ops to examine
     const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*firstOp);
-    if (vsetInfo == nullptr) return RETURN_DO_NOTHING;
+    if (vsetInfo == nullptr) return RETURN_NO_TRANSFORM;
+    // construct a VectorMatcher to start the analysis.
+    VectorMatcher matcher(data, firstOp);
     bool vsetImmediate = vsetInfo->isVseti;
     bool vsetRegister = vsetInfo->isVset;
-    if (!(vsetImmediate || vsetRegister)) return RETURN_DO_NOTHING;
+    if (!(vsetImmediate || vsetRegister)) return RETURN_NO_TRANSFORM;
     // we have a vsetivli or a vsetvli instruction
     pluginLogger->trace("Entering applyOp with a recognized vset* user pcode op at 0x{0:x}",
         firstOp->getAddr().getOffset());
-    // construct a VectorMatcher to start the analysis.
-    VectorMatcher matcher(data, firstOp);
-    // The size, or total number of elements to process, will be a constant
-    // for vsetivli instructions or a register for vsetvl instructions
-    Varnode* size_varnode = firstOp->getIn(1);
-
-    // Examine the vsetivli instr to get multiplier and element size
-    if (vsetImmediate && !size_varnode->isConstant())
-    {
-        pluginLogger->warn("Found a vseti instruction with a non-constant argument");
-        return 0;
-    }
-    int4 numBytesPerPass = vsetInfo->multiplier * vsetInfo->elementSize;
-    int4 numBytes;
     if (vsetImmediate)
     {
-        numBytes = size_varnode->getOffset() * numBytesPerPass;
         // search forward in the block for a PcodeOp that may begin the pattern we
-        // which to replace.  Stop the search after 30 pcode ops
+        // which to replace.  Stop the search after 30 pcode ops or the first vset* instruction.
+        // For each vector load or load immediate instruction, collect any vector dependencies.
+        // For each vector dependency in the form of a vector store operation, convert the
+        // load and store ops into vector_memset or vector_memcpy invocations.
+        // This is the only current loop-free vector pattern - refactor when we find others.
         PcodeOp* op = firstOp->nextOp();
         int numPcodes = 1;
         std::vector<PcodeOp*> deleteSet;
@@ -105,13 +97,15 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
             // is this a vector load or load immediate?
             if (opInfo->isLoad || opInfo->isLoadImmediate)
             {
+                // There may be multiple vector store ops for each vector load op
                 if (trace) displayPcodeOp(*op, "vector sequence start op", true);
-                // find the descendents reading the output vector register
+                // is the source an address to be copied or a constant to be stored?
                 Varnode* sourceVn = op->getIn(1);
                 bool isMemset = sourceVn->isConstant() && opInfo->isLoadImmediate;
                 intb builtinOp;
                 if (isMemset) builtinOp = VECTOR_MEMSET;
                 else builtinOp = VECTOR_MEMCPY;
+                // find the descendents reading the output vector register
                 Varnode* outputVn = op->getOut();
                 std::vector<std::pair<PcodeOp*,PcodeOp*>*> pcodesToBeBuilt;
                 std::list<PcodeOp*>::const_iterator enditer = outputVn->endDescend();
@@ -121,23 +115,25 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     // we only replace vector store opcodes
                     if ((descOpInfo == nullptr) || !descOpInfo->isStore)
                         continue;
-                    PcodeOp* newOp;
                     pluginLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
                         builtinOp, (*it)->getAddr().getOffset());
                     if (trace) displayPcodeOp(**it, "Dependent pcode:", true);
+                    // vector_mem* invocations count bytes, not elements.
+                    int4 numBytes = matcher.vNumElem->getOffset() * vsetInfo->multiplier * vsetInfo->elementSize;
                     Varnode * new_size_varnode = data.newConstant(1, numBytes);
-                    newOp = insertBuiltin(data, **it, builtinOp, (*it)->getIn(2), sourceVn, new_size_varnode);
+                    Varnode* destVn = (*it)->getIn(2);
+                    PcodeOp* newOp = insertBuiltin(data, **it, builtinOp, destVn, sourceVn, new_size_varnode);
                     pcodesToBeBuilt.push_back(new std::pair<PcodeOp*,PcodeOp*>(newOp, *it));
                     deleteSet.push_back(*it);
                     ++transformCount;
-                    returnCode = 1;
+                    returnCode = RETURN_TRANSFORM_PERFORMED;
                 }
                 for (auto it: pcodesToBeBuilt) {
-
+                    // queue pending vector_mem* insertions
                     data.opInsertBefore(it->first, it->second);
                     delete it;
                 }
-                pluginLogger->info("Queing deletion of op at 0x{0:x}", op->getAddr().getOffset());
+                pluginLogger->info("Queuing deletion of op at 0x{0:x}", op->getAddr().getOffset());
                 deleteSet.push_back(op);
             }
             op = op->nextOp();
@@ -145,18 +141,18 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         }
         if (noVectorOpsFound)
         {
-            pluginLogger->info("Deleting firstOp at 0x{0:x}", firstOp->getAddr().getOffset());
+            pluginLogger->warn("Deleting orphan vset op at 0x{0:x}", firstOp->getAddr().getOffset());
             data.opUnlink(firstOp);
         }
         for (auto iter: deleteSet)
         {
-            pluginLogger->info("Deleting op at 0x{0:x}", iter->getAddr().getOffset());
+            pluginLogger->info("Deleting vector op at 0x{0:x}", iter->getAddr().getOffset());
             data.opUnlink(iter);
         }
         return returnCode;
     }
-
-    if (!matcher.analysisEnabled) return 0;
+    // this must be a vset and is likely a loop
+    if (!matcher.analysisEnabled) return RETURN_NO_TRANSFORM;
     matcher.analyze();
     if (matcher.isMemcpy())
     {

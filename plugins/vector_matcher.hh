@@ -70,8 +70,8 @@ class VectorMatcher {
     intb loopEndAddr;        /// location of the loop end or 0
     BlockBasic* loopBlock;   /// the parent block of the loop
     std::vector<PhiNode*> phiNodes; /// Phi or MULTIEQUAL nodes found
-    bool numElementsConstant; /// vsetOp provides number of elements as a constant
-    bool numElementsVariable; /// vsetOp provides number of elements in a register
+    bool numElementsConstant; /// vsetOp is a vseti provides number of elements as a constant
+    bool numElementsVariable; /// vsetOp is a vset and provides number of elements in a register
     bool foundSimpleComparison; /// an integer conditional expression found
     bool foundUnexpectedOp;  /// An unexpected pcode op was found
     bool foundOtherUserPcodes; /// An unexpected user pcode op was found
@@ -88,6 +88,8 @@ class VectorMatcher {
     Varnode* vLoadImmVn;     /// Varnode used by a vector load immediate
     Varnode* vStoreVn;       /// Varnode used by a vector store
     bool analysisEnabled;    /// Construction completed successfully
+    const bool trace;        /// true if logger would process loglevel=trace
+    const bool info;         /// true if logger would process loglevel=info
     /**
      * @brief Perform basic analysis and feature extraction
      */
@@ -110,6 +112,14 @@ class VectorMatcher {
      * 
      */
     ~VectorMatcher();
+  private:
+  /**
+   * @brief construct basic control flow data
+   * 
+   * @param data Function data provided by Ghidra
+   * @param vsetOp The triggering PcodeOp vset or vseti instruction
+   */
+    void collect_control_flow_data(Funcdata& data, PcodeOp& vsetOp);
 };
 }
 #endif /* VECTOR_MATCHER_HH_ */

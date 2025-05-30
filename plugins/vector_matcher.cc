@@ -63,7 +63,6 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     loopFound(false),
     loopStartAddr(0),
     loopEndAddr(0),
-    phiNodes(),
     numElementsConstant(false),
     numElementsVariable(false),
     foundSimpleComparison(false),
@@ -81,28 +80,32 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     vLoadVn(nullptr),
     vLoadImmVn(nullptr),
     vStoreVn(nullptr),
-    analysisEnabled(true)
+    analysisEnabled(false),
+    trace(loopLogger->should_log(spdlog::level::trace)),
+    info(loopLogger->should_log(spdlog::level::info))
 {
-    bool trace = loopLogger->should_log(spdlog::level::trace);
-    bool info = loopLogger->should_log(spdlog::level::info);
     if (vsetOp == nullptr) return;
+    // get basic info on the vsetop trigger
+    const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*vsetOp);
+    numElementsConstant = vsetInfo->isVseti;
+    numElementsVariable = vsetInfo->isVset;
+    vNumElem = vsetOp->getIn(1);
     loopLogger->trace("Analyzing potential vector stanza at 0x{0:x}",
         vsetOp->getAddr().getOffset());
-    // PcodeOps we believe to be part of a vector loop
+    // initialize temporary collections
+    // * PcodeOps we believe to be part of a vector loop
     std::set<PcodeOp*> opsInLoop;
-    // PcodeOps we believe to outside a vector loop and in need of dependency analysis
+    // * PcodeOps we believe to outside a vector loop and in need of dependency analysis
     std::set<PcodeOp*> opsExternalToLoop;
-    // PcodeOps we want to visit on this iteration,
+    // * PcodeOps we want to visit on this iteration,
     std::set<PcodeOp*> visitPending;
-    // PcodeOps we want to visit on the next iteration,
+    // * PcodeOps we want to visit on the next iteration,
     std::set<PcodeOp*> candidates;
+    collect_control_flow_data(data, *vsetOp);
     // Schedule analysis of this vset pcodeop
     visitPending.insert(vsetOp);
     loopLogger->trace("Listing PcodeOpTree of vset trigger");
     // Add any PcodeOps found in this PcodeOpTree
-    loopStartAddr = vsetOp->getAddr().getOffset();
-    loopBlock = vsetOp->getParent();
-    loopEndAddr = loopBlock->getStop().getOffset();
     const int MAX_SELECTION = 20;
     analysisEnabled = true;
     PcodeOpTree::const_iterator iter = data.beginOp(vsetOp->getAddr());
@@ -219,6 +222,7 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
             ++it;
         }
     }
+    analysisEnabled = true;
 }
 
 VectorMatcher::~VectorMatcher()
@@ -231,7 +235,6 @@ VectorMatcher::~VectorMatcher()
 
 void VectorMatcher::analyze()
 {
-    bool info = loopLogger->should_log(spdlog::level::info);
     numPcodes = pcodeOpSelection.size();
     PcodeOp* firstOp = *(pcodeOpSelection.begin());
     PcodeOp* lastOp = *(--pcodeOpSelection.end());
@@ -484,5 +487,31 @@ int VectorMatcher::transform()
         data.opUnlink(it);
     }
     return 1;
+}
+
+void VectorMatcher::collect_control_flow_data(Funcdata& data, PcodeOp& vsetOp)
+{
+    loopStartAddr = vsetOp.getAddr().getOffset();
+    loopBlock = vsetOp.getParent();
+    Address lastAddr = loopBlock->getStop();
+    loopEndAddr = lastAddr.getOffset();
+    PcodeOp* lastOp = loopBlock->lastOp();
+    bool isBranch = lastOp->isBranch();
+    if (isBranch && (lastOp->code() == CPUI_CBRANCH))
+    {
+        intb branchTarget = lastOp->getIn(0)->getAddr().getOffset();
+        if (branchTarget == loopStartAddr)
+        {
+            simpleFlowStructure = true;
+            loopFound = true;
+            foundSimpleComparison = true;
+        }
+        else
+        {
+            simpleFlowStructure = false;
+            loopFound = false;
+            foundSimpleComparison = false;
+        }
+    }
 }
 }
