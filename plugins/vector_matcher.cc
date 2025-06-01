@@ -90,8 +90,10 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     numElementsConstant = vsetInfo->isVseti;
     numElementsVariable = vsetInfo->isVset;
     vNumElem = vsetOp->getIn(1);
+    // determine if we have a loop and if so, where does it start and stop
+    collect_control_flow_data(data, *vsetOp);
     loopLogger->trace("Analyzing potential vector stanza at 0x{0:x}",
-        vsetOp->getAddr().getOffset());
+        loopStartAddr);
     // initialize temporary collections
     // * PcodeOps we believe to be part of a vector loop
     std::set<PcodeOp*> opsInLoop;
@@ -101,13 +103,15 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     std::set<PcodeOp*> visitPending;
     // * PcodeOps we want to visit on the next iteration,
     std::set<PcodeOp*> candidates;
-    collect_control_flow_data(data, *vsetOp);
     // Schedule analysis of this vset pcodeop
     visitPending.insert(vsetOp);
     loopLogger->trace("Listing PcodeOpTree of vset trigger");
     // Add any PcodeOps found in this PcodeOpTree
     const int MAX_SELECTION = 20;
     analysisEnabled = true;
+    // tree nodes (aka Phi or Multiequal nodes) provide the locations at which
+    // registers and memory locations are set. They are found at the top of a block
+    collect_tree_nodes(data, *vsetOp);
     PcodeOpTree::const_iterator iter = data.beginOp(vsetOp->getAddr());
     PcodeOpTree::const_iterator enditer = data.endOp(vsetOp->getAddr());
     // This loop collects PcodeOps that share an instruction address
@@ -497,6 +501,8 @@ void VectorMatcher::collect_control_flow_data(Funcdata& data, PcodeOp& vsetOp)
     loopEndAddr = lastAddr.getOffset();
     PcodeOp* lastOp = loopBlock->lastOp();
     bool isBranch = lastOp->isBranch();
+    // this block forms a loop if it starts with a vset and ends
+    // with a conditional branch back to the start
     if (isBranch && (lastOp->code() == CPUI_CBRANCH))
     {
         intb branchTarget = lastOp->getIn(0)->getAddr().getOffset();
@@ -513,5 +519,53 @@ void VectorMatcher::collect_control_flow_data(Funcdata& data, PcodeOp& vsetOp)
             foundSimpleComparison = false;
         }
     }
+}
+void VectorMatcher::collect_tree_nodes(Funcdata& data, PcodeOp& vsetOp)
+{
+    PcodeOpTree::const_iterator iter = data.beginOp(vsetOp.getAddr());
+    PcodeOpTree::const_iterator enditer = data.endOp(vsetOp.getAddr());
+    // This loop collects PcodeOps that share an instruction address
+    // with the trigger vsetOp.
+    loopLogger->trace("  Iterating over vset phi pcodes");
+    while(iter!=enditer) {
+        // iter points at a (SeqNum, PcodeOp*) pair
+        PcodeOp *op = (*iter).second;
+        
+         ++iter;
+         if (op->code() == CPUI_MULTIEQUAL)
+         {
+            if (trace)
+            {
+                std::stringstream ss;
+                op->printRaw(ss);
+                loopLogger->trace("Analysis of Phi node: {0:s}",
+                    ss.str());
+            }
+            int numArgs = op->numInput();
+            //intb reg = op->getOut()->getOffset();
+            for (int slot = 0; slot < numArgs; ++slot)
+            {
+                // where does this arg get written?
+                if (trace)
+                {
+                    std::stringstream ss;
+                    op->getIn(slot)->printRaw(ss);
+                    loopLogger->trace("Analysis of Varnode in slot {0:d}: {1:s}",
+                        slot, ss.str());
+                }
+                PcodeOp* definingOp = op->getIn(slot)->getDef();
+                if (definingOp != nullptr)
+                {
+                    intb offset = definingOp->getAddr().getOffset();
+                    if ((offset >= loopStartAddr) && (offset <= loopEndAddr))
+                    {
+                        // we might want to record the slot number and register
+                        phiNodesAffectedByLoop.push_back(op);
+                    }
+                }
+            }
+         }
+    }
+    loopLogger->trace("  Found {0:d} Phi nodes affected by the loop", phiNodesAffectedByLoop.size());
 }
 }

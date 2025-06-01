@@ -70,6 +70,7 @@ class VectorMatcher {
     intb loopEndAddr;        /// location of the loop end or 0
     BlockBasic* loopBlock;   /// the parent block of the loop
     std::vector<PhiNode*> phiNodes; /// Phi or MULTIEQUAL nodes found
+    std::vector<PcodeOp*> phiNodesAffectedByLoop;  /// Phi or MULTIEQUAL nodes referencing loop variables
     bool numElementsConstant; /// vsetOp is a vseti provides number of elements as a constant
     bool numElementsVariable; /// vsetOp is a vset and provides number of elements in a register
     bool foundSimpleComparison; /// an integer conditional expression found
@@ -114,12 +115,23 @@ class VectorMatcher {
     ~VectorMatcher();
   private:
   /**
-   * @brief construct basic control flow data
+   * @brief construct basic control flow data to determine
+   * if this is a simple loop
    * 
    * @param data Function data provided by Ghidra
    * @param vsetOp The triggering PcodeOp vset or vseti instruction
    */
     void collect_control_flow_data(Funcdata& data, PcodeOp& vsetOp);
+    /**
+     * @brief Collect other PcodeOps bound to the initial vset instruction
+     * @details These Pcodes may include Phi nodes showing register heritage,
+     * or cast operations.  We are especially interested in Phi Pcodes that
+     * reference loop registers
+     * 
+     * @param data 
+     * @param vsetOp 
+     */
+    void collect_tree_nodes(Funcdata& data, PcodeOp& vsetOp);
 };
 }
 #endif /* VECTOR_MATCHER_HH_ */
