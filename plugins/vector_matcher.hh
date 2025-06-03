@@ -61,16 +61,12 @@ class VectorMatcher {
     VectorMatcher(Funcdata& fData, PcodeOp* vsetOp);
 
     Funcdata& data;          /// Function context data
-    intb selectionStartAddr; /// first address found in the selection
-    intb selectionEndAddr;   /// last address found in the selection
-    int numPcodes;           /// number of pcodeOps found in the selection
-    int numPhiNodes;         /// number of PhiNodes found bound to the vset instruction
     bool loopFound;          /// does pcodeOpSelection contain a loop?
     intb loopStartAddr;      /// location of the loop start or 0
     intb loopEndAddr;        /// location of the loop end or 0
     BlockBasic* loopBlock;   /// the parent block of the loop
-    std::vector<PhiNode*> phiNodes; /// Phi or MULTIEQUAL nodes found
-    std::vector<PcodeOp*> phiNodesAffectedByLoop;  /// Phi or MULTIEQUAL nodes referencing loop variables
+    std::vector<PcodeOp*> phiNodesAffectedByLoop;  /// Phi or MULTIEQUAL opcodes referencing loop variables
+    std::vector<PcodeOp*> otherUserPcodes; /// Other user pcodes found within the loop
     bool numElementsConstant; /// vsetOp is a vseti provides number of elements as a constant
     bool numElementsVariable; /// vsetOp is a vset and provides number of elements in a register
     bool foundSimpleComparison; /// an integer conditional expression found
@@ -105,10 +101,6 @@ class VectorMatcher {
      */
     int transform();
     /**
-     * @brief find the external Varnode corresponding to a  loop-internal Varnode
-     */
-    Varnode* getExternalVn(const Varnode* loopVn);
-    /**
      * @brief Destroy the Vector Tree Match object
      * 
      */
@@ -117,21 +109,29 @@ class VectorMatcher {
   /**
    * @brief construct basic control flow data to determine
    * if this is a simple loop
-   * 
-   * @param data Function data provided by Ghidra
-   * @param vsetOp The triggering PcodeOp vset or vseti instruction
    */
-    void collect_control_flow_data(Funcdata& data, PcodeOp& vsetOp);
+    void collect_control_flow_data();
+
     /**
      * @brief Collect other PcodeOps bound to the initial vset instruction
      * @details These Pcodes may include Phi nodes showing register heritage,
      * or cast operations.  We are especially interested in Phi Pcodes that
      * reference loop registers
      * 
-     * @param data 
      * @param vsetOp 
      */
-    void collect_tree_nodes(Funcdata& data, PcodeOp& vsetOp);
+    void collect_phi_nodes();
+
+    /**
+     * @brief Examine pcode ops within a loop to locate key vector operations.
+     */
+    void examine_loop_pcodeops();
+
+    /**
+     * @brief Follow Phi nodes into the loop to identify the role of loop registers
+     * 
+     */
+    void collect_loop_registers();
 };
 }
 #endif /* VECTOR_MATCHER_HH_ */

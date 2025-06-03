@@ -153,7 +153,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
     }
     // this must be a vset and is likely a loop
     if (!matcher.analysisEnabled) return RETURN_NO_TRANSFORM;
-    matcher.analyze();
+    //matcher.analyze();
     if (matcher.isMemcpy())
     {
         ++transformCount;
