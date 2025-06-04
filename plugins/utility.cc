@@ -17,4 +17,10 @@ PcodeOp* insertBuiltin(Funcdata& data, PcodeOp& op, intb builtinOpId, Varnode* p
     data.opSetInput(newOp, param3, 3);
     return newOp;
 }
+void getRegisterName(const Varnode* vn, std::string* regName)
+{
+    AddrSpace* spc = arch->getSpaceByName("register");
+    const Translate *trans = spc->getTrans();
+    *regName = trans->getRegisterName(spc, vn->getAddr().getOffset(), 4);
+}
 }

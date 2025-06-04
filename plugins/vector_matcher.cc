@@ -364,6 +364,7 @@ void VectorMatcher::examine_loop_pcodeops()
 }
 void VectorMatcher::collect_loop_registers()
 {
+    // use lists instead of vectors to allow for push_back inside iterative loops
     std::list<Varnode*> dependentVarnodesInLoop;
     std::list<Varnode*> dependentVarnodesOutsideLoop;
     std::list<PcodeOp*> opsToVisit(phiNodesAffectedByLoop.begin(), phiNodesAffectedByLoop.end());
@@ -371,11 +372,13 @@ void VectorMatcher::collect_loop_registers()
     for (auto op: opsToVisit)
     {
         Varnode* phiResult = op->getOut();
-        const Translate *trans = phiResult->getAddr().getSpace()->getTrans();
-        string regName = trans->getRegisterName(phiResult->getAddr().getSpace(), phiResult->getAddr().getOffset(), 8);
-        loopLogger->info("Tracing loop dependencies for Phi node register 0x{0:x} aka {1:s}",
-            phiResult->getAddr().getOffset(), regName);
-
+        if (info)
+        {
+            string regName;
+            getRegisterName(phiResult, &regName);
+            loopLogger->info("Tracing loop dependencies for Phi node register 0x{0:x} aka {1:s}",
+                phiResult->getAddr().getOffset(), regName);
+        }
         list<PcodeOp*>::const_iterator begin = phiResult->beginDescend();
         list<PcodeOp*>::const_iterator end = phiResult->endDescend();
         for (auto descendent = begin; descendent != end; ++descendent)

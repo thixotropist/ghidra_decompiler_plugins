@@ -31,6 +31,7 @@ extern std::ofstream logFile;
 static const int TRANSFORM_LIMIT = INT_MAX; ///<@brief maximum number of transforms to execute
 //static const int TRANSFORM_LIMIT = 1; ///<@brief maximum number of transforms to execute
 extern int transformCount;
+extern Architecture* arch;
 
 /**
  * @brief Group RISC-V user pcodes according to their generic roles

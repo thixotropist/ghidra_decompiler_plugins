@@ -75,6 +75,7 @@ std::shared_ptr<spdlog::logger> pluginLogger;
 std::shared_ptr<spdlog::logger> loopLogger;
 
 int transformCount;
+Architecture* arch;
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -91,7 +92,7 @@ extern "C" int plugin_init(void *context)
     pluginLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
     logFile.open("/tmp/ghidraPluginAnalysis.log");
     logFile << "Initiating plugin analysis log" << std::endl;
-    Architecture* arch = reinterpret_cast<Architecture*>(context);
+    arch = reinterpret_cast<Architecture*>(context);
     pluginLogger->info("Plugin initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=10000; index++) {
