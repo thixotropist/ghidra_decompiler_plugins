@@ -66,11 +66,6 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     if (!loopFound) return;
     loopLogger->info("Analyzing potential vector stanza at 0x{0:x}",
         loopStartAddr);
-    loopLogger->info("Analysis (part 1):\n"
-            "\telementSize = {0:d}\n"
-            "\tmultiplier = {1:d}\n"
-            "\tsize = 0x{2:x}",
-            elementSize, multiplier, loopEndAddr - loopStartAddr);
     // Phi (or Multiequal nodes) provide the locations at which
     // registers and memory locations are set. They are found at the top of a block
     // and are essential in determining heritages and dependencies
@@ -81,6 +76,45 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     // Follow dependencies of phi nodes within the loop to identify
     // source and destination pointer registers and the counter register
     collect_loop_registers();
+    // show traits we have deduced
+    loopLogger->info("Summary of traits:\n"
+        "\tVector stanza begins at 0x{0:x}\n"
+        "\telementSize = {1:d}\n"
+        "\tmultiplier = {2:d}\n"
+        "\tcode size = 0x{3:x}",
+        loopStartAddr, elementSize, multiplier, loopEndAddr - loopStartAddr);
+    loopLogger->info("\n"
+        "\tNumber of Phi nodes affected by loop = {0:d}\n"
+        "\tNumber of other UserPcodes = {1:d}\n"
+        "\tNumber of arithmetic ops = {2:d}",
+        phiNodesAffectedByLoop.size(), otherUserPcodes.size(), numArithmeticOps);
+    loopLogger->info("\n"
+        "\tNumber of elements is constant = {0:s}\n"
+        "\tNumber of elements is variable = {1:s}\n"
+        "\tFound simple comparison = {2:s}\n"
+        "\tFound unexpected opcode = {3:s}",
+        numElementsConstant ? "true" : "false",
+        numElementsVariable ? "true" : "false",
+        foundSimpleComparison ? "true" : "false",
+        foundUnexpectedOp ? "true" : "false");
+    loopLogger->info("\n"
+        "\tFound other user  opcode = {0:s}\n"
+        "\tFound simple flow structure = {1:s}\n"
+        "\tFound simple load/store pattern = {2:s}\n"
+        "\tFound vector registers match = {3:s}",
+        foundOtherUserPcodes ? "true" : "false",
+        simpleFlowStructure ? "true" : "false",
+        simpleLoadStoreStructure ? "true" : "false",
+        vectorRegistersMatch ? "true" : "false");
+    loopLogger->info("\n"
+        "\tNumber of elements varnode identified = {0:s}\n"
+        "\tNumber of elements per loop varnode identified = {1:s}\n"
+        "\tVector load address varnode identified = {2:s}\n"
+        "\tVector store address varnode identified = {3:s}",
+        vNumElem != nullptr ? "true" : "false",
+        vNumPerLoop != nullptr ? "true" : "false",
+        vLoadVn != nullptr ? "true" : "false",
+        vStoreVn != nullptr ? "true" : "false");
 }
 
 VectorMatcher::~VectorMatcher()
@@ -229,8 +263,6 @@ void VectorMatcher::examine_loop_pcodeops()
 {
     std::list<PcodeOp*>::iterator it = loopBlock->beginOp();
     std::list<PcodeOp*>::iterator lastOp = loopBlock->endOp();
-    Varnode* vectorLoadRegisterVn = nullptr;
-    Varnode* vectorStoreRegisterVn = nullptr;
     bool analysisFailed = false;
     int conditional_branches = 0;
     loopLogger->trace("Beginning loop pcode analysis");
@@ -305,43 +337,14 @@ void VectorMatcher::examine_loop_pcodeops()
                     // may also be other builtin pcodes
                     foundOtherUserPcodes = true;
                 }
-                else if (opInfo->isVset)
-                {
-                    multiplier = opInfo->multiplier;
-                    elementSize = opInfo->elementSize;
-                    vNumElem = op->getIn(1);
-                    vNumPerLoop = op->getOut();
-                    loopLogger->trace("    Vset found: numElementsRegister=0x{0:x}",
-                        vNumElem->getOffset());
-                }
-                else if ((opInfo->isLoad) && (vLoadVn == nullptr))
-                {
-                    vectorLoadRegisterVn = op->getOut();
-                    loopLogger->trace("    Vload found at 0x{0:x}", op->getAddr().getOffset());
-                    loopLogger->flush();
-                    if (vectorLoadRegisterVn == nullptr)
-                    {
-                        loopLogger->warn("    Vload at 0x{0:x} has no output!",
-                            op->getAddr().getOffset());
-                        displayPcodeOp(*op, "VLoad with no output", true);
-                    }
-                    else
-                        loopLogger->trace("    Vload register=0x{0:x}",
-                            vectorLoadRegisterVn->getOffset());
-                }
                 else if ((opInfo->isLoadImmediate) && (vLoadImmVn == nullptr))
                 {
                     // TODO: vector load immediate instructions should not be found inside a loop
                     vLoadImmVn = op->getIn(1);
                     loopLogger->trace("    VloadImmediate found: numElem={0:d}", vLoadImmVn->getOffset());
                 }
-                else if ((opInfo->isStore) && (vStoreVn == nullptr))
-                {
-                    vectorStoreRegisterVn = op->getIn(1);
-                    Varnode* vLoopStoreVn = op->getIn(2);
-                    loopLogger->trace("    Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
-                        vectorStoreRegisterVn->getOffset(), vLoopStoreVn->getOffset());
-                }
+                else if (opInfo->isVset || opInfo->isLoad || opInfo->isStore)
+                    break;
                 else
                 {
                     foundOtherUserPcodes = true;
@@ -365,47 +368,139 @@ void VectorMatcher::examine_loop_pcodeops()
 void VectorMatcher::collect_loop_registers()
 {
     // use lists instead of vectors to allow for push_back inside iterative loops
-    std::list<Varnode*> dependentVarnodesInLoop;
-    std::list<Varnode*> dependentVarnodesOutsideLoop;
-    std::list<PcodeOp*> opsToVisit(phiNodesAffectedByLoop.begin(), phiNodesAffectedByLoop.end());
-    std::list<PcodeOp*> opsToFixDependencies;
-    for (auto op: opsToVisit)
+    std::list<Varnode *> dependentVarnodesInLoop;
+    std::list<Varnode *> dependentVarnodesOutsideLoop;
+    std::list<PcodeOp *> opsToFixDependencies;
+    std::list<PcodeOp *> opsToVisit(phiNodesAffectedByLoop.begin(), phiNodesAffectedByLoop.end());
+    Varnode* vLoopStoreVn = nullptr;
+    Varnode* vectorNumElemVn;
+    Varnode* vectorLoadRegisterVn;
+    Varnode* vectorLoadAddrVn;
+    Varnode* vectorStoreRegisterVn;
+    Varnode* vectorStoreAddrVn;
+    // For all Phi nodes affected by the loop determine the output register and its dependencies.
+    for (auto op : opsToVisit)
     {
-        Varnode* phiResult = op->getOut();
-        if (info)
-        {
-            string regName;
-            getRegisterName(phiResult, &regName);
-            loopLogger->info("Tracing loop dependencies for Phi node register 0x{0:x} aka {1:s}",
-                phiResult->getAddr().getOffset(), regName);
-        }
-        list<PcodeOp*>::const_iterator begin = phiResult->beginDescend();
-        list<PcodeOp*>::const_iterator end = phiResult->endDescend();
-        for (auto descendent = begin; descendent != end; ++descendent)
+        if (trace)
         {
             std::stringstream ss;
-            (*descendent)->printRaw(ss);
-            loopLogger->trace("  Descendent op: {0:s}", ss.str());
-            Varnode* vn = (*descendent)->getOut();
-            if (vn == nullptr) continue;
-            intb offset = vn->getDef()->getAddr().getOffset();
-            if (offset >= loopStartAddr && offset<= loopEndAddr)
+            op->printRaw(ss);
+            loopLogger->trace("Examining context of: {0:s}", ss.str());
+        }
+        Varnode *resultVn = op->getOut();
+        // descendent ops with no return value need to be checked for content but not dependencies.
+        bool opIsVoid = (resultVn == nullptr);
+        intb offset = op->getAddr().getOffset();
+        bool isInsideLoop = (offset >= loopStartAddr) && (offset <= loopEndAddr);
+        if (info && !opIsVoid)
+        {
+            string regName;
+            getRegisterName(resultVn, &regName);
+            if (regName != "")
             {
-                dependentVarnodesInLoop.push_back(vn);
-                if (std::find(opsToVisit.begin(), opsToVisit.end(), *descendent) == opsToVisit.end())
-                    opsToVisit.push_back(*descendent);
+                loopLogger->info("Tracing loop dependencies for register result {0:s} with register offset 0x{1:x}",
+                                 regName, resultVn->getAddr().getOffset());
+            }
+            else
+            {
+                loopLogger->info("Tracing loop dependencies for non-register object with offset 0x{0:x}",
+                                 resultVn->getAddr().getOffset());
+            }
+        }
+        if (isInsideLoop)
+        {
+            loopLogger->trace("  Examining context of op inside the loop:");
+            // if this is a vector op, identify the register assignments
+            const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*op);
+            if (opInfo != nullptr)
+            {
+                if (opInfo->isVset)
+                {
+                    multiplier = opInfo->multiplier;
+                    elementSize = opInfo->elementSize;
+                    vectorNumElemVn = op->getIn(1);
+                    vNumPerLoop = op->getOut();
+                    loopLogger->trace("    Vset found: numElementsRegister=0x{0:x}",
+                                      vectorNumElemVn->getOffset());
+                }
+                else if (opInfo->isLoad)
+                {
+                    vectorLoadRegisterVn = op->getOut();
+                    vectorLoadAddrVn = op->getIn(1);
+                    loopLogger->trace("    Vload found at 0x{0:x}", op->getAddr().getOffset());
+                    loopLogger->trace("    Vload register=0x{0:x}",
+                                      vectorLoadRegisterVn->getOffset());
+                }
+                else if (opInfo->isStore)
+                {
+                    loopLogger->flush();
+                    vectorStoreRegisterVn = op->getIn(1);
+                    vectorStoreAddrVn = op->getIn(2);
+                    vLoopStoreVn = op->getIn(2);
+                    loopLogger->trace("    Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
+                                      vectorStoreRegisterVn->getOffset(), vLoopStoreVn->getOffset());
+                }
+            }
+            if (info && (resultVn != nullptr))
+            {
                 std::stringstream ss;
-                vn->printRaw(ss);
+                resultVn->printRaw(ss);
                 loopLogger->trace("  inloop dependency: {0:s}", ss.str());
             }
-            else{
-                dependentVarnodesOutsideLoop.push_back(vn);
-                if (std::find(opsToFixDependencies.begin(), opsToFixDependencies.end(), *descendent) == opsToFixDependencies.end())
-                    opsToFixDependencies.push_back(*descendent);
+        }
+        else
+        {
+            loopLogger->trace("  Examining context of op inside the loop:");
+            dependentVarnodesOutsideLoop.push_back(resultVn);
+            if (std::find(opsToFixDependencies.begin(), opsToFixDependencies.end(), op) == opsToFixDependencies.end())
+                opsToFixDependencies.push_back(op);
+            if ((resultVn != nullptr) && info)
+            {
                 std::stringstream ss;
-                vn->printRaw(ss);
+                resultVn->printRaw(ss);
                 loopLogger->trace("  exterior dependency to fix: {0:s}", ss.str());
             }
+        }
+        if (opIsVoid) continue;
+        // Add new dependent ops to visit if this op has a known result
+        list<PcodeOp *>::const_iterator begin = resultVn->beginDescend();
+        list<PcodeOp *>::const_iterator end = resultVn->endDescend();
+        for (auto descendent = begin; descendent != end; ++descendent)
+        {
+            PcodeOp *descendentOp = *descendent;
+            if (trace)
+            {
+                std::stringstream ss;
+                descendentOp->printRaw(ss);
+                loopLogger->trace("  Descendent op: {0:s}", ss.str());
+            }
+            if (!opIsVoid)
+                {
+                    dependentVarnodesInLoop.push_back(resultVn);
+                    if (std::find(opsToVisit.begin(), opsToVisit.end(), descendentOp) == opsToVisit.end())
+                        opsToVisit.push_back(descendentOp);
+                }
+        }
+    }
+    // do load and store registers match?
+    vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
+    // find the Phi node defining the initial load address register
+    for (auto op: phiNodesAffectedByLoop)
+    {
+        intb regOffset = op->getOut()->getAddr().getOffset();
+        loopLogger->trace("Searching for loop variables referring to register 0x{0:x}",
+            regOffset);
+        if ((vectorNumElemVn != nullptr) && (regOffset == vectorNumElemVn->getOffset()))
+        {
+            vNumElem = op->getOut();
+        }
+        else if ((vectorLoadAddrVn != nullptr) && (regOffset == vectorLoadAddrVn->getOffset()))
+        {
+            vLoadVn = op->getOut();
+        }
+        else if ((vectorStoreAddrVn != nullptr) && regOffset == vectorStoreAddrVn->getOffset())
+        {
+            vStoreVn = op->getOut();
         }
     }
 }
