@@ -84,7 +84,6 @@ class VectorMatcher {
     Varnode* vLoadVn;        /// Varnode used by a vector load
     Varnode* vLoadImmVn;     /// Varnode used by a vector load immediate
     Varnode* vStoreVn;       /// Varnode used by a vector store
-    bool analysisEnabled;    /// Construction completed successfully
     const bool trace;        /// true if logger would process loglevel=trace
     const bool info;         /// true if logger would process loglevel=info
     /**

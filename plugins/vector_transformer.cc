@@ -152,8 +152,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         return returnCode;
     }
     // this must be a vset and is likely a loop
-    if (!matcher.analysisEnabled) return RETURN_NO_TRANSFORM;
-    //matcher.analyze();
+    pluginLogger->trace("Testing the vector stanza for a vector_memcpy match");
     if (matcher.isMemcpy())
     {
         ++transformCount;

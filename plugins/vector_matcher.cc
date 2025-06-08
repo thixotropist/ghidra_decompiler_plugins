@@ -48,7 +48,6 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     vLoadVn(nullptr),
     vLoadImmVn(nullptr),
     vStoreVn(nullptr),
-    analysisEnabled(false),
     trace(loopLogger->should_log(spdlog::level::trace)),
     info(loopLogger->should_log(spdlog::level::info))
 {
@@ -124,54 +123,71 @@ VectorMatcher::~VectorMatcher()
 
 bool VectorMatcher::isMemcpy()
 {
-    return loopFound &&
-        simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
+    return simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
         vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp) &&
         (!foundOtherUserPcodes);
 }
 int VectorMatcher::transform()
 {
+
     loopLogger->info("Transforming selection into vector_memcpy");
     // todo: compute number of bytes to move, generate a new varnode
     PcodeOp* newOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStoreVn, vLoadVn, vNumElem);
     data.opInsertBefore(newOp, vsetOp);
 
-    // purge any descendents of the deleted varnodes
-    loopLogger->info("Trimming dependencies");
-    loopLogger->trace("Searching for varnodes between {0:x} and {1:x}", loopStartAddr, loopEndAddr);
-    std::set<PcodeOp*>::iterator it = pcodeOpDependencies.begin();
-    while (it != pcodeOpDependencies.end())
+    // trim any leading Phi nodes of references any loop varnodes we are absorbing
+    loopLogger->info("Trimming loop varnodes out of leading Phi nodes");
+    for (std::vector<PcodeOp*>::iterator it = phiNodesAffectedByLoop.begin();
+         it != phiNodesAffectedByLoop.end();
+         ++it)
+    {
+        PcodeOp* phiOp = *it;
+        // Delete any varnode references to loop variable varnodes
+        for (int slot = 0; slot < phiOp->numInput(); ++slot)
+        {
+            Varnode *vn = phiOp->getIn(slot);
+            PcodeOp *def = vn->getDef();
+            if (def != nullptr)
+            {
+                intb defOffset = def->getAddr().getOffset();
+                if (defOffset >= loopStartAddr && defOffset <= loopEndAddr)
+                {
+                    loopLogger->trace("  deleting slot {0:d} of pcode at 0x{1:x}",
+                                        slot, phiOp->getAddr().getOffset());
+                    data.opRemoveInput(phiOp, slot);
+                }
+            }
+        }
+        if ( phiOp->numInput() == 1)
+        {
+            loopLogger->info("  fixing Phi node with only one input");
+            Varnode *vn = phiOp->getIn(0);
+            Varnode* resultVn = phiOp->getOut();
+            list<PcodeOp *>::const_iterator begin = resultVn->beginDescend();
+            list<PcodeOp *>::const_iterator end = resultVn->endDescend();
+            for (auto descendent = begin; descendent != end; ++descendent)
+            {
+                PcodeOp *descendentOp = *descendent;
+                for (int slot = 0; slot < descendentOp->numInput(); ++slot)
+                {
+                    if (resultVn == descendentOp->getIn(slot))
+                    {
+                        data.opSetInput(descendentOp, vn, slot);
+                    }
+                }
+            }
+        }
+    }
+    // remove loop pcode ops except for the Phi nodes and our inserted op
+    std::list<PcodeOp*>::iterator it = loopBlock->beginOp();
+    std::list<PcodeOp*>::iterator lastOp = loopBlock->endOp();
+    while (it != lastOp)
     {
         PcodeOp* op = *it;
-        loopLogger->trace("Pcode to be trimmed has {0:d} inputs at address 0x{1:x}",
-            op->numInput(), op->getAddr().getOffset());
-        displayPcodeOp(*op, "Pcode to be trimmed", false);
-        int lastSlot = op->numInput() - 1;
-        for (int i = lastSlot; i >= 0; --i)
-        {
-            Varnode* v = op->getIn(i);
-            if ((v == nullptr) || (v->getDef() == nullptr))
-            {
-                loopLogger->warn("Tried to process a null varnode or varnode without a parent pcodeop");
-                continue;
-            }
-            intb offset = v->getDef()->getAddr().getOffset();
-            loopLogger->info("Searching for deleted varnodes: offset=0x{0:x}, addr=0x{1:x}",
-                offset, v->getAddr().getOffset());
-            if ((offset >= loopStartAddr) && (offset <= loopEndAddr))
-            {
-                data.opRemoveInput(op, i);
-                loopLogger->trace("  deleting slot {0:d} of pcode at 0x{1:x}",
-                    i, op->getAddr().getOffset());
-            }
-            loopLogger->flush();
-        }
-        displayPcodeOp(*op, "Pcode after trimming", false);
         ++it;
-    }
-    for (auto it: pcodeOpSelection)
-    {
-        data.opUnlink(it);
+        if ((op->code() == CPUI_MULTIEQUAL) || op == newOp)
+            continue;
+        data.opUnlink(op);
     }
     return 1;
 }
