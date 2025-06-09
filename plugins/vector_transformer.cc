@@ -8,7 +8,6 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 #include "riscv.hh"
-#include "diagnostics.hh"
 #include "vector_transformer.hh"
 #include "vector_matcher.hh"
 #include "utility.hh"
@@ -98,7 +97,6 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
             if (opInfo->isLoad || opInfo->isLoadImmediate)
             {
                 // There may be multiple vector store ops for each vector load op
-                if (trace) displayPcodeOp(*op, "vector sequence start op", true);
                 // is the source an address to be copied or a constant to be stored?
                 Varnode* sourceVn = op->getIn(1);
                 bool isMemset = sourceVn->isConstant() && opInfo->isLoadImmediate;
@@ -117,7 +115,6 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                         continue;
                     pluginLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
                         builtinOp, (*it)->getAddr().getOffset());
-                    if (trace) displayPcodeOp(**it, "Dependent pcode:", true);
                     // vector_mem* invocations count bytes, not elements.
                     int4 numBytes = matcher.vNumElem->getOffset() * vsetInfo->multiplier * vsetInfo->elementSize;
                     Varnode * new_size_varnode = data.newConstant(1, numBytes);

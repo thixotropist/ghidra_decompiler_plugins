@@ -11,7 +11,6 @@
 
 #include "riscv.hh"
 #include "vector_matcher.hh"
-#include "diagnostics.hh"
 #include "utility.hh"
 
 namespace ghidra
@@ -109,7 +108,6 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
 
 VectorMatcher::~VectorMatcher()
 {
-
 }
 
 bool VectorMatcher::isMemcpy()
@@ -167,6 +165,8 @@ int VectorMatcher::transform()
                     }
                 }
             }
+            // delete this do-nothing Phi op
+            data.opUnlink(phiOp);
         }
     }
     // remove loop pcode ops except for the Phi nodes and our inserted op

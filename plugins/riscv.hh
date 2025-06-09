@@ -26,7 +26,6 @@ namespace ghidra{
 
 extern std::shared_ptr<spdlog::logger> pluginLogger;
 extern std::shared_ptr<spdlog::logger> loopLogger;
-extern std::ofstream logFile;
 
 static const int TRANSFORM_LIMIT = INT_MAX; ///<@brief maximum number of transforms to execute
 //static const int TRANSFORM_LIMIT = 1; ///<@brief maximum number of transforms to execute

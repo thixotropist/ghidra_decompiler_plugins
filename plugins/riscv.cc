@@ -14,7 +14,6 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 #include "vector_transformer.hh"
-#include "diagnostics.hh"
 #include "riscv.hh"
 
 static const bool DO_SURVEY = false;  ///< survey the loaded architecture
@@ -22,8 +21,6 @@ static const bool SURVEY_USERPCODEOPS = false;  ///< show user pcode ops by name
 static const int MAX_USER_PCODES = 10000;  ///< limit the number of user pcode ops shown
 
 namespace ghidra {
-
-std::ofstream logFile;
 
 RiscvUserPcode::RiscvUserPcode(const string& op, int index) :
     asmOpcode(op),
@@ -90,8 +87,6 @@ extern "C" int plugin_init(void *context)
     loopLogger->set_level(spdlog::level::trace);
     transformCount = 0;
     pluginLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
-    logFile.open("/tmp/ghidraPluginAnalysis.log");
-    logFile << "Initiating plugin analysis log" << std::endl;
     arch = reinterpret_cast<Architecture*>(context);
     pluginLogger->info("Plugin initialized");
     // The pcode index identifies the target of a CALLOTHER
