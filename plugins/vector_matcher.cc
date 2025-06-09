@@ -121,8 +121,34 @@ int VectorMatcher::transform()
 
     loopLogger->info("Transforming selection into vector_memcpy");
     // todo: compute number of bytes to move, generate a new varnode
-    PcodeOp* newOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStoreVn, vLoadVn, vNumElem);
-    data.opInsertBefore(newOp, vsetOp);
+    PcodeOp* newVectorOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStoreVn, vLoadVn, vNumElem);
+    data.opInsertBefore(newVectorOp, vsetOp);
+    if (false)
+    {
+        Varnode* constantVn = data.newConstant(8, 0);
+        PcodeOp* constantOp = data.newOp(1, vsetOp->getAddr());
+        data.opSetOpcode(constantOp, CPUI_COPY);
+        data.opSetInput(constantOp, constantVn, 0);
+        const int WORD_SIZE = 8;
+        intb offset = vStoreVn->getOffset();
+        AddrSpace* spc = arch->getSpaceByName("register");
+        Varnode* regVarnode = data.newVarnode(WORD_SIZE, spc, offset);
+        data.opSetOutput(constantOp, regVarnode);
+        data.newVarnodeOut(WORD_SIZE, vNumElem->getAddr(), constantOp);
+        data.opInsertAfter(constantOp, newVectorOp);
+    }
+    if (trace)
+    {
+        std::stringstream ss;
+        newVectorOp->printRaw(ss);
+        loopLogger->info("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
+        if (false)
+        {
+            ss.str("");
+            //constantOp->printRaw(ss);
+            loopLogger->info("\tInserting a new register opcode\n\t\t{0:s}", ss.str());
+        }
+    }
 
     // trim any leading Phi nodes of references any loop varnodes we are absorbing
     loopLogger->info("Trimming loop varnodes out of leading Phi nodes");
@@ -176,9 +202,32 @@ int VectorMatcher::transform()
     {
         PcodeOp* op = *it;
         ++it;
-        if ((op->code() == CPUI_MULTIEQUAL) || op == newOp)
+        if ((op->code() == CPUI_MULTIEQUAL) || op == newVectorOp)
             continue;
         data.opUnlink(op);
+    }
+
+    if (trace)
+    {
+        loopLogger->info("Notify Funcdata of control flow reset");
+        BlockGraph& graph = data.getStructure();
+        std::stringstream ss;
+        graph.printRaw(ss);
+        graph.printTree(ss, 1);
+        loopLogger->trace("Examining BlockGraph (Raw and Tree forms) after transform: {0:s}", ss.str());
+        ss.str("");
+        loopBlock->printRaw(ss);
+        loopLogger->trace("\tThe loop block identifies as {0:s}", ss.str());
+        ss.str("");
+        int index = 0;
+        FlowBlock* fb = loopBlock->subBlock(index);
+        while (fb != nullptr)
+        {
+            fb->printRaw(ss);
+            loopLogger->trace("\tInterior  block {0:d} identifies as {0:s}", index, ss.str());
+            index++;
+            fb = loopBlock->subBlock(index);
+        }
     }
     return 1;
 }
