@@ -17,15 +17,6 @@
 namespace ghidra
 {
 
-PhiNode::PhiNode(intb reg, Varnode* v1, Varnode* v2, Varnode* v3)
-{
-    registerOffset = reg;
-    varnodes.push_back(v1);
-    varnodes.push_back(v2);
-    if (v3 != nullptr)
-    varnodes.push_back(v3);
-}
-
 VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     data(fData),
     loopFound(false),
@@ -490,13 +481,10 @@ void VectorMatcher::collect_loop_registers()
                 descendentOp->printRaw(ss);
                 loopLogger->trace("  Descendent op: {0:s}", ss.str());
             }
-            if (!opIsVoid)
-                {
-                    dependentVarnodesInLoop.push_back(resultVn);
-                    if (std::find(opsToVisit.begin(), opsToVisit.end(), descendentOp) == opsToVisit.end())
-                        opsToVisit.push_back(descendentOp);
-                }
-        }
+            dependentVarnodesInLoop.push_back(resultVn);
+            if (std::find(opsToVisit.begin(), opsToVisit.end(), descendentOp) == opsToVisit.end())
+                opsToVisit.push_back(descendentOp);
+    }
     }
     // do load and store registers match?
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);

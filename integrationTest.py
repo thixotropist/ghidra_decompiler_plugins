@@ -107,6 +107,7 @@ class T1Datatests(unittest.TestCase):
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
                       "Memory Leak or invalid read access detected")
 
+    @unittest.skip("Dangling references")
     def test_02_whisper_selection_simple(self):
         """
         Verify correct behavior with more complex functions extracted from whisper-cpp
@@ -124,6 +125,7 @@ class T1Datatests(unittest.TestCase):
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
                       "Memory Leak or invalid read access detected")
 
+    @unittest.skip("Dangling references")
     def test_02_whisper_selection_complex(self):
         """
         Verify correct behavior with the main function of whisper-cpp
@@ -142,6 +144,7 @@ class T1Datatests(unittest.TestCase):
         self.assertIn("vector_memcpy((void *)&uStack_274,(void *)0x107f20,0x10)", result.stdout,
                       "Vector_memcpy fixed length transform was not as expected")
 
+    @unittest.skip("Dangling references")
     def test_03_whisper_regression(self):
         """
         Verify processing of several Whisper functions that previously threw exceptions

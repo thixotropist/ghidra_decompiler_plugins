@@ -6,52 +6,8 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 namespace ghidra{
-
-/**
- * @brief Phi or Multiequal nodes merge two register histories
- */
-struct PhiNode {
-  public:
-    intb registerOffset;            /// identifies the associated register
-    std::vector<Varnode*> varnodes; /// up to three varnodes
-
-    PhiNode(intb reg, Varnode* v1, Varnode* v2, Varnode* v3);
-};
-
-/**
- * @brief Methods that analyze a sequence of PcodeOps to match
- * against common patterns.
- */
 class VectorMatcher {
   public:
-    /**
-     * @brief ordering relation for PcodeOp* based on Address
-     * @details comparison is first on Address then on SeqNum
-     * @param a first of two PcodeOp* objects to compare
-     * @param b second of two PcodeOp* objects to compare
-     * @return true if address of a appears before address of b
-     */
-    class PcodeOpComparator {
-      public:
-        bool operator()(const PcodeOp* a, const PcodeOp* b) const
-        {
-            if (a->getAddr() == b->getAddr())
-                return (a->getSeqNum() < b->getSeqNum());
-            return (a->getAddr() < b->getAddr());
-        }
-    };
-    static const int MAX_DEPENDENTS = 15;
-    /**
-     * @brief set of PcodeOps selected as possible loop transform candidates,
-     * sorted with increasing Address and SeqNum
-     */
-    std::set<PcodeOp*, PcodeOpComparator> pcodeOpSelection;
-    /**
-     * @brief set of PcodeOps selected as possible external dependencies to be trimmed,
-     * sorted with increasing Address and SeqNum
-     */
-    std::set<PcodeOp*, PcodeOpComparator> pcodeOpDependencies;
-
     /**
      * @brief Construct a new Vector Tree Match object, populating pcodeOpSelection
      * with PcodeOps potentially implementing a vector stanza or loop
@@ -61,7 +17,7 @@ class VectorMatcher {
     VectorMatcher(Funcdata& fData, PcodeOp* vsetOp);
 
     Funcdata& data;          /// Function context data
-    bool loopFound;          /// does pcodeOpSelection contain a loop?
+    bool loopFound;          /// does the block contain a loop?
     intb loopStartAddr;      /// location of the loop start or 0
     intb loopEndAddr;        /// location of the loop end or 0
     BlockBasic* loopBlock;   /// the parent block of the loop
@@ -101,10 +57,10 @@ class VectorMatcher {
     int transform();
     /**
      * @brief Destroy the Vector Tree Match object
-     * 
      */
     ~VectorMatcher();
-  private:
+
+    private:
   /**
    * @brief construct basic control flow data to determine
    * if this is a simple loop
