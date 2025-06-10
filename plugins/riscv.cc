@@ -82,9 +82,9 @@ extern "C" int plugin_init(void *context)
 {
     pluginLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
-    pluginLogger->set_level(spdlog::level::trace);
+    pluginLogger->set_level(spdlog::level::warn);
     loopLogger = pluginLogger->clone("vector_loop");
-    loopLogger->set_level(spdlog::level::trace);
+    loopLogger->set_level(spdlog::level::warn);
     transformCount = 0;
     pluginLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
     arch = reinterpret_cast<Architecture*>(context);

@@ -50,7 +50,7 @@ class T0BuildPlugin(unittest.TestCase):
                          "Unable to install the decompiler executable")
 
         # build the decompiler datatest executable
-        command = "bazel build -c dbg @ghidra//:decompile_datatest"
+        command = "bazel build -c opt @ghidra//:decompile_datatest"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
@@ -70,7 +70,7 @@ class T0BuildPlugin(unittest.TestCase):
         self.assertEqual(0, result.returncode,
             "unable to clean previous decompiler plugin")
         logger.info("Building and installing the plugin")
-        command = "bazel build -c dbg plugins:riscv_vector"
+        command = "bazel build -c opt plugins:riscv_vector"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
