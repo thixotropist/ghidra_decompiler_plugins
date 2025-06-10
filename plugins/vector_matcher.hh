@@ -23,6 +23,7 @@ class VectorMatcher {
     BlockBasic* loopBlock;   /// the parent block of the loop
     std::vector<PcodeOp*> phiNodesAffectedByLoop;  /// Phi or MULTIEQUAL opcodes referencing loop variables
     std::vector<PcodeOp*> otherUserPcodes; /// Other user pcodes found within the loop
+    std::list<PcodeOp *> externalDependentOps; /// Pcodes outside of the loop dependent on varnodes inside the loop
     bool numElementsConstant; /// vsetOp is a vseti provides number of elements as a constant
     bool numElementsVariable; /// vsetOp is a vset and provides number of elements in a register
     bool foundSimpleComparison; /// an integer conditional expression found

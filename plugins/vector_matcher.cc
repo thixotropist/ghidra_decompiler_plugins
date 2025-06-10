@@ -108,22 +108,33 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
 
 VectorMatcher::~VectorMatcher()
 {
+    externalDependentOps.clear();
 }
 
 bool VectorMatcher::isMemcpy()
 {
-    return simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
+    bool match = simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
         vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp) &&
         (!foundOtherUserPcodes);
+    if (!match) return false;
+    if (!externalDependentOps.empty())
+    {
+        loopLogger->warn("Unable to complete a Memcpy transform at 0x{0:x} due to dangling dependencies",
+            loopStartAddr);
+        return false;
+    }
+    return true;
 }
 int VectorMatcher::transform()
 {
-
-    loopLogger->info("Transforming selection into vector_memcpy");
+    const bool DISPLAY_BLOCKS = false;
+    const bool INSERT_REG_FIXUPS = false;
+    loopLogger->info("Transforming selection into vector_memcpy, flushing log buffers");
+    loopLogger->flush();
     // todo: compute number of bytes to move, generate a new varnode
     PcodeOp* newVectorOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStoreVn, vLoadVn, vNumElem);
     data.opInsertBefore(newVectorOp, vsetOp);
-    if (false)
+    if (INSERT_REG_FIXUPS)
     {
         Varnode* constantVn = data.newConstant(8, 0);
         PcodeOp* constantOp = data.newOp(1, vsetOp->getAddr());
@@ -142,12 +153,6 @@ int VectorMatcher::transform()
         std::stringstream ss;
         newVectorOp->printRaw(ss);
         loopLogger->info("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
-        if (false)
-        {
-            ss.str("");
-            //constantOp->printRaw(ss);
-            loopLogger->info("\tInserting a new register opcode\n\t\t{0:s}", ss.str());
-        }
     }
 
     // trim any leading Phi nodes of references any loop varnodes we are absorbing
@@ -207,7 +212,9 @@ int VectorMatcher::transform()
         data.opUnlink(op);
     }
 
-    if (trace)
+    // Optionally explore the BlockGraph around our loop to see if we can
+    // merge the DOWHILE block into its neighbors.
+    if (DISPLAY_BLOCKS && trace)
     {
         loopLogger->info("Notify Funcdata of control flow reset");
         BlockGraph& graph = data.getStructure();
@@ -426,14 +433,13 @@ void VectorMatcher::collect_loop_registers()
     // use lists instead of vectors to allow for push_back inside iterative loops
     std::list<Varnode *> dependentVarnodesInLoop;
     std::list<Varnode *> dependentVarnodesOutsideLoop;
-    std::list<PcodeOp *> opsToFixDependencies;
     std::list<PcodeOp *> opsToVisit(phiNodesAffectedByLoop.begin(), phiNodesAffectedByLoop.end());
     Varnode* vLoopStoreVn = nullptr;
-    Varnode* vectorNumElemVn;
-    Varnode* vectorLoadRegisterVn;
-    Varnode* vectorLoadAddrVn;
-    Varnode* vectorStoreRegisterVn;
-    Varnode* vectorStoreAddrVn;
+    Varnode* vectorNumElemVn = nullptr;
+    Varnode* vectorLoadRegisterVn = nullptr;
+    Varnode* vectorLoadAddrVn = nullptr;
+    Varnode* vectorStoreRegisterVn = nullptr;
+    Varnode* vectorStoreAddrVn = nullptr;
     // For all Phi nodes affected by the loop determine the output register and its dependencies.
     for (auto op : opsToVisit)
     {
@@ -508,8 +514,8 @@ void VectorMatcher::collect_loop_registers()
         {
             loopLogger->trace("  Examining context of op inside the loop:");
             dependentVarnodesOutsideLoop.push_back(resultVn);
-            if (std::find(opsToFixDependencies.begin(), opsToFixDependencies.end(), op) == opsToFixDependencies.end())
-                opsToFixDependencies.push_back(op);
+            if (std::find(externalDependentOps.begin(), externalDependentOps.end(), op) == externalDependentOps.end())
+                externalDependentOps.push_back(op);
             if ((resultVn != nullptr) && info)
             {
                 std::stringstream ss;
@@ -540,10 +546,19 @@ void VectorMatcher::collect_loop_registers()
     // find the Phi node defining the initial load address register
     for (auto op: phiNodesAffectedByLoop)
     {
+        if (trace)
+        {
+            std::stringstream ss;
+            op->printRaw(ss);
+            loopLogger->trace("Checking PcodeOp for dependencies: {0:s}", ss.str());
+            loopLogger->flush();
+        }
         intb regOffset = op->getOut()->getAddr().getOffset();
-        loopLogger->trace("Searching for loop variables referring to register 0x{0:x}",
-            regOffset);
-        if ((vectorNumElemVn != nullptr) && (regOffset == vectorNumElemVn->getOffset()))
+        string regName;
+        getRegisterName(op->getOut(), &regName);
+        loopLogger->trace("Searching for loop variables referring to register {0:s}",
+            regName);
+        if ((vectorNumElemVn != nullptr) && (!vectorNumElemVn->isConstant()) && (regOffset == vectorNumElemVn->getOffset()))
         {
             vNumElem = op->getOut();
         }
