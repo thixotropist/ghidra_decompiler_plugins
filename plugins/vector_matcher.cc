@@ -166,14 +166,14 @@ bool VectorMatcher::removeExteriorDependencies()
     for (auto it: externalDependentOps)
     {
         PcodeOp* op = it;
-        int numSlots = op->numInput();
-        for (int slot = 0; slot < numSlots; ++slot)
+        for (int slot = 0; slot < op->numInput(); ++slot)
         {
             if (isDefinedInLoop(op->getIn(slot)))
             {
                 riscvVectorLogger->info("Removing exterior dependency at 0x{0:x}",
                     op->getAddr().getOffset());
                 data.opRemoveInput(op, slot);
+                --slot;
             }
         }
     }
