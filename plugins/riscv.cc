@@ -68,8 +68,7 @@ const RiscvUserPcode* RiscvUserPcode::getUserPcode(PcodeOp& op)
 }
 
 std::map<int, RiscvUserPcode*> riscvPcodeMap;
-std::shared_ptr<spdlog::logger> pluginLogger;
-std::shared_ptr<spdlog::logger> loopLogger;
+std::shared_ptr<spdlog::logger> riscvVectorLogger;
 
 int transformCount;
 Architecture* arch;
@@ -80,23 +79,21 @@ Architecture* arch;
  */
 extern "C" int plugin_init(void *context)
 {
-    pluginLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
+    riscvVectorLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
-    pluginLogger->set_level(spdlog::level::warn);
-    loopLogger = pluginLogger->clone("vector_loop");
-    loopLogger->set_level(spdlog::level::warn);
+    riscvVectorLogger->set_level(spdlog::level::warn);
     transformCount = 0;
-    pluginLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
+    riscvVectorLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
     arch = reinterpret_cast<Architecture*>(context);
-    pluginLogger->info("Plugin initialized");
+    riscvVectorLogger->info("Plugin initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=10000; index++) {
         const UserPcodeOp* op = arch->userops.getOp(index);
         if (op == nullptr) break;
         riscvPcodeMap.insert(std::make_pair(index, new RiscvUserPcode(op->getName(), index)));
     }
-    pluginLogger->trace("Found {0} user pcode ops during plugin_init", riscvPcodeMap.size());
-    pluginLogger->flush();
+    riscvVectorLogger->trace("Found {0} user pcode ops during plugin_init", riscvPcodeMap.size());
+    riscvVectorLogger->flush();
     return 0;
 }
 /**
@@ -105,9 +102,9 @@ extern "C" int plugin_init(void *context)
  */
 extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 {
-    pluginLogger->trace("Adding a new Rule to pluginrules");
+    riscvVectorLogger->trace("Adding a new Rule to pluginrules");
     rules.push_back(new RuleVectorTransform("pluginrules"));
-    pluginLogger->flush();
+    riscvVectorLogger->flush();
     return 1;
 }
 
@@ -118,38 +115,38 @@ extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
 {
     DatatypeUserOp* res;
-    pluginLogger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
+    riscvVectorLogger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
     switch(id)
     {
       case VECTOR_MEMCPY:
         {
-          pluginLogger->trace("Creating a new DatatypeUserOp");
+          riscvVectorLogger->trace("Creating a new DatatypeUserOp");
           int4 ptrSize = glb->types->getSizeOfPointer();
           int4 wordSize = glb->getDefaultDataSpace()->getAddrSize();
           Datatype *vType = glb->types->getTypeVoid();
           Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
           Datatype *intType = glb->types->getBase(wordSize,TYPE_UINT);
           res = new DatatypeUserOp("vector_memcpy",glb,VECTOR_MEMCPY,vType,ptrType,ptrType,intType);
-          pluginLogger->trace("Creation complete");
+          riscvVectorLogger->trace("Creation complete");
           break;
         }
       case VECTOR_MEMSET:
       {
-        pluginLogger->trace("Creating a new DatatypeUserOp");
+        riscvVectorLogger->trace("Creating a new DatatypeUserOp");
         int4 ptrSize = glb->types->getSizeOfPointer();
         int4 wordSize = glb->getDefaultDataSpace()->getAddrSize();
         Datatype *vType = glb->types->getTypeVoid();
         Datatype *ptrType = glb->types->getTypePointer(ptrSize,vType,wordSize);
         Datatype *intType = glb->types->getBase(wordSize,TYPE_UINT);
         res = new DatatypeUserOp("vector_memset",glb,VECTOR_MEMSET,vType,ptrType,intType,intType);
-        pluginLogger->trace("Creation complete");
+        riscvVectorLogger->trace("Creation complete");
         break;
       }
       default:
-        pluginLogger->warn("Unrecognized new DatatypeUserOp");
+        riscvVectorLogger->warn("Unrecognized new DatatypeUserOp");
         res = nullptr;
     }
-    pluginLogger->flush();
+    riscvVectorLogger->flush();
     return res;
 }
 
@@ -159,12 +156,12 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
  */
 extern "C" void plugin_exit()
 {
-    pluginLogger->trace("Exiting the RISC-V transform plugin");
+    riscvVectorLogger->trace("Exiting the RISC-V transform plugin");
     for (auto p: riscvPcodeMap)
     {
         delete p.second;
     }
     riscvPcodeMap.clear();
-    pluginLogger->flush();
+    riscvVectorLogger->flush();
 }
 }

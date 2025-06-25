@@ -38,9 +38,9 @@ class VectorMatcher {
     PcodeOp* vsetOp;         /// vset PcodeOp
     Varnode* vNumElem;       /// Varnode setting number of elements to process
     Varnode* vNumPerLoop;    /// Varnode giving the number of elements per loop
-    Varnode* vLoadVn;        /// Varnode used by a vector load
-    Varnode* vLoadImmVn;     /// Varnode used by a vector load immediate
-    Varnode* vStoreVn;       /// Varnode used by a vector store
+    Varnode* vLoad;          /// Varnode used by a vector load instruction
+    Varnode* vLoadImm;       /// Varnode used by a vector load immediate instruction
+    Varnode* vStore;         /// Varnode used by a vector store instruction
     const bool trace;        /// true if logger would process loglevel=trace
     const bool info;         /// true if logger would process loglevel=info
     /**
@@ -88,6 +88,26 @@ class VectorMatcher {
      * 
      */
     void collect_loop_registers();
+
+    /**
+     * @brief Remove dependencies on interior loop Varnodes
+     * @return True if successful, False if no transform is known safe
+     */
+    bool removeExteriorDependencies();
+
+    /**
+     * @brief 
+     * 
+     * @param vn a Varnode reference
+     * @return true if the pcode defining this VN lies inside our loop
+     * @return false 
+     */
+    bool isDefinedInLoop(const Varnode* vn);
+
+    /**
+     * @brief Remove duplicate varnodes in a Phi opcode
+     */
+    void reducePhiNode(PcodeOp* op);
 };
 }
 #endif /* VECTOR_MATCHER_HH_ */

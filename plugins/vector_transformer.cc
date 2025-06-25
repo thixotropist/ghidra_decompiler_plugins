@@ -8,6 +8,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 #include "riscv.hh"
+
 #include "vector_transformer.hh"
 #include "vector_matcher.hh"
 #include "utility.hh"
@@ -20,11 +21,11 @@ RuleVectorTransform::RuleVectorTransform(const string &g) :
 Rule* RuleVectorTransform::clone(const ActionGroupList &grouplist) const
 {
     if (!grouplist.contains(getGroup())) {
-        pluginLogger->error("RuleVectorTransform::clone failed for lack of a group");
+        riscvVectorLogger->error("RuleVectorTransform::clone failed for lack of a group");
         return (Rule *)0;
     }
-    pluginLogger->trace("Prepared a new RuleVectorTransform for Action database");
-    pluginLogger->flush();
+    riscvVectorLogger->trace("Prepared a new RuleVectorTransform for Action database");
+    riscvVectorLogger->flush();
     return new RuleVectorTransform(getGroup());
 }
 
@@ -51,11 +52,11 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
 
     const int RETURN_NO_TRANSFORM = 0;
     const int RETURN_TRANSFORM_PERFORMED = 1;
-    pluginLogger->trace("Testing for early termination of the transform search");
+    riscvVectorLogger->trace("Testing for early termination of the transform search");
     if (transformCount >= TRANSFORM_LIMIT) return 0;
     int4 returnCode = RETURN_NO_TRANSFORM;
-    bool trace = pluginLogger->should_log(spdlog::level::trace);
-    pluginLogger->trace("Vector context discovered");
+    [[maybe_unused]] bool trace = riscvVectorLogger->should_log(spdlog::level::trace);
+    riscvVectorLogger->trace("Vector context discovered");
     // require one of several vset* instructions to begin this pattern,
     // adjusting the maximum number of pcode ops to examine
     const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*firstOp);
@@ -66,10 +67,22 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
     bool vsetRegister = vsetInfo->isVset;
     if (!(vsetImmediate || vsetRegister)) return RETURN_NO_TRANSFORM;
     // we have a vsetivli or a vsetvli instruction
-    pluginLogger->trace("Entering applyOp with a recognized vset* user pcode op at 0x{0:x}",
+    riscvVectorLogger->trace("Entering applyOp with a recognized vset* user pcode op at 0x{0:x}",
         firstOp->getAddr().getOffset());
+    // The size, or total number of elements to process, will be a constant
+    // for vsetivli instructions or a register for vsetvl instructions
+    Varnode* size_varnode = firstOp->getIn(1);
+    // Examine the vsetivli instr to get multiplier and element size
+    if (vsetImmediate && !size_varnode->isConstant())
+    {
+        riscvVectorLogger->warn("Found a vseti instruction with a non-constant argument");
+        return 0;
+    }
+    int4 numBytesPerPass = vsetInfo->multiplier * vsetInfo->elementSize;
+    int4 numBytes;
     if (vsetImmediate)
     {
+        numBytes = size_varnode->getOffset() * numBytesPerPass;
         // search forward in the block for a PcodeOp that may begin the pattern we
         // which to replace.  Stop the search after 30 pcode ops or the first vset* instruction.
         // For each vector load or load immediate instruction, collect any vector dependencies.
@@ -113,7 +126,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     // we only replace vector store opcodes
                     if ((descOpInfo == nullptr) || !descOpInfo->isStore)
                         continue;
-                    pluginLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
+                    riscvVectorLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
                         builtinOp, (*it)->getAddr().getOffset());
                     // vector_mem* invocations count bytes, not elements.
                     int4 numBytes = matcher.vNumElem->getOffset() * vsetInfo->multiplier * vsetInfo->elementSize;
@@ -130,7 +143,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     data.opInsertBefore(it->first, it->second);
                     delete it;
                 }
-                pluginLogger->info("Queuing deletion of op at 0x{0:x}", op->getAddr().getOffset());
+                riscvVectorLogger->info("Queuing deletion of op at 0x{0:x}", op->getAddr().getOffset());
                 deleteSet.push_back(op);
             }
             op = op->nextOp();
@@ -138,18 +151,18 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         }
         if (noVectorOpsFound)
         {
-            pluginLogger->warn("Deleting orphan vset op at 0x{0:x}", firstOp->getAddr().getOffset());
+            riscvVectorLogger->warn("Deleting orphan vset op at 0x{0:x}", firstOp->getAddr().getOffset());
             data.opUnlink(firstOp);
         }
         for (auto iter: deleteSet)
         {
-            pluginLogger->info("Deleting vector op at 0x{0:x}", iter->getAddr().getOffset());
+            riscvVectorLogger->info("Deleting vector op at 0x{0:x}", iter->getAddr().getOffset());
             data.opUnlink(iter);
         }
         return returnCode;
     }
     // this must be a vset and is likely a loop
-    pluginLogger->trace("Testing the vector stanza for a vector_memcpy match");
+    riscvVectorLogger->trace("Testing the vector stanza for a vector_memcpy match");
     if (matcher.isMemcpy())
     {
         ++transformCount;

@@ -35,11 +35,11 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     vsetOp(initialVsetOp),
     vNumElem(nullptr),
     vNumPerLoop(nullptr),
-    vLoadVn(nullptr),
-    vLoadImmVn(nullptr),
-    vStoreVn(nullptr),
-    trace(loopLogger->should_log(spdlog::level::trace)),
-    info(loopLogger->should_log(spdlog::level::info))
+    vLoad(nullptr),
+    vLoadImm(nullptr),
+    vStore(nullptr),
+    trace(riscvVectorLogger->should_log(spdlog::level::trace)),
+    info(riscvVectorLogger->should_log(spdlog::level::info))
 {
     if (vsetOp == nullptr) return;
     // get basic info on the vsetop trigger
@@ -53,7 +53,7 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     collect_control_flow_data();
     // terminate construction if this vset op doesn't start a loop
     if (!loopFound) return;
-    loopLogger->info("Analyzing potential vector stanza at 0x{0:x}",
+    riscvVectorLogger->info("Analyzing potential vector stanza at 0x{0:x}",
         loopStartAddr);
     // Phi (or Multiequal nodes) provide the locations at which
     // registers and memory locations are set. They are found at the top of a block
@@ -66,18 +66,18 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     // source and destination pointer registers and the counter register
     collect_loop_registers();
     // show traits we have deduced
-    loopLogger->info("Summary of traits:\n"
+    riscvVectorLogger->info("Summary of traits:\n"
         "\tVector stanza begins at 0x{0:x}\n"
         "\telementSize = {1:d}\n"
         "\tmultiplier = {2:d}\n"
         "\tcode size = 0x{3:x}",
         loopStartAddr, elementSize, multiplier, loopEndAddr - loopStartAddr);
-    loopLogger->info("\n"
+    riscvVectorLogger->info("\n"
         "\tNumber of Phi nodes affected by loop = {0:d}\n"
         "\tNumber of other UserPcodes = {1:d}\n"
         "\tNumber of arithmetic ops = {2:d}",
         phiNodesAffectedByLoop.size(), otherUserPcodes.size(), numArithmeticOps);
-    loopLogger->info("\n"
+    riscvVectorLogger->info("\n"
         "\tNumber of elements is constant = {0:s}\n"
         "\tNumber of elements is variable = {1:s}\n"
         "\tFound simple comparison = {2:s}\n"
@@ -86,7 +86,7 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
         numElementsVariable ? "true" : "false",
         foundSimpleComparison ? "true" : "false",
         foundUnexpectedOp ? "true" : "false");
-    loopLogger->info("\n"
+    riscvVectorLogger->info("\n"
         "\tFound other user  opcode = {0:s}\n"
         "\tFound simple flow structure = {1:s}\n"
         "\tFound simple load/store pattern = {2:s}\n"
@@ -95,15 +95,15 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
         simpleFlowStructure ? "true" : "false",
         simpleLoadStoreStructure ? "true" : "false",
         vectorRegistersMatch ? "true" : "false");
-    loopLogger->info("\n"
+    riscvVectorLogger->info("\n"
         "\tNumber of elements varnode identified = {0:s}\n"
         "\tNumber of elements per loop varnode identified = {1:s}\n"
         "\tVector load address varnode identified = {2:s}\n"
         "\tVector store address varnode identified = {3:s}",
         vNumElem != nullptr ? "true" : "false",
         vNumPerLoop != nullptr ? "true" : "false",
-        vLoadVn != nullptr ? "true" : "false",
-        vStoreVn != nullptr ? "true" : "false");
+        vLoad != nullptr ? "true" : "false",
+        vStore != nullptr ? "true" : "false");
 }
 
 VectorMatcher::~VectorMatcher()
@@ -117,126 +117,67 @@ bool VectorMatcher::isMemcpy()
         vectorRegistersMatch && (numArithmeticOps >=3) && (!foundUnexpectedOp) &&
         (!foundOtherUserPcodes);
     if (!match) return false;
-    if (!externalDependentOps.empty())
-    {
-        loopLogger->warn("Unable to complete a Memcpy transform at 0x{0:x} due to dangling dependencies",
-            loopStartAddr);
-        return false;
-    }
     return true;
 }
-int VectorMatcher::transform()
+
+bool VectorMatcher::isDefinedInLoop(const Varnode* vn)
 {
-    const bool DISPLAY_BLOCKS = false;
-    const bool INSERT_REG_FIXUPS = false;
-    loopLogger->info("Transforming selection into vector_memcpy, flushing log buffers");
-    loopLogger->flush();
-    // todo: compute number of bytes to move, generate a new varnode
-    PcodeOp* newVectorOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStoreVn, vLoadVn, vNumElem);
-    data.opInsertBefore(newVectorOp, vsetOp);
-    if (INSERT_REG_FIXUPS)
-    {
-        Varnode* constantVn = data.newConstant(8, 0);
-        PcodeOp* constantOp = data.newOp(1, vsetOp->getAddr());
-        data.opSetOpcode(constantOp, CPUI_COPY);
-        data.opSetInput(constantOp, constantVn, 0);
-        const int WORD_SIZE = 8;
-        intb offset = vStoreVn->getOffset();
-        AddrSpace* spc = arch->getSpaceByName("register");
-        Varnode* regVarnode = data.newVarnode(WORD_SIZE, spc, offset);
-        data.opSetOutput(constantOp, regVarnode);
-        data.newVarnodeOut(WORD_SIZE, vNumElem->getAddr(), constantOp);
-        data.opInsertAfter(constantOp, newVectorOp);
-    }
-    if (trace)
-    {
-        std::stringstream ss;
-        newVectorOp->printRaw(ss);
-        loopLogger->info("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
-    }
+    const PcodeOp* definingOp = vn->getDef();
+    if (definingOp == nullptr) return false; 
+    intb offset = definingOp->getAddr().getOffset();
+    return (offset >= loopStartAddr) && (offset <= loopEndAddr);
+}
 
-    // trim any leading Phi nodes of references any loop varnodes we are absorbing
-    loopLogger->info("Trimming loop varnodes out of leading Phi nodes");
-    for (std::vector<PcodeOp*>::iterator it = phiNodesAffectedByLoop.begin();
-         it != phiNodesAffectedByLoop.end();
-         ++it)
+void VectorMatcher::reducePhiNode(PcodeOp* op)
+{
+    for (int slot = 0; slot < op->numInput(); ++slot)
     {
-        PcodeOp* phiOp = *it;
-        // Delete any varnode references to loop variable varnodes
-        for (int slot = 0; slot < phiOp->numInput(); ++slot)
+        Varnode* baseVn = op->getIn(slot);
+        for (int otherSlot = slot + 1; otherSlot < op->numInput(); ++otherSlot)
         {
-            Varnode *vn = phiOp->getIn(slot);
-            PcodeOp *def = vn->getDef();
-            if (def != nullptr)
+            if (baseVn == op->getIn(otherSlot))
             {
-                intb defOffset = def->getAddr().getOffset();
-                if (defOffset >= loopStartAddr && defOffset <= loopEndAddr)
+                riscvVectorLogger->info("Removing duplicate Phi varnode at 0x{0:x}:{1:x}, slot = {2:d}",
+                    op->getAddr().getOffset(), op->getTime(), otherSlot);
+                data.opRemoveInput(op, otherSlot);
+                if (info)
                 {
-                    loopLogger->trace("  deleting slot {0:d} of pcode at 0x{1:x}",
-                                        slot, phiOp->getAddr().getOffset());
-                    data.opRemoveInput(phiOp, slot);
+                    std::stringstream ss;
+                    op->printRaw(ss);
+                    riscvVectorLogger->info("\tNew Phi PcodeOp is: {0:s}", ss.str());
                 }
+                --otherSlot;
             }
         }
-        if ( phiOp->numInput() == 1)
-        {
-            loopLogger->info("  fixing Phi node with only one input");
-            Varnode *vn = phiOp->getIn(0);
-            Varnode* resultVn = phiOp->getOut();
-            list<PcodeOp *>::const_iterator begin = resultVn->beginDescend();
-            list<PcodeOp *>::const_iterator end = resultVn->endDescend();
-            for (auto descendent = begin; descendent != end; ++descendent)
-            {
-                PcodeOp *descendentOp = *descendent;
-                for (int slot = 0; slot < descendentOp->numInput(); ++slot)
-                {
-                    if (resultVn == descendentOp->getIn(slot))
-                    {
-                        data.opSetInput(descendentOp, vn, slot);
-                    }
-                }
-            }
-            // delete this do-nothing Phi op
-            data.opUnlink(phiOp);
-        }
     }
-    // remove loop pcode ops except for the Phi nodes and our inserted op
-    std::list<PcodeOp*>::iterator it = loopBlock->beginOp();
-    std::list<PcodeOp*>::iterator lastOp = loopBlock->endOp();
-    while (it != lastOp)
-    {
-        PcodeOp* op = *it;
-        ++it;
-        if ((op->code() == CPUI_MULTIEQUAL) || op == newVectorOp)
-            continue;
-        data.opUnlink(op);
-    }
+}
 
-    // Optionally explore the BlockGraph around our loop to see if we can
-    // merge the DOWHILE block into its neighbors.
-    if (DISPLAY_BLOCKS && trace)
+bool VectorMatcher::removeExteriorDependencies()
+{
+    if (externalDependentOps.empty())
+        return true;
+    // if the dependencies are simple Phi node terms, allow proceeding
+    bool enableTransform = true;
+    for (auto it: externalDependentOps)
     {
-        loopLogger->info("Notify Funcdata of control flow reset");
-        BlockGraph& graph = data.getStructure();
-        std::stringstream ss;
-        graph.printRaw(ss);
-        graph.printTree(ss, 1);
-        loopLogger->trace("Examining BlockGraph (Raw and Tree forms) after transform: {0:s}", ss.str());
-        ss.str("");
-        loopBlock->printRaw(ss);
-        loopLogger->trace("\tThe loop block identifies as {0:s}", ss.str());
-        ss.str("");
-        int index = 0;
-        FlowBlock* fb = loopBlock->subBlock(index);
-        while (fb != nullptr)
+        enableTransform &= (it->code() == CPUI_MULTIEQUAL);
+    }
+    if (!enableTransform) return false;
+    for (auto it: externalDependentOps)
+    {
+        PcodeOp* op = it;
+        int numSlots = op->numInput();
+        for (int slot = 0; slot < numSlots; ++slot)
         {
-            fb->printRaw(ss);
-            loopLogger->trace("\tInterior  block {0:d} identifies as {0:s}", index, ss.str());
-            index++;
-            fb = loopBlock->subBlock(index);
+            if (isDefinedInLoop(op->getIn(slot)))
+            {
+                riscvVectorLogger->info("Removing exterior dependency at 0x{0:x}",
+                    op->getAddr().getOffset());
+                data.opRemoveInput(op, slot);
+            }
         }
     }
-    return 1;
+    return true;
 }
 
 void VectorMatcher::collect_control_flow_data()
@@ -267,9 +208,9 @@ void VectorMatcher::collect_control_flow_data()
     }
     if (loopFound)
     {
-        loopLogger->info("Loop instruction range: 0x{0:x} to 0x{1:x}",
+        riscvVectorLogger->info("Loop instruction range: 0x{0:x} to 0x{1:x}",
             loopStartAddr, loopEndAddr);
-        loopLogger->info("loopFound = {0:d}; simpleFlowStructure = {1:d}; "
+        riscvVectorLogger->info("loopFound = {0:d}; simpleFlowStructure = {1:d}; "
                          "foundSimpleComparison = {2:d}",
                          loopFound, simpleFlowStructure, foundSimpleComparison);
     }
@@ -281,7 +222,7 @@ void VectorMatcher::collect_phi_nodes()
     PcodeOpTree::const_iterator enditer = data.endOp(vsetOp->getAddr());
     // This loop collects PcodeOps that share an instruction address
     // with the trigger vsetOp.
-    loopLogger->trace("  Iterating over vset phi pcodes");
+    riscvVectorLogger->trace("  Iterating over vset phi pcodes");
     while(iter!=enditer) {
         // iter points at a (SeqNum, PcodeOp*) pair
         PcodeOp *op = (*iter).second;
@@ -292,7 +233,7 @@ void VectorMatcher::collect_phi_nodes()
             {
                 std::stringstream ss;
                 op->printRaw(ss);
-                loopLogger->trace("  Analysis of Phi node: {0:s}",
+                riscvVectorLogger->trace("  Analysis of Phi node: {0:s}",
                     ss.str());
             }
             int numArgs = op->numInput();
@@ -304,7 +245,7 @@ void VectorMatcher::collect_phi_nodes()
                 {
                     std::stringstream ss;
                     op->getIn(slot)->printRaw(ss);
-                    loopLogger->trace("  Analysis of Varnode in slot {0:d}: {1:s}",
+                    riscvVectorLogger->trace("  Analysis of Varnode in slot {0:d}: {1:s}",
                         slot, ss.str());
                 }
                 PcodeOp* definingOp = op->getIn(slot)->getDef();
@@ -320,15 +261,16 @@ void VectorMatcher::collect_phi_nodes()
             }
          }
     }
-    loopLogger->trace("  Found {0:d} Phi nodes affected by the loop", phiNodesAffectedByLoop.size());
+    riscvVectorLogger->trace("  Found {0:d} Phi nodes affected by the loop", phiNodesAffectedByLoop.size());
 }
+
 void VectorMatcher::examine_loop_pcodeops()
 {
     std::list<PcodeOp*>::iterator it = loopBlock->beginOp();
     std::list<PcodeOp*>::iterator lastOp = loopBlock->endOp();
     bool analysisFailed = false;
     int conditional_branches = 0;
-    loopLogger->trace("Beginning loop pcode analysis");
+    riscvVectorLogger->trace("Beginning loop pcode analysis");
     while (it != lastOp && !analysisFailed)
     {
         PcodeOp* op = *it;
@@ -338,7 +280,7 @@ void VectorMatcher::examine_loop_pcodeops()
         {
             std::stringstream ss;
             op->printRaw(ss);
-            loopLogger->trace("  PcodeOp at 0x{0:x}: {1:s}",
+            riscvVectorLogger->trace("  PcodeOp at 0x{0:x}: {1:s}",
                 opOffset, ss.str());
         }
         switch(op->code())
@@ -400,11 +342,11 @@ void VectorMatcher::examine_loop_pcodeops()
                     // may also be other builtin pcodes
                     foundOtherUserPcodes = true;
                 }
-                else if ((opInfo->isLoadImmediate) && (vLoadImmVn == nullptr))
+                else if ((opInfo->isLoadImmediate) && (vLoadImm == nullptr))
                 {
                     // TODO: vector load immediate instructions should not be found inside a loop
-                    vLoadImmVn = op->getIn(1);
-                    loopLogger->trace("    VloadImmediate found: numElem={0:d}", vLoadImmVn->getOffset());
+                    vLoadImm = op->getIn(1);
+                    riscvVectorLogger->trace("    VloadImmediate found: numElem={0:d}", vLoadImm->getOffset());
                 }
                 else if (opInfo->isVset || opInfo->isLoad || opInfo->isStore)
                     break;
@@ -414,7 +356,7 @@ void VectorMatcher::examine_loop_pcodeops()
                     otherUserPcodes.push_back(op);
                     std::stringstream ss;
                     op->printRaw(ss);
-                    loopLogger->trace("    Unexpected user pcode found at 0x{0:x}: {1:s}",
+                    riscvVectorLogger->trace("    Unexpected user pcode found at 0x{0:x}: {1:s}",
                         opOffset, ss.str());
                 }
             }
@@ -423,11 +365,12 @@ void VectorMatcher::examine_loop_pcodeops()
             {
                 foundUnexpectedOp = true;
                 int opcode = op->code();
-                loopLogger->warn("    Unexpected op found in analysis: {0:d}", opcode);
+                riscvVectorLogger->warn("    Unexpected op found in analysis: {0:d}", opcode);
             }
         }
     }
 }
+
 void VectorMatcher::collect_loop_registers()
 {
     // use lists instead of vectors to allow for push_back inside iterative loops
@@ -440,14 +383,15 @@ void VectorMatcher::collect_loop_registers()
     Varnode* vectorLoadAddrVn = nullptr;
     Varnode* vectorStoreRegisterVn = nullptr;
     Varnode* vectorStoreAddrVn = nullptr;
+    std::stringstream ss;
     // For all Phi nodes affected by the loop determine the output register and its dependencies.
     for (auto op : opsToVisit)
     {
         if (trace)
         {
-            std::stringstream ss;
             op->printRaw(ss);
-            loopLogger->trace("Examining context of: {0:s}", ss.str());
+            riscvVectorLogger->trace("Examining context of: {0:s}", ss.str());
+            ss.str("");
         }
         Varnode *resultVn = op->getOut();
         // descendent ops with no return value need to be checked for content but not dependencies.
@@ -460,18 +404,18 @@ void VectorMatcher::collect_loop_registers()
             getRegisterName(resultVn, &regName);
             if (regName != "")
             {
-                loopLogger->info("Tracing loop dependencies for register result {0:s} with register offset 0x{1:x}",
+                riscvVectorLogger->info("Tracing loop dependencies for register result {0:s} with register offset 0x{1:x}",
                                  regName, resultVn->getAddr().getOffset());
             }
             else
             {
-                loopLogger->info("Tracing loop dependencies for non-register object with offset 0x{0:x}",
+                riscvVectorLogger->info("Tracing loop dependencies for non-register object with offset 0x{0:x}",
                                  resultVn->getAddr().getOffset());
             }
         }
         if (isInsideLoop)
         {
-            loopLogger->trace("  Examining context of op inside the loop:");
+            riscvVectorLogger->trace("  Examining context of op inside the loop:");
             // if this is a vector op, identify the register assignments
             const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*op);
             if (opInfo != nullptr)
@@ -482,94 +426,307 @@ void VectorMatcher::collect_loop_registers()
                     elementSize = opInfo->elementSize;
                     vectorNumElemVn = op->getIn(1);
                     vNumPerLoop = op->getOut();
-                    loopLogger->trace("    Vset found: numElementsRegister=0x{0:x}",
+                    riscvVectorLogger->trace("    Vset found: numElementsRegister=0x{0:x}",
                                       vectorNumElemVn->getOffset());
                 }
                 else if (opInfo->isLoad)
                 {
                     vectorLoadRegisterVn = op->getOut();
                     vectorLoadAddrVn = op->getIn(1);
-                    loopLogger->trace("    Vload found at 0x{0:x}", op->getAddr().getOffset());
-                    loopLogger->trace("    Vload register=0x{0:x}",
+                    riscvVectorLogger->trace("    Vload found at 0x{0:x}", op->getAddr().getOffset());
+                    riscvVectorLogger->trace("    Vload register=0x{0:x}",
                                       vectorLoadRegisterVn->getOffset());
                 }
                 else if (opInfo->isStore)
                 {
-                    loopLogger->flush();
+                    riscvVectorLogger->flush();
                     vectorStoreRegisterVn = op->getIn(1);
                     vectorStoreAddrVn = op->getIn(2);
                     vLoopStoreVn = op->getIn(2);
-                    loopLogger->trace("    Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
+                    riscvVectorLogger->trace("    Vstore found: vector register=0x{0:x}; destination register=0x{1:x}",
                                       vectorStoreRegisterVn->getOffset(), vLoopStoreVn->getOffset());
                 }
             }
             if (info && (resultVn != nullptr))
             {
-                std::stringstream ss;
                 resultVn->printRaw(ss);
-                loopLogger->trace("  inloop dependency: {0:s}", ss.str());
+                riscvVectorLogger->trace("  inloop dependency: {0:s}", ss.str());
+                ss.str("");
+            }
+            if (opIsVoid) continue;
+            // Add new dependent ops to visit if this op has a known result *and* this op is inside the loop
+            list<PcodeOp *>::const_iterator begin = resultVn->beginDescend();
+            list<PcodeOp *>::const_iterator end = resultVn->endDescend();
+            for (auto descendent = begin; descendent != end; ++descendent)
+            {
+                PcodeOp *descendentOp = *descendent;
+                if (trace)
+                {
+                    descendentOp->printRaw(ss);
+                    riscvVectorLogger->trace("  Descendent op: {0:s}", ss.str());
+                    ss.str("");
+                }
+                dependentVarnodesInLoop.push_back(resultVn);
+                if (std::find(opsToVisit.begin(), opsToVisit.end(), descendentOp) == opsToVisit.end())
+                    opsToVisit.push_back(descendentOp);
             }
         }
         else
         {
-            loopLogger->trace("  Examining context of op inside the loop:");
+            riscvVectorLogger->trace("  Examining context of op outside the loop:");
             dependentVarnodesOutsideLoop.push_back(resultVn);
             if (std::find(externalDependentOps.begin(), externalDependentOps.end(), op) == externalDependentOps.end())
                 externalDependentOps.push_back(op);
             if ((resultVn != nullptr) && info)
             {
-                std::stringstream ss;
                 resultVn->printRaw(ss);
-                loopLogger->trace("  exterior dependency to fix: {0:s}", ss.str());
+                riscvVectorLogger->trace("  exterior dependency to fix: {0:s}", ss.str());
+                ss.str("");
             }
         }
-        if (opIsVoid) continue;
-        // Add new dependent ops to visit if this op has a known result
-        list<PcodeOp *>::const_iterator begin = resultVn->beginDescend();
-        list<PcodeOp *>::const_iterator end = resultVn->endDescend();
-        for (auto descendent = begin; descendent != end; ++descendent)
-        {
-            PcodeOp *descendentOp = *descendent;
-            if (trace)
-            {
-                std::stringstream ss;
-                descendentOp->printRaw(ss);
-                loopLogger->trace("  Descendent op: {0:s}", ss.str());
-            }
-            dependentVarnodesInLoop.push_back(resultVn);
-            if (std::find(opsToVisit.begin(), opsToVisit.end(), descendentOp) == opsToVisit.end())
-                opsToVisit.push_back(descendentOp);
-    }
     }
     // do load and store registers match?
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
-    // find the Phi node defining the initial load address register
+    // find the Phi node defining the loop registers
     for (auto op: phiNodesAffectedByLoop)
     {
         if (trace)
         {
-            std::stringstream ss;
             op->printRaw(ss);
-            loopLogger->trace("Checking PcodeOp for dependencies: {0:s}", ss.str());
-            loopLogger->flush();
+            riscvVectorLogger->trace("Checking PcodeOp for dependencies: {0:s}", ss.str());
+            riscvVectorLogger->flush();
+            ss.str("");
         }
         intb regOffset = op->getOut()->getAddr().getOffset();
         string regName;
         getRegisterName(op->getOut(), &regName);
-        loopLogger->trace("Searching for loop variables referring to register {0:s}",
+        riscvVectorLogger->trace("Searching for loop variables referring to register {0:s}",
             regName);
         if ((vectorNumElemVn != nullptr) && (!vectorNumElemVn->isConstant()) && (regOffset == vectorNumElemVn->getOffset()))
         {
+            if (trace)
+            {
+                op->getOut()->printRaw(ss);
+                riscvVectorLogger->trace("\tvNumElem identified as {0:s}", ss.str());
+                ss.str("");
+            }
             vNumElem = op->getOut();
         }
         else if ((vectorLoadAddrVn != nullptr) && (regOffset == vectorLoadAddrVn->getOffset()))
         {
-            vLoadVn = op->getOut();
+            if (trace)
+            {
+                op->getOut()->printRaw(ss);
+                riscvVectorLogger->trace("\tvLoadVn identified as {0:s}", ss.str());
+                ss.str("");
+            }
+            vLoad = op->getOut();
         }
         else if ((vectorStoreAddrVn != nullptr) && regOffset == vectorStoreAddrVn->getOffset())
         {
-            vStoreVn = op->getOut();
+            if (trace)
+            {
+                op->getOut()->printRaw(ss);
+                riscvVectorLogger->trace("\tvStoreVn identified as {0:s}", ss.str());
+                ss.str("");
+            }
+            vStore = op->getOut();
         }
     }
+}
+
+int VectorMatcher::transform()
+{
+    const bool EXPLORE_BLOCKS = false;
+    const int TRANSFORM_COMPLETED = 1;
+    const int TRANSFORM_ROLLED_BACK = 0;
+    std::stringstream ss;
+
+    if (info)
+    {
+        loopBlock->printRaw(ss);
+        riscvVectorLogger->info("Vector loop block before transforms is\n{0:s}", ss.str());
+        ss.str("");
+    }
+
+    // Optionally show the current block structure around the code we will transform
+    if (EXPLORE_BLOCKS && trace)
+    {
+        BlockGraph& graph = data.getStructure();
+        graph.printRaw(ss);
+        graph.printTree(ss, 1);
+        riscvVectorLogger->trace("Examining BlockGraph (Raw and Tree forms) after transform:\n{0:s}", ss.str());
+        ss.str("");
+        loopBlock->printRaw(ss);
+        riscvVectorLogger->trace("\tThe loop block identifies as\n{0:s}", ss.str());
+        ss.str("");
+    }
+
+    // attempt to remove exterior dependencies on the scratch registers employed
+    // by the vector code
+    if (!removeExteriorDependencies())
+    {
+        riscvVectorLogger->warn("Unable to safely remove register dependencies at 0x{0:x}",
+            vsetOp->getAddr().getOffset());
+        return TRANSFORM_ROLLED_BACK;
+    }
+    if (trace)
+    {
+        vStore->printRaw(ss); ss << ";";
+        vLoad->printRaw(ss); ss << ";";
+        vNumElem->printRaw(ss);
+        riscvVectorLogger->trace("vStore, vLoadVn, vNumElem = {0:s}", ss.str());
+        ss.str("");
+    }
+
+    // visit all pcodeops in the loop block
+    // * Phi nodes are edited to replace loop variable varnodes with duplicates
+    // * the newVector op is unchanged
+    // * other loop ops are removed
+    std::list<PcodeOp*>::iterator it = loopBlock->beginOp();
+    std::list<PcodeOp*>::iterator lastOp = loopBlock->endOp();
+    while (it != lastOp)
+    {
+        PcodeOp* op = *it;
+        ++it;
+        Varnode* vOut = op->getOut();
+        riscvVectorLogger->trace("Adjusting Phi node at 0x{0:x}:{1:x} to remove interior varnodes",
+            op->getAddr().getOffset(), op->getTime());
+        if (op->code() == CPUI_MULTIEQUAL)
+        {
+            // if there are only two varnodes in this Phi node, and one is a loop variable,
+            // delete the Phi node and take the non-loop varnode as a parameter
+            reducePhiNode(op);
+            // Try the simplest case first
+            if ((op->numInput() == 2) && (vOut != nullptr))
+            {
+                Varnode* v0 = op->getIn(0);
+                Varnode* v1 = op->getIn(1);
+                Varnode* vParam;
+                if (isDefinedInLoop(v0))
+                    vParam = v1;
+                else if (isDefinedInLoop(v1))
+                    vParam = v0;
+                else
+                {
+                    riscvVectorLogger->warn("Unable to recognize Phi node parameters");
+                    continue;
+                }
+                if (sameRegister(vOut, vStore))
+                {
+                    riscvVectorLogger->trace("Replacing the vector store address varnode");
+                    vStore = vParam;
+                }
+                else if (sameRegister(vOut, vLoad))
+                {
+                    riscvVectorLogger->trace("Replacing the vector load address varnode");
+                    vLoad = vParam;
+                }
+                else if (sameRegister(vOut, vNumElem))
+                {
+                     riscvVectorLogger->trace("Replacing the vector number of elements varnode");
+                    vNumElem = vParam;
+                }
+                riscvVectorLogger->trace("Deleting the op (and all of its descendents) at 0x{0:x}:{1:x}",
+                    op->getAddr().getOffset(), op->getTime());
+                riscvVectorLogger->flush();
+                data.opUnlink(op);
+            }
+            else if ((op->numInput() >= 3) && (vOut != nullptr))
+            {
+                // We need to preserve this Phi node after removing the interior Vnode reference
+                for (int slot=0; slot < op->numInput(); ++slot)
+                {
+                    if ((op->getIn(slot)->isFree()) || (isDefinedInLoop(op->getIn(slot))))
+                    {
+                        riscvVectorLogger->trace("Removed interior varnode in slot {0:d}", slot);
+                        riscvVectorLogger->flush();
+                        data.opRemoveInput(op, slot);
+                        --slot;
+                    }
+                }
+            }
+        }
+        else
+        {
+            riscvVectorLogger->trace("Deleting the op at 0x{0:x}:{1:x}",
+                op->getAddr().getOffset(), op->getTime());
+            data.opUnlink(op);
+        }
+    }
+
+    if (trace)
+    {
+        loopBlock->printRaw(ss);
+        riscvVectorLogger->trace("Vector loop block after reducing Phi nodes is {0:s}", ss.str());
+        ss.str("");
+    }
+
+    riscvVectorLogger->info("Transforming selection into vector_memcpy, flushing log buffers");
+    riscvVectorLogger->flush();
+    // todo: compute number of bytes to move, generate a new varnode
+
+    PcodeOp* newVectorOp = insertBuiltin(data, *vsetOp, VECTOR_MEMCPY, vStore, vLoad, vNumElem);
+    if (trace)
+    {
+        newVectorOp->printRaw(ss);
+        riscvVectorLogger->info("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
+        ss.str("");
+    }
+    data.opInsertBegin(newVectorOp, loopBlock);
+
+    if (info)
+    {
+        loopBlock->printRaw(ss);
+        riscvVectorLogger->info("Vector loop block after all immediate transforms is\n{0:s}", ss.str());
+        ss.str("");
+    }
+
+    // Optionally explore the BlockGraph around our loop to see if we can
+    // merge the DOWHILE block into its neighbors.  Results so far suggest that
+    // it is possible but complex - replacing the function's BlockGraph entirely rather
+    // than a simple edge edit.  Perhaps we could apply these loop-processing rules
+    // earlier, between the point blocks are identified and the DOWHILE block is created?
+    if (EXPLORE_BLOCKS && trace)
+    {
+        riscvVectorLogger->info("Notify Funcdata of control flow reset");
+        BlockGraph& graph = data.getStructure();
+        graph.printRaw(ss);
+        graph.printTree(ss, 1);
+        riscvVectorLogger->trace("Examining BlockGraph (Raw and Tree forms) after transform:\n{0:s}", ss.str());
+        ss.str("");
+        loopBlock->printRaw(ss);
+        riscvVectorLogger->trace("\tThe loop block identifies as\n{0:s}", ss.str());
+        ss.str("");
+        riscvVectorLogger->trace("\t\tBlock ins = {0:d}, outs = {1:d}", loopBlock->sizeIn(), loopBlock->sizeOut());
+        int index = 0;
+        FlowBlock* fb = loopBlock->subBlock(index);
+        while (fb != nullptr)
+        {
+            fb->printRaw(ss);
+            riscvVectorLogger->trace("\tInterior  block {0:d} identifies as\n{0:s}", index, ss.str());
+            index++;
+            riscvVectorLogger->trace("\t\tBlock ins = {0:d}, outs = {1:d}", fb->sizeIn(), fb->sizeOut());
+            fb = loopBlock->subBlock(index);
+        }
+        FlowBlock* parentBlock = loopBlock->getParent();
+        parentBlock->printRaw(ss);
+        riscvVectorLogger->trace("\tThe parent basic block to our loop block identifies as\n{0:s}", ss.str());
+        ss.str("");
+        riscvVectorLogger->trace("\t\tParent block ins = {0:d}, outs = {1:d}", parentBlock->sizeIn(), parentBlock->sizeOut());
+        // identify the output edge blocks
+        for (index=0; index < loopBlock->sizeOut(); ++index)
+        {
+            fb = loopBlock->getOut(index);
+            fb->printRaw(ss);
+            riscvVectorLogger->trace("\t\tOutput block {0:d} identifies as\n{1:s}", index, ss.str());
+            ss.str("");
+        }
+        riscvVectorLogger->info("Preparing to edit the flow block graph");
+        graph.removeEdge(loopBlock, loopBlock);
+        graph.printTree(ss, 1);
+        riscvVectorLogger->info("\t\tBlock tree after loop edge removal is\n{0:s}",ss.str());
+    }
+    return TRANSFORM_COMPLETED;
 }
 }

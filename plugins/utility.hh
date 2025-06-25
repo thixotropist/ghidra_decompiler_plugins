@@ -19,6 +19,11 @@ PcodeOp* insertBuiltin(Funcdata& data, PcodeOp& op, intb builtinOpId, Varnode* p
  * @brief Get the register name associated with a given Varnode
  */
 void getRegisterName(const Varnode* vn, std::string* regname);
+
+/**
+ * @brief compare registers associated with two Varnodes
+ */
+bool sameRegister(const Varnode* a, const Varnode* b);
 }
 
 #endif /* UTILITY_HH_ */
