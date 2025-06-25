@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __VECTORCOPY_HH__
-#define __VECTORCOPY_HH__
+#ifndef __VECTOR_TRANSFORMER_HH__
+#define __VECTOR_TRANSFORMER_HH__
 
 #include <iostream>
 #include <unordered_set>
@@ -24,18 +24,17 @@
 
 namespace ghidra{
 /**
- * @brief A Rule collecting vector loads and stores into builtin_memcpy
- * and builtin_memset
+ * @brief A Rule collecting individual vector instructions into vector_* function invocations
  */
-class RuleVectorCopy : public Rule
+class RuleVectorTransform : public Rule
 {
 public:
     /**
-     * @brief Construct a new Rule Vector Copy object
+     * @brief Construct a new Rule Vector Transform object
      * 
      * @param g the name of an existing Ghidra rule group
      */
-    explicit RuleVectorCopy(const string &g); ///< Constructor
+    explicit RuleVectorTransform(const string &g); ///< Constructor
     /**
      * @brief Allow the ActionDatabase to clone this rule
      * 
@@ -57,13 +56,6 @@ public:
      * @return int4 0 if no changes made, 1 if changes made
      */
     virtual int4 applyOp(PcodeOp *op, Funcdata &data) override;
-
-private:
-
-    /**
-     * @brief Is this PcodeOp likely to begin a builtin_memcpy or builtin_memset sequence?
-     */
-    bool validVectorLoadOrLoadImmed(PcodeOp& p);
 };
 }
-#endif /* __VECTORCOPY_HH__ */
+#endif /* __VECTOR_TRANSFORMER_HH__ */

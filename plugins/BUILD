@@ -1,14 +1,12 @@
 cc_library(
     name = "riscv_vector",
     srcs = [
-        "diagnostics.hh",
-        "diagnostics.cc",
         "riscv.hh",
         "riscv.cc",
-        "vectorcopy.hh",
-        "vectorcopy.cc",
-        "vector_loop_match.hh",
-        "vector_loop_match.cc",
+        "vector_transformer.hh",
+        "vector_transformer.cc",
+        "vector_matcher.hh",
+        "vector_matcher.cc",
         "utility.hh",
         "utility.cc",
     ],

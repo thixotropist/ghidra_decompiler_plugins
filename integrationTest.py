@@ -92,6 +92,9 @@ class T1Datatests(unittest.TestCase):
         result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
             "Datatest of memcpy_exemplars failed")
+        with open("/tmp/memcpy_exemplars.testlog", "w", encoding="utf8") as f:
+            f.write(result.stdout)
+            f.write(result.stderr)
         self.assertIn("successfully loaded: RISC-V 64", result.stdout,
                          "Failed to load test/memcpy_exemplars_save.xml")
         self.assertIn("vector_memcpy((void *)to,(void *)from,2);", result.stdout,
@@ -119,11 +122,12 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/whisper_sample_1.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
-        self.assertIn("vector_memcpy((void *)pvVar1,(void *)param1,(ulong)pcVar5)", result.stdout,
+        self.assertIn("vector_memcpy((void *)pvVar2,(void *)param1,(ulong)pcVar5)", result.stdout,
                       "Vector_memcpy transform was not as expected")
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
                       "Memory Leak or invalid read access detected")
 
+    #@unittest.skip("Dangling references")
     def test_02_whisper_selection_complex(self):
         """
         Verify correct behavior with the main function of whisper-cpp
@@ -142,6 +146,7 @@ class T1Datatests(unittest.TestCase):
         self.assertIn("vector_memcpy((void *)&uStack_274,(void *)0x107f20,0x10)", result.stdout,
                       "Vector_memcpy fixed length transform was not as expected")
 
+    #@unittest.skip("Dangling references")
     def test_03_whisper_regression(self):
         """
         Verify processing of several Whisper functions that previously threw exceptions
@@ -156,11 +161,11 @@ class T1Datatests(unittest.TestCase):
             with open(f"/tmp/whisper_sample_{i}.testlog", "w", encoding="utf8") as f:
                 f.write(result.stdout)
                 f.write(result.stderr)
-            command = f"grep -P '^\\s+vector_memcpy' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
+            command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
             result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
             self.assertEqual(0, result.returncode,
                 f"Transform count collection for whisper_sample_{i} failed")
-            logger.info(f"Found {result.stdout.strip()} vector memcpy transforms in whisper_sample_{i}")
+            logger.info(f"Found {result.stdout.strip()} vector transforms in whisper_sample_{i}")
 
     @unittest.skip("Throws decompiler exception")
     def test_04_whisper_failures(self):
