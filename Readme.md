@@ -1,15 +1,19 @@
 # Overview
 
-The bulk of this project's documentation is to be structured as a Hugo + Docsys static web site,
+The bulk of this project's documentation is structured as a Hugo + Docsys static web site,
 with source material collected under `content/en`. Local browsing is enabled with `hugo serve`.
 
 The intended audience includes Ghidra users wishing to extend or research Ghidra's decompiler subsystem,
-especially in support of instruction set architecture extensions like the RISC-V vector instruction set.
+especially in support of processor-specific Rules and Actions.
+This sample project concentrates on rules supporting instruction set architecture extensions like the
+RISC-V vector instruction set.
 
 This is a research project intended to show what *may* be done with the Ghidra decompiler and at what complexity.
 We can avoid the complexity of full Ghidra decompiler PR reviews by proposing no enduring changes to the decompiler
-itself.  Instead, the first decompiler plugin build triggers a download of Ghidra sources, which are patched to provide the decompiler
-with a minimal plugin manager.  Exploratory development then proceeds within the plugin, using the decompiler's native datatest framework for
+itself.  Instead, the first decompiler plugin build triggers a download of current released Ghidra sources,
+which are patched to provide the decompiler
+with a minimal plugin manager.
+Exploratory development then proceeds within the plugin, using the decompiler's native datatest framework for
 rapid build/test iterations.
 
 A secondary goal is to supplement @caheckman's excellent Doxygen documentation of the decompiler source code, for instance
@@ -29,9 +33,7 @@ Much of the material here has been adapted from the excellent prior work by
 
 Plugins are experimental.  We hope to evaluate the feasibility of both user-contributed and processor-specific plugins.
 The initial goal is to extend @caheckman commits transforming pcode sequences into `builtin_memcpy` calls, translating
-common RISCV-64 vector instruction sequences into `builtin_memcpy`, `builtin_strlen`, and other higher level calls.
-
-The project documentation consists of a Hugo static website under `content/en`.
+common RISCV-64 vector instruction sequences into `vector_memcpy`, `vector_strlen`, and other higher level calls.
 
 ## Quickstart
 
@@ -40,10 +42,10 @@ all of Ghidra on each test iteration.  The decompiler stands as a separate C++ e
 That executable can easily be patched to enable run-time plugins.  Therefore a fairly simple development workflow
 can be:
 
-1. Install a Ghidra distribution binary tarball.  For example, we install Ghidra /opt/ghidra_11.4_DEV from the
+1. Install a Ghidra distribution binary tarball.  For example, we install Ghidra /opt/ghidra_11.5_DEV from the
    `isa_ext` branch of https://github.com/thixotropist/ghidra.  This branch includes support for RISCV vector
    instruction set extensions.  The distribution's Ghidra decompiler gets installed at
-   `/opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompiler`.
+   `/opt/ghidra_11.5_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompiler`.
 2. Acquire a Ghidra distribution source tarball to get the decompiler sources, patch a simple plugin manager into
    those sources, and rebuild the decompiler.  The rebuilt decompiler will export all linkage symbols for access by
    a plugin.
@@ -58,7 +60,7 @@ can be:
 $ bazel build -c opt @ghidra//:decompile
 
 # replace the unpatched decompiler with our modified decompiler
-$ cp -f bazel-bin/external/+_repo_rules+ghidra/decompile /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
+$ cp -f bazel-bin/external/+_repo_rules+ghidra/decompile /opt/ghidra_11.5_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
 
 # build a decompiler plugin that can recognize vectorization of memcpy and memset invocations
 $ bazel build -c dbg plugins:riscv_vector
@@ -83,22 +85,18 @@ What works:
 * A simple Ghidra decompiler plugin framework is working on a Linux host.  The plugin activates with both the
   usual Ghidra GUI environment and the standalone Ghidra decompiler data test framework.
 * The plugin manager adds hooks to add custom actions and new Datatyped builtin functions.
-* The elementary proof-of-concept plugin recognizes *some* RISCV vector sequences and transforms them into `builtin_memcpy` and
-  `builtin_memset` calls.
+* The elementary proof-of-concept plugin recognizes *some* RISCV vector sequences and transforms them into `vector_memcpy` and
+  `vector_memset` calls.
 * Applying the new plugin rule to a vectorized RISC-V build of `whisper-cpp` completes without crashing and generates over 1000
   vector transforms.
 
-What's needed:
+What's pending:
 
-* `builtin_memset` transforms are often duplicated
-* `builtin_memcpy` patterns don't account for `void*` return values
-* unify pattern matching for vector sequences with and without loops
-* utility and diagnostic code needs refactoring
-* logging code dependencies should be moved into the decompiler and not duplicated in the plugin.
-* remove the logging requirement for a std c++-20 compilation
-* logging levels need balancing and should permit local trace or debugging
-* understand and document flow blocks, especially the proper flow structure changes needed when deleting
-  loops and merging flow blocks
-* update datatest cases to include patterns the plugin fails to get right
-* understand why datatest `print c` output differs from GUI decompiler C
-* update the Hugo Docsys content to better track code changes
+* Vector stanzas often consists of short loops with scalar registers assigned for source pointer, destination pointer, and counts.
+  Ghidra generally considers these scratch registers as having larger scope.  If the loop is absorbed into a function call
+  like `vector_memcpy` these register varnodes need to be deleted along with their descendants.  Figuring out when this is
+  safe is more art than science.
+* Vector stanza loops are replaced with function calls but the `BlockGraph` is not updated for the parent function.  This
+  leaves `DoWhile` `FlowBlock` objects in the function's `BlockGraph`, adding clutter to the decompiler output.  We need some
+  way to delete these `DoWhile` blocks and merge their interior BlockBasic code into the following blocks.
+* We need a general model for vector instruction stanzas implementing loops over arrays of structures.

@@ -830,3 +830,9 @@ $ python integrationTest.py T1Datatests.test_03_whisper_regression
 INFO:root:Running SLEIGHHOME=/opt/ghidra_11.4_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/whisper_sample_5.ghidra with output to /tmp/whisper_sample_5.testlog
 INFO:root:Found 17 vector memcpy transforms in whisper_sample_5
 ```
+
+## After refactoring and rebasing
+
+Refactor the plugin code and rebase to the Ghidra 11.4 release.  The code recognizing vector stanzas and completing
+the transforms changed significantly, so the previously reported results are no longer valid.  Let's walk through
+the test cases and see if we can improve on those previous results.
