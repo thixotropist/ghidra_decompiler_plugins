@@ -61,14 +61,14 @@ this kind of transform?
 
 ## Installation
 
->Note: This project is tested against Ghidra 11.4 and 11.5.  Documentation may refer to either release
+>Note: This project is tested against Ghidra 11.4, 11.5, and 12.0-DEV.  Documentation may refer to any release
        with no known release dependencies.
 
 This project patches an existing Ghidra deployment, replacing the standard decompiler executable
 with one supporting a simple plugin manager.  It also provides a framework for developing and
 testing decompiler plugins capable of adding new rules, actions, and transformations.
 
-1. Install Ghidra from any source.  For this project, we install the `isa_ext` branch from `git@github.com:thixotropist/ghidra.git` to `/opt/ghidra_11.5_DEV`.
+1. Install Ghidra from any source.  For this project, we install the `isa_ext` branch from `git@github.com:thixotropist/ghidra.git` to `/opt/ghidra_12.0_DEV`.
    This will provide every Ghidra component *except* for the decompiler.
 2. Allow changes to the decompiler directory.
    ```console

@@ -1,6 +1,5 @@
 ---
 title: Dangling Dependencies
-linkTitle: Dangling Dependencies
 weight: 20
 ---
 

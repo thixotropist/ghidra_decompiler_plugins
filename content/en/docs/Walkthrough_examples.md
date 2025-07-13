@@ -836,3 +836,643 @@ INFO:root:Found 17 vector memcpy transforms in whisper_sample_5
 Refactor the plugin code and rebase to the Ghidra 11.4 release.  The code recognizing vector stanzas and completing
 the transforms changed significantly, so the previously reported results are no longer valid.  Let's walk through
 the test cases and see if we can improve on those previous results.
+
+
+### Loop-free transforms
+
+The simplest case involves vector stanzas with no loops - where the number of vector elements is known at compile time
+and known to be small enough that all elements fit into the smallest vector register (16 bytes).  The `test/memcpy_exemplars`
+examples include several of these. A good example is
+
+```as
+# copy fixed 15 bytes
+.extern memcpy_i15
+memcpy_i15:
+    vsetivli zero,0xf,e8,m1,ta,ma  
+    vle8.v   v1,(a1)
+    nop
+    nop
+    vse8.v   v1,(a0)
+    ret
+```
+
+The Ghidra test script assigns this signature to the function before decompilation begins:
+
+```c
+extern void memcpy_i15(void* to, void* from);
+```
+
+>Note: the no-op instructions are present simply to test the stanza matcher with non-contiguous load and store operations.
+
+Run this test case with:
+
+```console
+SLEIGHHOME=/opt/ghidra_11.5_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so valgrind \
+  /opt/ghidra_11.5_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/memcpy_exemplars.ghidra
+```
+
+We get:
+
+```text
+...
+[decomp]> load function memcpy_i15
+Function memcpy_i15: 0x00000036
+[decomp]> decompile memcpy_i15
+Decompiling memcpy_i15
+Decompilation complete
+[decomp]> print C
+
+void memcpy_i15(void *to,void *from)
+
+{
+  vector_memcpy((void *)to,(void *)from,0xf);
+  return;
+}
+[decomp]> print raw
+0
+Basic Block 0 0x00000036-0x00000046
+0x00000042:c:	u0x10000000(0x00000042:c) = (cast) a0(i)
+0x00000042:d:	u0x10000008(0x00000042:d) = (cast) a1(i)
+0x00000042:b:	vector_memcpy(u0x10000000(0x00000042:c),u0x10000008(0x00000042:d),#0xf:1)
+0x00000046:a:	return(#0x0)
+```
+
+This shows a valid transform, with a few interesting traits:
+
+* `vector_memcpy` replaces the three vector operations with the single PcodeOp at `0x00000042:b`
+* The decompiler inserts two CAST PcodeOps after the transform Rule is complete.
+* The decompiler window inserts some redundant casting within the call to `vector_memcpy`.
+* The decompiler removes any references to the three scratch registers, `a0`, `a1`, and `v1`.
+  The decompiler knows that the function hasa a void return, so `a0` and `a1` are not to be considered
+  as holding the return value.
+
+### Minimal loop transforms
+
+`test/memcpy_exemplars` also includes an example where the compiler does not know the number of elements
+to transfer.
+
+```as
+memcpy_v1:
+    vsetvli  a3,a2,e8,m1,ta,ma
+    vle8.v   v1,(a1)
+    sub      a2,a2,a3
+    c.add    a0,a3
+    vse8.v   v1,(a0)
+    c.add    a1,a3
+    bne      a2,zero,memcpy_v1
+    ret
+```
+
+The decompiler is told the signature of this function:
+
+```c
+extern void memcpy_v1(void* to, void* from, long size);
+```
+The test output shows a successful transform:
+
+```text
+[decomp]> load function memcpy_v1
+Function memcpy_v1: 0x00000048
+[decomp]> decompile memcpy_v1
+Decompiling memcpy_v1
+Decompilation complete
+[decomp]> print C
+
+void memcpy_v1(void *to,void *from,long size)
+
+{
+  do {
+    vector_memcpy((void *)to,(void *)from,size);
+  } while ;
+  return;
+}
+[decomp]> print raw
+0
+Basic Block 0 0x00000048-0x00000048
+Basic Block 1 0x00000048-0x0000005a
+0x00000048:13:	u0x10000008(0x00000048:13) = (cast) a0(i)
+0x00000048:14:	u0x10000010(0x00000048:14) = (cast) a1(i)
+0x00000048:12:	vector_memcpy(u0x10000008(0x00000048:13),u0x10000010(0x00000048:14),a2(i))
+Basic Block 2 0x0000005c-0x0000005c
+0x0000005c:a:	return(#0x0)
+```
+
+The generated Pcode is good, with the same cast ops inserted as in the constant-size case.
+The `do ... while;` wrapping is a distracting but harmless side effect of the transform.
+This plugin build allows logging, so let's set the log-level to trace and see what is going on.
+
+This version of the plugin triggers on any `vsetvli` instruction, constructing a `VectorMatcher`
+object to extract features from the associated PcodeOps.  If those features are consistent with a vector_memcpy
+transform, and the transform can be completed without dangling (aka "free" varnode dependencies), then the
+transform is executed.
+
+>Note: The following segments of the log file includes manual annotation flagged by `//`
+
+```text
+[2025-06-26 20:16:05.505] [riscv_vector] [info] Summary of traits:
+        Vector stanza begins at 0x48
+        elementSize = 1
+        multiplier = 1
+        code size = 0x12
+[2025-06-26 20:16:05.505] [riscv_vector] [info] 
+        Number of Phi nodes affected by loop = 3   // Phi nodes track writes to registers and memory
+        Number of other UserPcodes = 0
+        Number of arithmetic ops = 3               // We expect two pointers and one counter to be updated within the loop
+[2025-06-26 20:16:05.507] [riscv_vector] [info] 
+        Number of elements is constant = false
+        Number of elements is variable = true
+        Found simple comparison = true             // Found a simple loop condition test
+        Found unexpected opcode = false            // No unexpected PcodeOps found
+[2025-06-26 20:16:05.507] [riscv_vector] [info] 
+        Found other user  opcode = false           // No other vector instructions found
+        Found simple flow structure = true         // No other calls, returns, or branches
+        Found simple load/store pattern = true     // One load, one store
+        Found vector registers match = true        // Load and Store share the same vector register
+[2025-06-26 20:16:05.508] [riscv_vector] [info] 
+        Number of elements varnode identified = true          // Varnode input holding total number of elements found
+        Number of elements per loop varnode identified = true // Varnode register holding number of elements per iteration
+        Vector load address varnode identified = true         // Varnode input holding source address
+        Vector store address varnode identified = true        // Varnode input holding destination address
+[2025-06-26 20:16:05.508] [riscv_vector] [trace] Entering applyOp with a recognized vset* user pcode op at 0x48
+[2025-06-26 20:16:05.508] [riscv_vector] [trace] Testing the vector stanza for a vector_memcpy match  // This is a match
+[2025-06-26 20:16:05.511] [riscv_vector] [info] Vector loop block before transforms is  // What Pcode is given to our Rule?
+Basic Block 1 0x00000048-0x0000005a
+0x00000048:e:   a2(0x00000048:e) = a2(0x00000050:3) ? a2(i)   // Three Phi nodes showing register write locations
+0x00000048:d:   a1(0x00000048:d) = a1(0x00000058:7) ? a1(i)
+0x00000048:c:   a0(0x00000048:c) = a0(0x00000052:4) ? a0(i)
+0x00000048:0:   a3(0x00000048:0) = vsetvli_e8m1tama(a2(0x00000048:e))  // The vsetvli_e8m1tama instruction
+0x0000004c:2:   v1(0x0000004c:2) = vle8_v(a1(0x00000048:d))            // The vector load instruction
+0x00000050:11:  u0x10000000(0x00000050:11) = a3(0x00000048:0) * #0xffffffffffffffff  // Part of the count decrementer
+0x00000050:3:   a2(0x00000050:3) = a2(0x00000048:e) + u0x10000000(0x00000050:11)     // Remainder of the count decrementer
+0x00000052:4:   a0(0x00000052:4) = a0(0x00000048:c) + a3(0x00000048:0) // Destination address updater
+0x00000054:6:   vse8_v(v1(0x0000004c:2),a0(0x00000052:4))              // The vector Store instruction
+0x00000058:7:   a1(0x00000058:7) = a1(0x00000048:d) + a3(0x00000048:0) // Source address updater
+0x0000005a:8:   u0x00018500:1(0x0000005a:8) = a2(0x00000050:3) != #0x0         // Branch condition test count==0
+0x0000005a:9:   goto r0x00000048:1(free) if (u0x00018500:1(0x0000005a:8) != 0) // Condintional branch
+
+// The `VectorMatcher` has identified key Varnodes within the loop
+[2025-06-26 20:16:05.512] [riscv_vector] [trace] vStore, vLoadVn, vNumElem = a0(0x00000048:c);a1(0x00000048:d);a2(0x00000048:e)
+2025-06-26 20:16:05.513] [riscv_vector] [info] Transforming PcodeOp at 0x48:e
+[2025-06-26 20:16:05.514] [riscv_vector] [trace]        Reducing the Phi or MULTIEQUAL node at this location
+[2025-06-26 20:16:05.514] [riscv_vector] [trace]        Absorbing this PcodeOp
+[2025-06-26 20:16:05.515] [riscv_vector] [trace]        Acquiring the vector number of elements varnode
+[2025-06-26 20:16:05.515] [riscv_vector] [trace]        Deleting the PcodeOP (and all of its descendents)
+[2025-06-26 20:16:05.516] [riscv_vector] [info] Transforming PcodeOp at 0x48:d
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Reducing the Phi or MULTIEQUAL node at this location
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Absorbing this PcodeOp
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Acquiring the vector load address varnode
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Deleting the PcodeOP (and all of its descendents)
+[2025-06-26 20:16:05.516] [riscv_vector] [info] Transforming PcodeOp at 0x48:c
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Reducing the Phi or MULTIEQUAL node at this location
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Absorbing this PcodeOp
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Acquiring the vector store address varnode
+[2025-06-26 20:16:05.516] [riscv_vector] [trace]        Deleting the PcodeOP (and all of its descendents)
+[2025-06-26 20:16:05.516] [riscv_vector] [info] Transforming PcodeOp at 0x48:0
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x48:0
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x4c:2
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x4c:2
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x50:11
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x50:11
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x50:3
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x50:3
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x52:4
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x52:4
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x54:6
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x54:6
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x58:7
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x58:7
+[2025-06-26 20:16:05.517] [riscv_vector] [info] Transforming PcodeOp at 0x5a:8
+[2025-06-26 20:16:05.517] [riscv_vector] [trace]        Deleting the op at 0x5a:8
+[2025-06-26 20:16:05.518] [riscv_vector] [info] Transforming PcodeOp at 0x5a:9
+[2025-06-26 20:16:05.518] [riscv_vector] [trace]        Deleting the op at 0x5a:9
+[2025-06-26 20:16:05.518] [riscv_vector] [trace] Vector loop block after reducing Phi nodes is
+Basic Block 1 0x00000048-0x0000005a
+
+[2025-06-26 20:16:05.518] [riscv_vector] [info] Transforming selection into vector_memcpy, flushing log buffers
+[2025-06-26 20:16:05.519] [riscv_vector] [info]         Inserting a new vector operation
+                syscall[#0x11000001:4](a0(i),a1(i),a2(i))
+[2025-06-26 20:16:05.520] [riscv_vector] [info] Vector loop block after all immediate transforms is
+Basic Block 1 0x00000048-0x0000005a
+0x00000048:12:  vector_memcpy(a0(i),a1(i),a2(i))
+```
+
+The transform has processed the three Phi or `MULTIEQUAL` PcodeOps at the top of the block, one for each of the scalar loop
+variables.  All three cite two Varnodes - an internal loop register Varnode and the source varnode giving the register's
+heritage at the start of the loop.  For each Phi node we need to delete the internal Varnode and replace any references
+to it with the source Varnode.  The Phi PcodeOp is then deleted.
+
+If these Phi PcodeOps cited three or more Varnodes - say a loop register Varnode and two external source Varnodes, then
+we need to preserve the Phi PcodeOp and just remove the loop register Varnode, reducing the number of Varnode citations (slots)
+by one.
+
+### A simple Whisper.cpp example
+
+We have several test functions extracted from the Whisper.cpp build.  The simplest of these is `whisper_sample_1`.
+This function has a signature like `extern void string_constructor(void* this, char* param1, void* allocator)`.  It contains
+two vector instruction sequences, one implementing a `strlen` call on `param1`, and the second a `memcpy` call to copy
+the C string into the C++ `std::string` object.  This test:
+
+* shows how the VectorMatch object characterizes vector loops that resemble but do not match `vector_memcpy` patterns
+* shows how we can process more complex heritage/descendant relationships
+
+The decompiler gives us (with manual annotation via `//`):
+
+```c
+void string_constructor(void *this,char *param1,void *allocator)
+
+{
+  long lVar1;
+  undefined8 uVar2;
+  long lVar3;
+  char *pcVar4;
+  long lVar5;
+  undefined auVar6 [256];
+  long in_vl;
+
+  *(long *)this = (long)this + 0x10;
+  if (param1 == (char *)0x0) {         // abort
+    func_0x0001f950(0xfa298);          // no-return:  __throw_logic_error
+                    /* WARNING: Bad instruction - Truncating control flow here */
+    halt_baddata();
+  }
+  lVar3 = 0;
+  pcVar4 = param1;
+  do {
+    uVar2 = vsetvli_e8m1tama(0);       // number of elements is maximum supported by the hardware
+    pcVar4 = pcVar4 + lVar3;           // adjust the source pointer
+    auVar6 = vle8ff_v(pcVar4);         // vector load with first-fail if it would throw an access violation
+    auVar6 = vmseq_vi(auVar6,0);       // vector compare with immediate 0
+    lVar5 = vfirst_m(auVar6);          // find location of first source byte == 0 or -1 if not found
+    lVar3 = in_vl;                     // number of bytes in a vector register
+  } while (lVar5 < 0);                 // continue until a zero byte is found
+  pcVar4 = pcVar4 + (lVar5 - (long)param1);  // calculate the string size
+  if (pcVar4 < (char *)0x10) {         // identify the location of the string buffer
+    if (pcVar4 == (char *)0x1) {
+      *(char *)((long)this + 0x10) = *param1;
+      goto code_r0x000209fe;
+    }
+    if (pcVar4 == (char *)0x0) goto code_r0x000209fe;
+  }
+  else {
+    lVar1 = func_0x0001fad0(pcVar4 + 1,uVar2);  // operator.new(ulong size)
+    *(long *)this = lVar1;
+    *(char **)((long)this + 0x10) = pcVar4;
+  }
+  do {                                   // copy the C string into the std::string buffer
+    vector_memcpy((void *)lVar1,(void *)param1,(ulong)pcVar4);
+    lVar1 = (long)this + 0x10;           // this looks wrong!
+  } while ;
+code_r0x000209fe:
+                    /* WARNING: Load size is inaccurate */
+  *(char **)((long)this + 8) = pcVar4;
+  pcVar4[*this] = '\0';
+  return;
+}
+```
+
+There are two heritage problems here, probably in our Phi node reductions:
+
+* `lVar1` should be defined before the `vector_memcpy` builtin, not after it.
+* `lVar1 = (long)this + 0x10` is true for strings of 0x10 bytes or more.
+
+Start Ghidra's GUI with the plugin active to get some more data:
+
+* `func_0x0001fad0` is operator.new, and takes only a single paramter.
+* The variables `this` and `lVar1` both use the same register `a0`.
+* simply switching the order of the two statements within the `do ... while` block
+  should fix things.
+
+Now collect data from the log file:
+
+```text
+[2025-06-27 09:36:40.938] [riscv_vector] [info] Vector loop block before transforms is
+Basic Block 9 0x00020a3e-0x00020a50
+0x00020a3e:a4:  a2(0x00020a3e:a4) = a2(0x00020a46:46) ? a5(0x000209ee:24) ? a5(0x000209ee:24)
+0x00020a3e:9f:  a1(0x00020a3e:9f) = a1(0x00020a48:47) ? a1(i) ? a1(i)
+0x00020a3e:9a:  a0(0x00020a3e:9a) = a0(0x00020a4e:4a) ? a0(0x000209c8:c) ? a0(0x00020a28:62)
+0x00020a3e:43:  a3(0x00020a3e:43) = vsetvli_e8m1tama(a2(0x00020a3e:a4))
+0x00020a42:45:  v1(0x00020a42:45) = vle8_v(a1(0x00020a3e:9f))
+0x00020a46:cb:  u0x10000008(0x00020a46:cb) = a3(0x00020a3e:43) * #0xffffffffffffffff
+0x00020a46:46:  a2(0x00020a46:46) = a2(0x00020a3e:a4) + u0x10000008(0x00020a46:cb)(*#0x1)
+0x00020a48:47:  a1(0x00020a48:47) = a1(0x00020a3e:9f) + a3(0x00020a3e:43)(*#0x1)
+0x00020a4a:49:  vse8_v(v1(0x00020a42:45),a0(0x00020a3e:9a))
+0x00020a4e:4a:  a0(0x00020a4e:4a) = a0(0x00020a3e:9a) + a3(0x00020a3e:43)
+...
+[2025-06-27 09:36:40.962] [riscv_vector] [info] Vector loop block after all immediate transforms is
+Basic Block 9 0x00020a3e-0x00020a50
+0x00020a3e:9a:  a0(0x00020a3e:9a) = a0(0x000209c8:c) ? a0(0x00020a28:62)
+0x00020a3e:e2:  vector_memcpy(a0(0x00020a3e:9a),a1(i),a5(0x000209ee:24))
+```
+
+The transformed Block 9 gets further processing from Ghidra, so the final result is different:
+
+```text
+Basic Block 9 0x00020a3e-0x00020a50
+0x00020a3e:9a:	a0(0x00020a3e:9a) = u0x10000019(0x00020a50:e3) ? a0(0x00020a28:62)
+0x00020a3e:ef:	u0x10000079(0x00020a3e:ef) = (cast) a0(0x00020a3e:9a)
+0x00020a3e:f0:	u0x10000081(0x00020a3e:f0) = (cast) a1(i)
+0x00020a3e:f1:	u0x10000089(0x00020a3e:f1) = (cast) a5(0x000209ee:24)
+0x00020a3e:e2:	vector_memcpy(u0x10000079(0x00020a3e:ef),u0x10000081(0x00020a3e:f0),u0x10000089(0x00020a3e:f1))
+0x00020a50:e3:	u0x10000019(0x00020a50:e3) = a0(0x000209c8:c)
+```
+
+The three cast opcodes look reasonable, but `a0(0x00020a3e:9a)` has been rewritten in a way that violates
+instruction sequencing.
+
+* does a Phi node's sequence of Varnodes matter? For example, must the first Varnode be something written within
+  the block?
+* is this an artifact of the Basic Block not being terminated in a branch?
+    * do we need to inject a goto op at the end of the block to replace the deleted PcodeOps?
+* can we find which existing Rule generates these new Varnodes?
+* if we generated the cast operations ourselves would the incorrect placement be avoided?
+* should the vector_memcpy be inserted at the end of the block instead of the beginning?
+* do we need a survey of the builtin actions to see what might be inserting these new pcodeops?
+
+Extend the code to insert a CPUI_BRANCH opcode to end the block and flow correctly into the following block.  The new Pcode produced by the decompiler becomes:
+
+```text
+Basic Block 9 0x00020a3e-0x00020a50
+0x00020a3e:9a:	a0(0x00020a3e:9a) = u0x10000019(0x00020a50:e4) ? a0(0x00020a28:62)
+0x00020a3e:f0:	u0x10000079(0x00020a3e:f0) = (cast) a0(0x00020a3e:9a)
+0x00020a3e:f1:	u0x10000081(0x00020a3e:f1) = (cast) a1(i)
+0x00020a3e:f2:	u0x10000089(0x00020a3e:f2) = (cast) a5(0x000209ee:24)
+0x00020a3e:e2:	vector_memcpy(u0x10000079(0x00020a3e:f0),u0x10000081(0x00020a3e:f1),u0x10000089(0x00020a3e:f2))
+0x00020a50:e4:	u0x10000019(0x00020a50:e4) = a0(0x000209c8:c)
+0x00020a50:e3:	goto r0x000209fe:1(free)
+Basic Block 10 0x000209fe-0x00020a0e
+```
+
+The decompiled C remains about the same:
+
+```c
+  do {
+    vector_memcpy((void *)lVar1,(void *)param1,(ulong)pcVar4);
+    lVar1 = (long)this + 0x10;
+  } while ;
+code_r0x000209fe:
+                    /* WARNING: Load size is inaccurate */
+  *(char **)((long)this + 8) = pcVar4;
+  pcVar4[*this] = '\0';
+  return;
+```
+
+## Possible Next steps
+
+There are now many paths we can take, probably to be cast into a set of formal Issues:
+
+1. Iterate on the code base until we eliminate any decompiler crashes across all of whisper.cpp.
+2. Iterate on the code base until all current integration data tests pass.
+3. Extend to code to increase the number of successful vector transforms.
+4. Localize the Phi node error breaking the `lVar1` linkage to `this` in the example above.
+5. Localize the decompiler failure to remove redundant cast operations associated with
+   the typed builtin functions.
+6. Document the existing decompiler hierarchy of Actions, localizing Phi and casting Actions
+   that may run after the Plugin action and the actions that produce the DoWhile block.
+7. Experiment with BlockGraph editing to remove the DoWhile block entirely.
+
+## Debugging a decompiler failure
+
+One of the most common debugging challenges involves the error message
+`Low-level ERROR: Free varnode has multiple descendants`.  This usually means a dependency has
+been improperly erased, leaving a dangling reference.  One of the integration tests currently throws
+this error - let's see if we can fix it.
+
+The command sequence to throw this error is:
+
+```console
+$ SLEIGHHOME=/opt/ghidra_11.5_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so /opt/ghidra_11.5_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/whisper_sample_5.ghidra with output to /tmp/whisper_sample_5.testlog
+[decomp]> restore test/whisper_sample_5_save.xml
+test/whisper_sample_5_save.xml successfully loaded: RISC-V 64 little general purpose compressed
+[decomp]> map function 0xb97c0 whisper_wrap_segment
+[decomp]> parse line extern void whisper_wrap_segment(void*, void*, int, int);
+[decomp]> load function whisper_wrap_segment
+Function whisper_wrap_segment: 0x000b97c0
+[decomp]> decompile whisper_wrap_segment
+Decompiling whisper_wrap_segment
+Low-level ERROR: Free varnode has multiple descendants
+Unable to proceed with function: whisper_wrap_segment
+[decomp]> print C
+Execution error: No function selected
+[decomp]> print raw
+Execution error: No function selected
+```
+
+The logfile shows some good hints at the problem:
+
+```text
+/tmp$ grep -E vector_\.*\(free\) ghidraRiscvLogger.log
+0x000ba438:2490:	vector_memcpy(s6(0x000b9bbc:439),a0(free),a7(0x000b9bc4:43d))
+0x000ba4e8:2494:	vector_memcpy(s0xffffffffffffff10(0x000b9de0:1c12),s6(0x000b9dfe:5a2),a0(free))
+0x000ba550:2498:	vector_memcpy(s0xffffffffffffff10(0x000b9de0:1c12),s6(0x000b9dfe:5a2),a2(free))
+```
+
+The three `free` varnodes should be fully resolved.
+
+```text
+[2025-06-29 13:25:02.504] [riscv_vector] [info] Vector loop block before transforms is
+Basic Block 152 0x000ba4d6-0x000ba4e8
+0x000ba4d6:116b:        a7(0x000ba4d6:116b) = s6(0x000b9dfe:5a2) ? a7(0x000ba4e0:5fd)
+0x000ba4d6:1113:        a6(0x000ba4d6:1113) = s0xffffffffffffff10(0x000b9de0:1c12) ? a6(0x000ba4e6:600)
+0x000ba4d6:e86: a0(0x000ba4d6:e86) = u0x100002cb(0x000ba4d6:23de) ? a0(0x000ba4de:5fc)
+0x000ba4d6:5f9: a3(0x000ba4d6:5f9) = vsetvli_e8m1tama(a0(0x000ba4d6:e86))
+0x000ba4da:5fb: v1(0x000ba4da:5fb) = vle8_v(a7(0x000ba4d6:116b))
+0x000ba4de:13a2:        u0x100001e0(0x000ba4de:13a2) = a3(0x000ba4d6:5f9) * #0xffffffffffffffff
+0x000ba4de:5fc: a0(0x000ba4de:5fc) = a0(0x000ba4d6:e86) + u0x100001e0(0x000ba4de:13a2)
+0x000ba4e0:5fd: a7(0x000ba4e0:5fd) = a7(0x000ba4d6:116b) + a3(0x000ba4d6:5f9)
+0x000ba4e2:5ff: vse8_v(v1(0x000ba4da:5fb),a6(0x000ba4d6:1113))
+0x000ba4e6:600: a6(0x000ba4e6:600) = a6(0x000ba4d6:1113) + a3(0x000ba4d6:5f9)
+0x000ba4e8:601: u0x00018500:1(0x000ba4e8:601) = a0(0x000ba4de:5fc) != #0x0
+0x000ba4e8:602: goto r0x000ba4d6:1(free) if (u0x00018500:1(0x000ba4e8:601) != 0)
+```
+
+The reference to `u0x100002cb(0x000ba4d6:23de)` looks particularly odd.  It looks to have been erased
+before the transform was started, perhaps by mistake with a prior transform.  The sequence number
+looks suspiciously high as well.
+
+Modify the source to get a bit more diagnostic information:
+
+* flush the logs after every completed transform
+* terminate vector loop transforms just after the failure occurs.
+
+The first vector stanza causing the problem is:
+
+```text
+Basic Block 83 0x000ba426-0x000ba438
+0x000ba426:1043:        a4(0x000ba426:1043) = a4(0x000ba42e:85b) ? a7(0x000b9bc4:43d)
+0x000ba426:eef: a1(0x000ba426:eef) = a1(0x000ba436:85f) ? a0(0x000b9f00:7f3)
+0x000ba426:e92: a0(0x000ba426:e92) = a0(0x000ba430:85c) ? s6(0x000b9bbc:439)
+0x000ba426:858: a3(0x000ba426:858) = vsetvli_e8m1tama(a4(0x000ba426:1043))
+0x000ba42a:85a: v1(0x000ba42a:85a) = vle8_v(a0(0x000ba426:e92))
+0x000ba42e:139b:        u0x100001b8(0x000ba42e:139b) = a3(0x000ba426:858) * #0xffffffffffffffff
+0x000ba42e:85b: a4(0x000ba42e:85b) = a4(0x000ba426:1043) + u0x100001b8(0x000ba42e:139b)
+0x000ba430:85c: a0(0x000ba430:85c) = a0(0x000ba426:e92) + a3(0x000ba426:858)
+0x000ba432:85e: vse8_v(v1(0x000ba42a:85a),a1(0x000ba426:eef))
+0x000ba436:85f: a1(0x000ba436:85f) = a1(0x000ba426:eef) + a3(0x000ba426:858)
+0x000ba438:860: u0x00018500:1(0x000ba438:860) = a4(0x000ba42e:85b) != #0x0
+0x000ba438:861: goto r0x000ba426:1(free) if (u0x00018500:1(0x000ba438:860) != 0)
+```
+
+The failing transform is:
+
+
+```text
+Basic Block 83 0x000ba426-0x000ba438
+0x000ba438:2490:        vector_memcpy(s6(0x000b9bbc:439),a0(free),a7(0x000b9bc4:43d))
+0x000ba438:2491:        goto r0x000ba43a:1(free)
+```
+
+The correct transform would be:
+
+```text
+0x000ba438:2490:        vector_memcpy(a0(0x000b9f00:7f3), s6(0x000b9bbc:439),a7(0x000b9bc4:43d))
+```
+
+The problem is likely the mixed registers found in the Phi ops.  Fixing that uncovers another error.
+
+```text
+Basic Block 42 0x000ba13a-0x000ba14c
+0x000ba13a:23fd:        t1(0x000ba13a:23fd) = t1(0x000ba13a:23fd) ? t1(0x000ba130:e2c) ? t1(0x000ba35c:e2e) ? t1(0x000ba240:e2a)
+0x000ba13a:23fc:        s2(0x000ba13a:23fc) = s2(0x000ba13a:23fc) ? s2(0x000ba130:1193) ? s2(0x000ba35c:1194) ? s2(0x000ba240:119d)
+0x000ba13a:23fb:        vl(0x000ba13a:23fb) = vl(0x000ba13a:23fb) ? vl(0x000ba130:1339) ? vl(0x000ba35c:133c) ? vl(0x000ba240:133a)
+0x000ba13a:23fa:        r0x001428b0(0x000ba13a:23fa) = r0x001428b0(0x000ba13a:23fa) ? r0x001428b0(0x000ba130:142c) ? r0x001428b0(0x000ba35c:1427) ? r0x001428b0(0x000ba240:142d)
+0x000ba13a:23f9:        r0x00142ab8(0x000ba13a:23f9) = r0x00142ab8(0x000ba13a:23f9) ? r0x00142ab8(0x000ba130:14cd) ? r0x00142ab8(0x000ba35c:14c8) ? r0x00142ab8(0x000ba240:14ce)
+0x000ba13a:23f8:        r0x00142ba0(0x000ba13a:23f8) = r0x00142ba0(0x000ba13a:23f8) ? r0x00142ba0(0x000ba130:156e) ? r0x00142ba0(0x000ba35c:1569) ? r0x00142ba0(0x000ba240:156f)
+0x000ba13a:23f7:        s0xfffffffffffffeb8(0x000ba13a:23f7) = s0xfffffffffffffeb8(0x000ba13a:23f7) ? s0xfffffffffffffeb8(0x000ba130:19bb) ? s0xfffffffffffffeb8(0x000ba35c:19be) ? s0xfffffffffffffeb8(0x000ba240:19bc)
+0x000ba13a:23f6:        s0xfffffffffffffec0(0x000ba13a:23f6) = s0xfffffffffffffec0(0x000ba13a:23f6) ? s0xfffffffffffffec0(0x000ba130:1a0c) ? s0xfffffffffffffec0(0x000ba35c:1a0f) ? s0xfffffffffffffec0(0x000ba240:1a0d)
+0x000ba13a:23f5:        s0xfffffffffffffec8(0x000ba13a:23f5) = s0xfffffffffffffec8(0x000ba13a:23f5) ? s0xfffffffffffffec8(0x000ba130:1a60) ? s0xfffffffffffffec8(0x000ba35c:1a63) ? s0xfffffffffffffec8(0x000ba240:1a61)
+0x000ba13a:23f4:        s0xfffffffffffffed8(0x000ba13a:23f4) = s0xfffffffffffffed8(0x000ba13a:23f4) ? s0xfffffffffffffed8(0x000ba130:1ab0) ? s0xfffffffffffffed8(0x000ba35c:1ab3) ? s0xfffffffffffffed8(0x000ba240:1ab1)
+0x000ba13a:23f3:        s0xfffffffffffffee0(0x000ba13a:23f3) = s0xfffffffffffffee0(0x000ba13a:23f3) ? s0xfffffffffffffee0(0x000ba130:1afe) ? s0xfffffffffffffee0(0x000ba35c:1b01) ? s0xfffffffffffffee0(0x000ba240:1aff)
+0x000ba13a:23f2:        s0xfffffffffffffee8(0x000ba13a:23f2) = s0xfffffffffffffee8(0x000ba13a:23f2) ? s0xfffffffffffffee8(0x000ba130:1b4c) ? s0xfffffffffffffee8(0x000ba35c:1b4f) ? s0xfffffffffffffee8(0x000ba240:1b4d)
+0x000ba13a:23f1:        s0xfffffffffffffef8(0x000ba13a:23f1) = s0xfffffffffffffef8(0x000ba13a:23f1) ? s0xfffffffffffffef8(0x000ba130:1b9a) ? s0xfffffffffffffef8(0x000ba35c:1b9d) ? s0xfffffffffffffef8(0x000ba240:1b9b)
+0x000ba13a:23f0:        s0xffffffffffffff08:4(0x000ba13a:23f0) = s0xffffffffffffff08:4(0x000ba13a:23f0) ? s0xffffffffffffff08:4(0x000ba130:1be8) ? s0xffffffffffffff08:4(0x000ba35c:1beb) ? s0xffffffffffffff08:4(0x000ba240:1be9)
+0x000ba13a:23ef:        s0xffffffffffffff10(0x000ba13a:23ef) = s0xffffffffffffff10(0x000ba13a:23ef) ? s0xffffffffffffff10(0x000ba130:1c36) ? s0xffffffffffffff10(0x000ba35c:1c39) ? s0xffffffffffffff10(0x000ba240:1c37)
+0x000ba13a:23ee:        s0xffffffffffffff18(0x000ba13a:23ee) = s0xffffffffffffff18(0x000ba13a:23ee) ? s0xffffffffffffff18(0x000ba130:1c85) ? s0xffffffffffffff18(0x000ba35c:1c88) ? s0xffffffffffffff18(0x000ba240:1c86)
+0x000ba13a:23ed:        s0xffffffffffffff20(0x000ba13a:23ed) = s0xffffffffffffff20(0x000ba13a:23ed) ? s0xffffffffffffff20(0x000ba130:1cd2) ? s0xffffffffffffff20(0x000ba35c:1cd5) ? s0xffffffffffffff20(0x000ba240:1cd3)
+0x000ba13a:23ec:        s0xffffffffffffff28:1(0x000ba13a:23ec) = s0xffffffffffffff28:1(0x000ba13a:23ec) ? s0xffffffffffffff28:1(0x000ba130:1d21) ? s0xffffffffffffff28:1(0x000ba35c:1d25) ? s0xffffffffffffff28:1(0x000ba240:1d22)
+0x000ba13a:23eb:        s0xffffffffffffff40(0x000ba13a:23eb) = s0xffffffffffffff40(0x000ba13a:23eb) ? s0xffffffffffffff40(0x000ba130:1d6e) ? s0xffffffffffffff40(0x000ba35c:1d71) ? s0xffffffffffffff40(0x000ba240:1d6f)
+0x000ba13a:23ea:        s0xffffffffffffff48(0x000ba13a:23ea) = s0xffffffffffffff48(0x000ba13a:23ea) ? s0xffffffffffffff48(0x000ba130:1dbc) ? s0xffffffffffffff48(0x000ba35c:1dbf) ? s0xffffffffffffff48(0x000ba240:1dbd)
+0x000ba13a:23e9:        s0xffffffffffffff50(0x000ba13a:23e9) = s0xffffffffffffff50(0x000ba13a:23e9) ? s0xffffffffffffff50(0x000ba130:1e0a) ? s0xffffffffffffff50(0x000ba35c:1e0d) ? s0xffffffffffffff50(0x000ba240:1e0b)
+0x000ba13a:23e8:        s0xffffffffffffff60:4(0x000ba13a:23e8) = s0xffffffffffffff60:4(0x000ba13a:23e8) ? s0xffffffffffffff60:4(0x000ba130:1e58) ? s0xffffffffffffff60:4(0x000ba35c:1e5b) ? s0xffffffffffffff60:4(0x000ba240:1e59)
+0x000ba13a:23e7:        s0xffffffffffffff68(0x000ba13a:23e7) = s0xffffffffffffff68(0x000ba13a:23e7) ? s0xffffffffffffff68(0x000ba130:1ea6) ? s0xffffffffffffff68(0x000ba35c:1ea9) ? s0xffffffffffffff68(0x000ba240:1ea7)
+0x000ba13a:23e6:        s0xffffffffffffff78(0x000ba13a:23e6) = s0xffffffffffffff78(0x000ba13a:23e6) ? s0xffffffffffffff78(0x000ba130:1ef4) ? s0xffffffffffffff78(0x000ba35c:1ef7) ? s0xffffffffffffff78(0x000ba240:1ef5)
+0x000ba13a:23e5:        s0xffffffffffffff80:1(0x000ba13a:23e5) = s0xffffffffffffff80:1(0x000ba13a:23e5) ? s0xffffffffffffff80:1(0x000ba130:1f42) ? s0xffffffffffffff80:1(0x000ba35c:1f45) ? s0xffffffffffffff80:1(0x000ba240:1f43)
+0x000ba13a:23e4:        s0xffffffffffffff88(0x000ba13a:23e4) = s0xffffffffffffff88(0x000ba13a:23e4) ? s0xffffffffffffff88(0x000ba130:1f90) ? s0xffffffffffffff88(0x000ba35c:1f93) ? s0xffffffffffffff88(0x000ba240:1f91)
+0x000ba13a:10d3:        a5(0x000ba13a:10d3) = a5(0x000ba142:323) ? a5(0x000b9966:121) ? a5(0x000b9966:121) ? a5(0x000b9966:121)
+0x000ba13a:fe9: a3(0x000ba13a:fe9) = a3(0x000ba144:324) ? a0(0x000b993c:10a) ? a0(0x000b993c:10a) ? a0(0x000b993c:10a)
+0x000ba13a:f0c: a1(0x000ba13a:f0c) = a1(0x000ba14a:327) ? a1(0x000ba132:31c) ? a1(0x000ba35e:33e) ? t1(0x000ba240:e2a)
+0x000ba13a:320: a4(0x000ba13a:320) = vsetvli_e8m1tama(a5(0x000ba13a:10d3))
+0x000ba13e:322: v1(0x000ba13e:322) = vle8_v(a3(0x000ba13a:fe9))
+0x000ba142:138c:        u0x10000158(0x000ba142:138c) = a4(0x000ba13a:320) * #0xffffffffffffffff
+0x000ba142:323: a5(0x000ba142:323) = a5(0x000ba13a:10d3) + u0x10000158(0x000ba142:138c)(*#0x1)
+0x000ba144:324: a3(0x000ba144:324) = a3(0x000ba13a:fe9) + a4(0x000ba13a:320)(*#0x1)
+0x000ba146:326: vse8_v(v1(0x000ba13e:322),a1(0x000ba13a:f0c))
+0x000ba14a:327: a1(0x000ba14a:327) = a1(0x000ba13a:f0c) + a4(0x000ba13a:320)
+0x000ba14c:328: u0x00018500:1(0x000ba14c:328) = a5(0x000ba142:323) != #0x0
+0x000ba14c:329: goto r0x000ba13a:1(free) if (u0x00018500:1(0x000ba14c:328) != 0)
+...
+vector_memcpy(<null>,a0(0x000b993c:10a),a5(0x000b9966:121))
+```
+
+There are two problems here:
+
+1. The large number of Phi nodes referencing stack variables unassociated with the vector loop adds distracting clutter.  The code
+   processes these nodes to check for interior loop references and to remove duplicate Varnodes - can we suppress printing these in `trace` mode?
+2. The code currently extracts vector parameters from Phi nodes with only two Varnodes after duplicate removal.  That's true for `a3` and `a5`,
+   but not for `a1`.  The code should remove duplicate Varnodes and search for vector parameters regardless of the number of unique
+   varnodes.
+
+Fix the extraction and rerun tests.  All integration tests pass.  Running the plugin with the Ghidra GUI shows:
+
+* 560 `vector_memcpy` transforms
+* 195 `vector_memset` transforms
+* 215 decompiler process failures
+
+```console
+$ grep Unable whisper_cpp_rva23.c
+Unable to decompile 'set_xterm256_foreground'
+Unable to decompile 'set_xterm256_foreground'
+Unable to decompile '__static_initialization_and_destruction_0'
+Unable to decompile '_start'
+Unable to decompile 'drwav_init_write__internal'
+Unable to decompile 'drwav_target_write_size_bytes'
+Unable to decompile 'drwav_read_pcm_frames_be'
+Unable to decompile 'drwav_write_pcm_frames_be.part.0'
+Unable to decompile 'drwav_f32_to_s16'
+...
+```
+
+Looks like we need more integration tests.  We'll use the built-in Ghidra decompiler ability to export functions for testing,
+generating `test/whisper_sample_6_save.xml` from `drwav_f32_to_s16`.  It's easy to generate a matching script `test/whisper_sample_6.ghidra`.
+The problem lies with instructions like
+
+```as
+fli.s   fa3
+```
+
+This instruction is part of the zfa extension, and incompletely implemented in our isa_ext SLEIGH directory.  It generates a CALL_OTHER operation
+without an input Varnode.  The correction is simple - return early from the `apply` function if we are not given either a `vset` or `vseti` instruction.
+
+With that change the Ghidra GUI whole-program decompilation is much more successful:
+
+* 957 `vector_memcpy` transforms
+* 420 `vector_memset` transforms
+* 46 decompiler process failures
+
+Pick one of those failures to continue: `quantize_q4_0`.  The failure here is a free varnode with multiple dependencies, possibly caused by
+a non-loop transform failure.
+
+Create a new integration test out of this function, calling it `whisper_sample_7`.
+The error thrown is:
+
+```text
+Low-level ERROR: Free varnode has multiple descendants
+```
+
+We don't get information on *which* free varnode is causing the problems.  The log file
+shows no free varnodes, so it is likely we are deleting an opcode without checking for descendents.
+
+```text
+$ grep Delet ghidraRiscvLogger.log
+[info] Deleting vector op at 0x9791a
+[info] Deleting vector op at 0x97922
+[info] Deleting vector op at 0x9792a
+[info] Deleting vector op at 0x97936
+[info] Deleting vector op at 0x9793e
+[info] Deleting vector op at 0x9794a
+[info] Deleting vector op at 0x9794e
+[info] Deleting vector op at 0x9795a
+[info] Deleting vector op at 0x97a52
+[info] Deleting vector op at 0x97aa2
+[info] Deleting vector op at 0x97aa6
+[info] Deleting vector op at 0x97972
+[info] Deleting vector op at 0x9797e
+[warning] Deleting orphan vset op at 0x97a46
+```
+
+Nothing in this function looks like it should trigger any vector_memcpy or vector_memset transforms
+
+Iterate on this to find several things to fix:
+
+* If the transform code would delete a PcodeOp with dependencies, abort the transform.  This helps
+  minimize free varnodes.
+* Ghidra will delete output Varnodes if it believes the destination is not used before it is overwritten.
+  This causes failures when those output Varnodes are silent dependencies of other instructions,
+  such as vfmacc and vslide instructions.  These require changes to make the transform code more robust
+  and to fix the SLEIGH definitions to include output registers as additional input registers.
+
+The fixes include:
+
+* update the RISC-V SLEIGH files to show as input parameters registers that are both read and written
+  during the instruction.  This includes `vfmacc`, `vfnmacc`, `vfnmadd`, `vfnmsacc`, `vfnmsub`, `vfslide1down`,
+  `vfslide1up`, `vslide1down`, `vslide1up`, `vslidedown`, and `vslideup` instructions.
+* rebase the Ghidra developer's tip at `ghidra_12.0_DEV` - while continuing to use the `ghidra_11.5` release
+  source code for the decompiler.
+
+At this point all integration tests pass - except for those that fail a datatest while passing in the GUI,
+and where we suspect a structural error in the test case files.
+
+The Ghidra GUI whole-program decompilation looks better:
+
+* 468 `vector_memcpy` transforms
+* 1111 `vector_memset` transforms
+* 0 decompiler process failures

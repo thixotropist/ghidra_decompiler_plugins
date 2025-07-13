@@ -13,7 +13,15 @@ namespace ghidra{
  * @brief Introduce an experimental rule to transform vector
  * sequences into vector_memcpy or vector_memset calls
  */
-PcodeOp* insertBuiltin(Funcdata& data, PcodeOp& op, intb builtinOpId, Varnode* param1, Varnode* param2, Varnode* param3);
+PcodeOp* insertBuiltin(Funcdata& data, const Address& addr, intb builtinOpId, Varnode* param1, Varnode* param2, Varnode* param3);
+
+/**
+ * @brief Add a PcodeOp 
+ * 
+ * @param data 
+ * @param addr 
+ */
+PcodeOp* insertBranchOp(Funcdata& data, const Address& insertionPoint, Address& destinationAddr);
 
 /**
  * @brief Get the register name associated with a given Varnode

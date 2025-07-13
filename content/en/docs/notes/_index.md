@@ -2,7 +2,7 @@
 title: Notes
 linkTitle: Notes
 menu: {main: {weight:20}}
-weight: 20
+weight: 990
 ---
 
 {{% blocks/section color='white' %}}

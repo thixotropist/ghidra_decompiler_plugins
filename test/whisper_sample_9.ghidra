@@ -1,0 +1,6 @@
+restore test/whisper_sample_9_save.xml
+parse line extern long whisper_model_load(void*,void*);
+load function whisper_model_load
+decompile whisper_model_load
+print C
+print raw

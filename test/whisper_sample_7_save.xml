@@ -1,0 +1,434 @@
+<xml_savefile name="quantize_q4_0" target="default" adjustvma="0">
+<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<bytechunk space="ram" offset="0x97772" readonly="true">
+    4571a2e386e7800bba8217b70a00
+033747131c63233cf4f681472334c4e4
+2338b4e663890238233ca4eab6850945
+233854ea2330d4ecef20cdbd833784e4
+2330a4e46357f002833f84eb833704e7
+033804ec833204eb8143634100050337
+04e48503b34ff821ba97033784e4e316
+77fe833704e4033784e43385e70297b7
+0a0083b7270c033784f79c63b98f0147
+63930734be601e6479618280d37728d0
+a2ae530418f0eafa135df8435374f418
+137dfd01429deef62338f4e6856d9357
+5d402330f4e89387fdff968526ff4afb
+4ef752f356ef5aeb5ee762e3e6fe233c
+f4e6233cf4e2c282d777000dd730005e
+168dfe86d7770d0907e10602330dfd40
+b3c6d720d71021b2e3160dfefd4763d8
+5726d777000d57610042833704e7d710
+1106370900ff138c2700930784ee2330
+f4ea930784ef2338f4e8930784f0d717
+1042233cf4ead3f78710930784f12338
+f4ea930784f22334f4ea930784f35770
+02cd233cf4e8930784f4e289d7d0075e
+2334f4e8938a0f01233474e62330f4e7
+138a0501930b84f5130c84f6fe8dae84
+233c54e42338b4e4930c84ed138b0502
+19a0577002cd13870d02076407021387
+0d038763070213870d04076307021387
+0d05571414a28762070213870d060762
+070213870d07d79313a28761070207e1
+0d02571313a2d714804e07e50a02d792
+12a2571212a2d79111a2571111a25714
+704e07680b0213870403d713604e8768
+0702138704045713504e876707029307
+04ecd712404ed7149892138704055712
+304ea7e0070207670702d711204e5731
+a09e833704e957948892571115a21387
+0406a7e4070287660702833784ebd793
+77925711204e1387040727e407020766
+0702833704eb5713679287e50402a7e3
+070207650a02833784ead79256925712
+469227e30702833784e9d79135922145
+a7e2070257112592833784e8e6865e86
+27e20702833704eaee85a7e10c0227e1
+0702ef20ffe5530705e0a16721659b5f
+0701b3ffff00577002cd930704ec9b12
+170087e00702130505e063625904b707
+0071b3f22201b3f2f20a1bd712003705
+80072a97d30607f0d327a52053871bf0
+833784e7a162c3f7e768938202c05387
+07e01b55d700337555007d8f3a955770
+08cc07010c0287810b02833704e8b3ef
+af00239ff9ff050d5731229693840408
+938d0d085781212a130a0a08938a0a08
+27810902130b0b08c909e34cfde28333
+84e6833f04e6833284e5833504e58337
+84e48503638c7700833704e7033704e4
+b3cff221ba972338f4e6b9b3fa745a79
+ba791a7afa6a5a6bba6b1a6cf67c567d
+b67d76247db926ffb2843386c6022330
+d4ecef60df9b833504ec0945ef208d84
+459dfa746db126ff4afb4ef752f356ef
+5aeb5ee762e3e6feeafaeef6a2aeef80
+28bc
+</bytechunk>
+<bytechunk space="ram" offset="0x1428b0" readonly="true">
+38a01c0000000000
+</bytechunk>
+</binaryimage>
+
+<coretypes>
+  <type name="uint6" size="6" metatype="uint" id="0xc0000000000000c0"/>
+  <type name="uint7" size="7" metatype="uint" id="0xc0000000000000c1"/>
+  <type name="code" size="1" metatype="code" id="0xe000000000000001"/>
+  <type name="uint" size="4" metatype="uint" id="0xc0000000000000c2"/>
+  <type name="double" size="8" metatype="float" id="0xc000000000000082"/>
+  <type name="ulong" size="8" metatype="uint" id="0xc0000000000000c4"/>
+  <type name="float10" size="10" metatype="float" id="0xc000000000000084"/>
+  <type name="float16" size="16" metatype="float" id="0xc000000000000085"/>
+  <type name="ushort" size="2" metatype="uint" id="0xc0000000000000c6"/>
+  <type name="float2" size="2" metatype="float" id="0xc000000000000086"/>
+  <type name="void" size="0" metatype="void" id="0xc0000000000000c7"/>
+  <type name="float" size="4" metatype="float" id="0xc00000000000008a"/>
+  <type name="wchar32" size="4" metatype="int" utf="true" id="0xc0000000000000ca"/>
+  <type name="wchar_t" size="2" metatype="int" utf="true" id="0xc0000000000000cb"/>
+  <type name="int16" size="16" metatype="int" id="0xc000000000000090"/>
+  <type name="int3" size="3" metatype="int" id="0xc000000000000091"/>
+  <type name="int5" size="5" metatype="int" id="0xc000000000000092"/>
+  <type name="int6" size="6" metatype="int" id="0xc000000000000093"/>
+  <type name="int7" size="7" metatype="int" id="0xc000000000000094"/>
+  <type name="int" size="4" metatype="int" id="0xc000000000000095"/>
+  <type name="long" size="8" metatype="int" id="0xc000000000000097"/>
+  <type name="short" size="2" metatype="int" id="0xc0000000000000a6"/>
+  <type name="sbyte" size="1" metatype="int" id="0xc0000000000000a7"/>
+  <type name="undefined1" size="1" metatype="unknown" id="0xc0000000000000b2"/>
+  <type name="undefined2" size="2" metatype="unknown" id="0xc0000000000000b3"/>
+  <type name="undefined3" size="3" metatype="unknown" id="0xc0000000000000b4"/>
+  <type name="undefined4" size="4" metatype="unknown" id="0xc0000000000000b5"/>
+  <type name="undefined5" size="5" metatype="unknown" id="0xc0000000000000b6"/>
+  <type name="undefined6" size="6" metatype="unknown" id="0xc0000000000000b7"/>
+  <type name="undefined7" size="7" metatype="unknown" id="0xc0000000000000b8"/>
+  <type name="undefined8" size="8" metatype="unknown" id="0xc0000000000000b9"/>
+  <type name="bool" size="1" metatype="bool" id="0xc000000000000079"/>
+  <type name="byte" size="1" metatype="uint" id="0xc00000000000007a"/>
+  <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b"/>
+  <type name="uint16" size="16" metatype="uint" id="0xc0000000000000bd"/>
+  <type name="uint3" size="3" metatype="uint" id="0xc0000000000000be"/>
+  <type name="uint5" size="5" metatype="uint" id="0xc0000000000000bf"/>
+</coretypes><save_state>
+
+<typegrp structalign="4">
+  <type name="undefined" id="0xc000000000000000" metatype="unknown" size="1"/>
+</typegrp><db scopeidbyname="false">
+<scope name="" id="0x0">
+<symbollist>
+
+<mapsym>
+  <function id="0xaad" name="quantize_q4_0" size="1">
+    <addr space="ram" offset="0x97772"/>
+    <localdb lock="false" main="stack">
+      <scope name="quantize_q4_0">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist>
+          <mapsym>
+            <symbol id="0x3c80" name="local_88" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffff78" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c6e" name="local_1c8" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe38" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c6f" name="local_1c0" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe40" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c70" name="local_1b8" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe48" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c71" name="local_1b0" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe50" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c72" name="local_1a8" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe58" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c73" name="local_1a0" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe60" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c74" name="local_198" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe68" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c75" name="local_190" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe70" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c76" name="local_188" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe78" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c77" name="local_180" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe80" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c78" name="local_178" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe88" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c79" name="local_170" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe90" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c7a" name="local_168" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffe98" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c7b" name="local_160" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffea0" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c7c" name="local_158" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffea8" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c7d" name="local_150" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffeb0" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c7e" name="local_148" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffeb8" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x3c7f" name="local_140" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xfffffffffffffec0" size="8"/>
+            <rangelist/>
+          </mapsym>
+        </symbollist>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x97772" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <function id="0xe68" name="ggml_row_size" size="1">
+    <addr space="ram" offset="0x69b84"/>
+    <localdb lock="false" main="stack">
+      <scope name="ggml_row_size">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist>
+          <mapsym>
+            <symbol id="0x3571" name="local_20" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000b9"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffe0" size="8"/>
+            <rangelist/>
+          </mapsym>
+        </symbollist>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x69b84" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <function id="0x2c6" name="__stack_chk_fail" size="1" noreturn="true">
+    <addr space="ram" offset="0x1ff20"/>
+    <localdb lock="false" main="stack">
+      <scope name="__stack_chk_fail">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist/>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown" noreturn="true">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x1ff20" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <function id="0x76c" name="make_qx_quants.constprop.0" size="1">
+    <addr space="ram" offset="0x8a890"/>
+    <localdb lock="false" main="stack">
+      <scope name="make_qx_quants.constprop.0">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist/>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x8a890" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <function id="0xd6c" name="quantize_row_q4_0_ref" size="1">
+    <addr space="ram" offset="0x8e4ee"/>
+    <localdb lock="false" main="stack">
+      <scope name="quantize_row_q4_0_ref">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist/>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x8e4ee" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <symbol name="PTR___stack_chk_guard_001428b0" typelock="true" namelock="true" readonly="true" merge="false" cat="-1">
+    <type name="" metatype="ptr" size="8">
+      <typeref name="undefined" id="0xc000000000000000"/>
+    </type>
+  </symbol>
+  <addr space="ram" offset="0x1428b0" size="8"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <symbol id="0x15" name="__stack_chk_guard" typelock="true" namelock="true" merge="false" cat="-1">
+    <typeref name="undefined" id="0xc000000000000000"/>
+  </symbol>
+  <addr space="ram" offset="0x1ca038" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <symbol id="0x213" name="__global_pointer$" typelock="true" namelock="true" merge="false" cat="-1">
+    <typeref name="undefined" id="0xc000000000000000"/>
+  </symbol>
+  <addr space="ram" offset="0x144438" size="1"/>
+  <rangelist/>
+</mapsym></symbollist>
+</scope>
+</db>
+<context_points>
+
+<context_pointset space="ram" offset="0x97772">
+  <set name="RVA" val="1"/>
+  <set name="RVB" val="0"/>
+  <set name="RVC" val="1"/>
+  <set name="RVD" val="1"/>
+  <set name="RVE" val="0"/>
+  <set name="RVF" val="1"/>
+  <set name="RVG" val="0"/>
+  <set name="RVH" val="1"/>
+  <set name="RVI" val="1"/>
+  <set name="RVJ" val="0"/>
+  <set name="RVK" val="0"/>
+  <set name="RVL" val="0"/>
+  <set name="RVM" val="1"/>
+  <set name="RVN" val="0"/>
+  <set name="RVO" val="0"/>
+  <set name="RVP" val="0"/>
+  <set name="RVQ" val="1"/>
+  <set name="RVR" val="0"/>
+  <set name="RVS" val="1"/>
+  <set name="RVT" val="0"/>
+  <set name="RVU" val="1"/>
+  <set name="RVV" val="0"/>
+  <set name="RVW" val="0"/>
+  <set name="RVX" val="0"/>
+  <set name="RVY" val="0"/>
+  <set name="RVZ" val="0"/>
+  <set name="MXL" val="2"/>
+</context_pointset>
+<tracked_pointset space="ram" offset="0x97772">
+  <set space="register" offset="0x2018" size="8" val="0x144438"/>
+</tracked_pointset></context_points>
+
+<commentdb/>
+<optionslist>
+  <readonly>on</readonly>
+  <setlanguage>c-language</setlanguage>
+  <protoeval>__stdcall</protoeval>
+</optionslist><flowoverridelist>
+
+<flow type="callreturn">
+  <addr space="ram" offset="0x97772"/>
+  <addr space="ram" offset="0x97b5e"/>
+</flow></flowoverridelist>
+</save_state>
+</xml_savefile>

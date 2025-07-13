@@ -48,9 +48,9 @@ Basic Block 0 0x00000000-0x0000000c             // a basic block has no jumps in
 0x0000000c:6:	return(#0x0)
 ```
 
-Note that Varnodes like `v1(0x00000004:3)` include both the register name (`v1`) and the pcode location and sequence number
+Note that Varnodes like `v1(0x00000004:3)` include both the register name (`v1`) and the pcode address offset and sequence number (aka `Time`)
 at which the register was set (`0x00000004:3`).
-The `i` field likely means this is an Indirect or input varnode, in this case provided externally via a function call.
+The `i` field likely means this is an Indirect varnode, in this case provided externally via a function call.
 
 ## Initialization blocks
 
@@ -186,7 +186,7 @@ How do we interpret these printRaw descriptions?
 * the varnodes generally include a location of the `PcodeOp` at which they are generated
     * if the varnode is an input, such as a function parameter or register loaded before the block, you see `(i)`
     * if the varnode is generated in the function, you see something like `(0x00100006:5)`,
-      where `0x00100006` is a memory address and `5` is sequence number.
+      where `0x00100006` is a memory address and `5` is a sequence number unique to this function's decompilation.
 * varnodes like `u0x1000001c(...)` appear to be temporaries of unknown type
     * the `u` character appears to be a shortcut for the `AddrSpace` of the varnode, as specified in
       `AddrSpaceManager::assignShortcut`.
@@ -265,12 +265,12 @@ Notes:
 * the loop exists completely within Basic Block 1, terminating with a conditional branch to location 0x00000048.
 * the loop begins with four pcodeops at a single address  0x00000048.
     * three of these are so-called Phi or MULTIEQUAL expressions, naming registers that have needed values
-      on entry to the loop and are updated within the loop
-    * one is the `vsetvli` instruction setting the vector context, invoked with a CALLOTHER (aka syscall) pcode operation.
+      on entry to the loop and may be updated within the loop
+    * one is the `vsetvli` instruction setting the vector context, invoked with a `CALLOTHER` (aka syscall) pcode operation.
       This operation identifies the `size` input varnode `a2(0x00000048:e)` and the number of elements processed per loop
       varnode `a2(0x00000050:3)`
     * these four pcodeops can occur in any order
-* the vector load and store operations identify from and to pointer varnodes `a1(0x00000048:d)` and `a0(0x00000052:13`
+* the vector load and store operations identify the `from` and `to` pointer varnodes `a1(0x00000048:d)` and `a0(0x00000052:13`
   as well as the base vector register `v1`.
     * three `cast` pcode ops are present, perhaps added late in processing, to capture type operations.
 * the conditional branch becomes a comparison operation and a conditional goto operation
@@ -285,13 +285,13 @@ We should also merge Basic Block 1 into Basic Block 2, as the branch instruction
 ```
 
 If this was a `builtin_memset` loop, we would likely see:
-* a loop preamble consisting of a vset instruction and a vmv vector load immediate instruction
+* a loop preamble consisting of a vset instruction and a `vmv` vector load immediate instruction
 * the loop would no longer include a vector load or source pointer increment
 
 ### loop feature recognition
 
 If we want to recognize this kind of loop and transform it into a `builtin_*` operation, a successive-refinement
-strategy can be used.  The starting point will be a vsetvli instruction.
+strategy can be used.  The starting point will be a `vsetvli` instruction.
 
 >TODO: update the following to match the final logic flow
 

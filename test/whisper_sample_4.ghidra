@@ -1,6 +1,6 @@
 restore test/whisper_sample_4_save.xml
 map function 0xb3824 whisper_model_load
-parse line extern bool whisper_model_load(void*, void*);
+parse line extern long whisper_model_load(void*, void*);
 load function whisper_model_load
 decompile whisper_model_load
 print C

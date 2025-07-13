@@ -1,4 +1,6 @@
 restore test/whisper_main_save.xml
+map function 0xbfb30 whisper_init_from_file_with_params
+parse line extern long whisper_init_from_file_with_params(void* params);
 map function 0x20fd0 main
 parse line extern int main(int argc, char** argv);
 load function main
