@@ -17,13 +17,13 @@ The primary components are:
 * A plugin loaded into the decompiler at Ghidra decompiler initialization
     * Plugin source code is found in the `plugins` directory.
     * The plugin can be built with `bazel build -c opt plugins:riscv_vector` and installed anywhere,
-      .in our example to `/tmp/libriscv_vector.so`.
+      in our example to `/tmp/libriscv_vector.so`.
     * Source code changes to a plugin do not generally require rebuilding the `decompile` invoked by Ghidra.
 * Additional Ghidra decompiler datatests to verify plugin transforms outside of a full Ghidra integration.
 * Extracting the Ghidra decompiler Doxygen html tree into your workspace is highly recommended.
 * Supporting documentation on how to use plugins to add new, user-supplied decompiler Actions and transformations.
     * The driving example here is recognition of RISC-V vector instruction sequences and translating them into something
-      friendlier to the user, such as `builtin_memcpy`, `builtin_memset`, `builtin_strlen`, or other method calls.
+      friendlier to the user, such as `vector_memcpy`, `vector_memset`, `vector_strlen`, or other method calls.
 
 Using a new plugin is simple:
 * replace `Ghidra/Features/Decompiler/os/linux_x86_64/decompile` with the plugin-enabled executable built by `bazel build -c opt @ghidra//:decompile`.

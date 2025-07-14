@@ -11,7 +11,7 @@ import shutil
 logging.basicConfig(level=logging.INFO)
 logger = logging
 
-GHIDRA_INSTALL_DIR = "/opt/ghidra_11.4_DEV/"
+GHIDRA_INSTALL_DIR = "/opt/ghidra_12.0_DEV/"
 DECOMPILER_DIR = GHIDRA_INSTALL_DIR + "Ghidra/Features/Decompiler/os/linux_x86_64/"
 DECOMPILER_PATH = DECOMPILER_DIR + "decompile"
 DATATEST_PATH = DECOMPILER_DIR + "decompile_datatest"
@@ -122,12 +122,12 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/whisper_sample_1.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
-        self.assertIn("vector_memcpy((void *)pvVar2,(void *)param1,(ulong)pcVar5)", result.stdout,
+        self.assertIn("vector_memcpy((void *)lVar1,(void *)param1,(ulong)pcVar4)", result.stdout,
                       "Vector_memcpy transform was not as expected")
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
                       "Memory Leak or invalid read access detected")
 
-    def test_02_whisper_selection_complex(self):
+    def test_02_whisper_selection_main_function(self):
         """
         Verify correct behavior with the main function of whisper-cpp
         Note: this test skips valgrind analysis in favor of speed
@@ -149,7 +149,7 @@ class T1Datatests(unittest.TestCase):
         """
         Verify processing of several Whisper functions that previously threw exceptions
         """
-        sample_set = (2,3,5)
+        sample_set = (2,3,5,6,7)
         for i in sample_set:
             command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_sample_{i}.ghidra"
             logger.info(f"Running {command} with output to /tmp/whisper_sample_{i}.testlog")
@@ -159,6 +159,8 @@ class T1Datatests(unittest.TestCase):
             with open(f"/tmp/whisper_sample_{i}.testlog", "w", encoding="utf8") as f:
                 f.write(result.stdout)
                 f.write(result.stderr)
+            self.assertNotIn("Low-level ERROR", result.stdout, 
+                             "Decompiler completes without a low level error")
             command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
             result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
             self.assertEqual(0, result.returncode,

@@ -29,7 +29,7 @@ We can also include survey examples from the Data Path Development Kit distribut
 vector math components but many loops over arrays of structures that get compiled into
 surprisingly complex vector sequences.
 
-Ghidra finds 275K instructions in this executable, with roughly 8% being vector instructions.  
+Ghidra finds 275K instructions in this `whisper-cpp` executable, with roughly 8% being vector instructions.  
 
 ## Loop-free patterns
 
@@ -106,7 +106,7 @@ vsetivli zero,0x4,e32,m1,ta,ma  // refresh vset parameters
 vse32.v  v3,(a5)
 ```
 
-These instructions should be transformed to `builtin_memcpy(a5, a3, 16)`.
+These instructions should be transformed to `vector_memcpy(a5, a3, 16)`.
 
 ```as
 vsetivli zero,0x2,e32,mf2,ta,ma
@@ -116,7 +116,7 @@ vsetivli zero,0x2,e32,mf2,ta,ma
 vse32.v  v2,(a5)
 ```
 
-These instructions should be transformed to `builtin_memcpy(a5, a4, 8)`.
+These instructions should be transformed to `vector_memcpy(a5, a4, 8)`.
 
 ```as
 vsetivli zero,0x8,e8,mf2,ta,ma 
@@ -126,7 +126,7 @@ vsetivli zero,0x8,e8,mf2,ta,ma
 vse8.v   v1,(a5)
 ```
 
-These instructions *might* be transformed to `builtin_memcpy(a5, a5, 8)`, but the a5 register has changed with the intermediate instructions.
+These instructions *might* be transformed to `vector_memcpy(a5, a5, 8)`, but the a5 register has changed with the intermediate instructions.
 
 ```as
 vsetivli zero,0x10,e8,m1,ta,ma  
@@ -135,7 +135,7 @@ vmv.v.i  v4,0x0
 vse8.v   v4,(a5)                 // no vset refresh needed
 ```
 
-These instructions should be transformed to `builtin_memset(a5,0,16)`
+These instructions should be transformed to `vector_memset(a5,0,16)`
 
 ## Loop patterns
 
@@ -203,7 +203,6 @@ Features:
 * floating point reduction and widening ops
 * vector instructions span multiple blocks
 
-
 Compiled from:
 
 ```c
@@ -225,6 +224,6 @@ std::inner_product(x.begin(), x.end(), y.begin(), 0.0);
 
 Notes:
 
-* Type management in the midst of widening and reduction operations make this messy.
+* Type management in the midst of widening and reduction operations makes this messy.
 * Most ML apps using routines like this would be more likely to operate on 5 bit floats,
   not 32 bit floats, making type management in Ghidra even more complicated.

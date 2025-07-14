@@ -72,6 +72,7 @@ std::shared_ptr<spdlog::logger> riscvVectorLogger;
 
 int transformCount;
 Architecture* arch;
+AddrSpace* registerAddrSpace;
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -85,6 +86,7 @@ extern "C" int plugin_init(void *context)
     transformCount = 0;
     riscvVectorLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
     arch = reinterpret_cast<Architecture*>(context);
+    registerAddrSpace = arch->getSpaceByName("register");
     riscvVectorLogger->info("Plugin initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=10000; index++) {

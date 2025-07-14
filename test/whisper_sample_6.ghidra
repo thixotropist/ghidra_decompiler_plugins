@@ -1,0 +1,6 @@
+restore test/whisper_sample_6_save.xml
+parse line extern long drwav_f32_to_s16(long param_1,long param_2,long param_3);
+load function drwav_f32_to_s16
+decompile drwav_f32_to_s16
+print C
+print raw

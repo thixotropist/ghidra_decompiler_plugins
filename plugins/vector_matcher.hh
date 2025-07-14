@@ -17,9 +17,11 @@ class VectorMatcher {
     VectorMatcher(Funcdata& fData, PcodeOp* vsetOp);
 
     Funcdata& data;          /// Function context data
+    AddrSpace* codeSpace;    /// The code address space containing the loop
     bool loopFound;          /// does the block contain a loop?
     intb loopStartAddr;      /// location of the loop start or 0
     intb loopEndAddr;        /// location of the loop end or 0
+    Address nextInstructionAddress; /// location at which we resume execution
     BlockBasic* loopBlock;   /// the parent block of the loop
     std::vector<PcodeOp*> phiNodesAffectedByLoop;  /// Phi or MULTIEQUAL opcodes referencing loop variables
     std::vector<PcodeOp*> otherUserPcodes; /// Other user pcodes found within the loop
@@ -108,6 +110,7 @@ class VectorMatcher {
      * @brief Remove duplicate varnodes in a Phi opcode
      */
     void reducePhiNode(PcodeOp* op);
-};
+
+  };
 }
 #endif /* VECTOR_MATCHER_HH_ */

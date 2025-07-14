@@ -7,7 +7,7 @@ Vector instructions commonly appear in surprising places.  Let's generate a Ghid
 recognizes some of the simplest vector sequences and replaces them with something more user-friendly.
 Initialization code often initializes stack variables with default values.  If the compiler sees two adjacent
 8 bit variables or fields initialized from adjacent sources, it can issue two pairs of 8 bit loads and stores.  It can't generally
-issue a single 16 bit load and store, due to memory alignment restrictions.  But it can issue three vector instructions to complete
+issue a single 16 bit load and store, due to memory alignment restrictions on many processors.  But it can issue three vector instructions to complete
 the initialization, saving one instruction slot.  This example shows the development sequence for a plugin to transform that kind
 of vector sequence into a call to `builtin_memcpy`, something that should be a lot more accessible to most Ghidra users than
 RISC-V vector instruction encodings.  Along the way we will add a new builtin function `builtin_memset`, as the patterns can be quite similar.
@@ -422,7 +422,7 @@ Our plugin should rewrite the pcode ops and varnodes to turn the raw form into s
 
 ```text
 Basic Block 0 0x00000036-0x00000046
-0x00000036:1:	builtin_memcpy(a0(i), a1(i), #0xf:5)
+0x00000036:1:	vector_memcpy(a0(i), a1(i), #0xf:5)
 0x00000046:a:	return(#0x0)
 ```
 
@@ -478,6 +478,9 @@ That breaks down into several survey steps:
       decompiler as std::cout is needed for the socket to the Ghidra Java GUI.  We'll add [spdlog](https://github.com/gabime/spdlog)spdlog
       support to the decompiler, where it can be used by both the PluginManager and individual plugins.
 
+>Note: `vector_memcpy` is different from a `builtin_memcpy` or `memcpy` in that it returns void instead of the address of
+       the destination parameter 
+
 ## Plugin specifics
 
 The sample plugin (currently) consists of three components:
@@ -491,7 +494,7 @@ The sample plugin (currently) consists of three components:
       console program retrieves this information from a Ghidra distribution's Processor/* directories.
       The Ghidra decompiler process retrieves this information from the Ghidra GUI's Java implementation.
 * `vectorcopy.{hh,cc}` provides the Rules for transforming non-loop vector instruction sequences into
-  calls to `builtin_memcpy` calls. Provided capabilities include
+  calls to `vector_memcpy` calls. Provided capabilities include
     * `displayPcodeOp`, `displayVarnode`, and `displayVectorSequence` for diagnostics and survey work.
       These are not used in deployed systems.
     * The `RuleVectorCopy` class implementing the match and transform logic.
@@ -527,7 +530,7 @@ The logic implemented by `RuleVectorCopy::applyOp` follows this flow:
 ## exercising the plugin
 
 Once we have the plugin logic we can build and exercise it.  Bazel will build it, and we'll leave
-it in /tmp.  We can pass this plugin location with the `DECOMP_PLUGIN` environment variable.
+it in `/tmp`.  We can pass this plugin location with the `DECOMP_PLUGIN` environment variable.
 
 ```console
 $ bazel build -c dbg plugins:riscv_vector
@@ -551,13 +554,13 @@ Decompilation complete
 [decomp]> print C
 void memcpy_i2(void *to,void *from,long size)
 {
-  builtin_memcpy(to,from,2);
+  vector_memcpy(to,from,2);
   return;
 }
 [decomp]> print raw
 0
 Basic Block 0 0x00000000-0x0000000c
-0x00000000:7:	builtin_memcpy(a0(i),a1(i),#0x2:5)
+0x00000000:7:	vector_memcpy(a0(i),a1(i),#0x2:5)
 0x0000000c:6:	return(#0x0)
 ...
 ==125839== LEAK SUMMARY:

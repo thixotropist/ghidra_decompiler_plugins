@@ -93,6 +93,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         int numPcodes = 1;
         std::vector<PcodeOp*> deleteSet;
         bool noVectorOpsFound = true;
+
         while ((op != nullptr) && (numPcodes < 30))
         {
             const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
@@ -101,10 +102,13 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                 ++numPcodes;
                 continue;
             };
-            // fail the match if this is another vset instruction
+            // stop scanning if this is another vset instruction
             if (opInfo->isVset || opInfo->isVseti) {
                 break;
             }
+            // end if we have iterated into another block
+            if (op->getParent() != firstOp->getParent())
+                break;
             noVectorOpsFound = noVectorOpsFound && !opInfo->isVectorOp;
             // is this a vector load or load immediate?
             if (opInfo->isLoad || opInfo->isLoadImmediate)
@@ -132,7 +136,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     int4 numBytes = matcher.vNumElem->getOffset() * vsetInfo->multiplier * vsetInfo->elementSize;
                     Varnode * new_size_varnode = data.newConstant(1, numBytes);
                     Varnode* destVn = (*it)->getIn(2);
-                    PcodeOp* newOp = insertBuiltin(data, **it, builtinOp, destVn, sourceVn, new_size_varnode);
+                    PcodeOp* newOp = insertBuiltin(data, (*it)->getAddr(), builtinOp, destVn, sourceVn, new_size_varnode);
                     pcodesToBeBuilt.push_back(new std::pair<PcodeOp*,PcodeOp*>(newOp, *it));
                     deleteSet.push_back(*it);
                     ++transformCount;
@@ -151,13 +155,25 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         }
         if (noVectorOpsFound)
         {
-            riscvVectorLogger->warn("Deleting orphan vset op at 0x{0:x}", firstOp->getAddr().getOffset());
-            data.opUnlink(firstOp);
+            riscvVectorLogger->warn("Found possible orphan vset op at 0x{0:x}", firstOp->getAddr().getOffset());
         }
         for (auto iter: deleteSet)
         {
-            riscvVectorLogger->info("Deleting vector op at 0x{0:x}", iter->getAddr().getOffset());
-            data.opUnlink(iter);
+            riscvVectorLogger->info("Attempting deletion of vector op at 0x{0:x}", iter->getAddr().getOffset());
+            Varnode* outVn = iter->getOut();
+            if (outVn == nullptr) {
+                riscvVectorLogger->info("Deleting vector op at 0x{0:x}", iter->getAddr().getOffset());
+                data.opUnlink(iter);
+            }
+            else {
+                std::list<PcodeOp*>::const_iterator endIter = outVn->endDescend();
+                std::list<PcodeOp*>::const_iterator startIter = outVn->beginDescend();
+                if (startIter == endIter)
+                {
+                    riscvVectorLogger->info("Deleting vector op at 0x{0:x}", iter->getAddr().getOffset());
+                    data.opUnlink(iter);
+                }
+            }
         }
         return returnCode;
     }
