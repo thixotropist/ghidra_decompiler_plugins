@@ -149,7 +149,7 @@ class T1Datatests(unittest.TestCase):
         """
         Verify processing of several Whisper functions that previously threw exceptions
         """
-        sample_set = (2,3,5,6,7)
+        sample_set = (2,3,4,5,6,7,8,9)
         for i in sample_set:
             command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_sample_{i}.ghidra"
             logger.info(f"Running {command} with output to /tmp/whisper_sample_{i}.testlog")
@@ -166,32 +166,6 @@ class T1Datatests(unittest.TestCase):
             self.assertEqual(0, result.returncode,
                 f"Transform count collection for whisper_sample_{i} failed")
             logger.info(f"Found {result.stdout.strip()} vector transforms in whisper_sample_{i}")
-
-    @unittest.skip("Throws decompiler exception")
-    def test_04_whisper_failures(self):
-        """
-        This currently throws a std::vector assertion error even with no plugin
-        within ghidra::Heritage::splitByRefinement at heritage.cc:1748
-        """
-        test_name = "whisper_sample_4"
-        enable_plugin = False
-        enable_valgrind = False
-        if enable_plugin:
-            plugin = f"DECOMP_PLUGIN={PLUGIN_PATH}"
-        else:
-            plugin = ""
-        if enable_valgrind:
-            valgrind = "valgrind"
-        else:
-            valgrind = ""
-        command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} {plugin} {valgrind} {DATATEST_PATH} < test/{test_name}.ghidra"
-        logger.info(f"Running {command} with output to /tmp/{test_name}.testlog")
-        result = subprocess.run(command, check=False, capture_output=True, shell=True, encoding="utf8")
-        with open(f"/tmp/{test_name}.testlog", "w", encoding="utf8") as f:
-            f.write(result.stdout)
-            f.write(result.stderr)
-        self.assertEqual(0, result.returncode,
-            f"Datatest of {test_name} failed")
 
 if __name__ == "__main__":
 
