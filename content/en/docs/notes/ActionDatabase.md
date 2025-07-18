@@ -103,6 +103,12 @@ void ActionDatabase::universalAction(Architecture *conf)
   // end of added plugin code
   act->addAction( actcleanup );
   ...
+  // final actions performed
+  act->addAction( new ActionNameVars("merge") );
+  act->addAction( new ActionSetCasts("casts") );
+  act->addAction( new ActionFinalStructure("blockrecovery") );
+  act->addAction( new ActionPrototypeWarnings("protorecovery") );
+  act->addAction( new ActionStop("base") );
 }
 ```
 
