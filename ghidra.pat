@@ -1,5 +1,5 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index 494d160d..97384ddd 100644
+index e71bf7ad..a9cd6735 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 @@ -639,6 +639,12 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
@@ -36,10 +36,10 @@ index ebd0e843..b8d50b4e 100644
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index 436b8431..4116abe3 100644
+index c76121c4..bd0f9333 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5330,7 +5330,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5342,7 +5342,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -48,7 +48,7 @@ index 436b8431..4116abe3 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5611,6 +5611,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5624,6 +5624,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleSplitStore("splitpointer") );
      actcleanup->addRule( new RuleStringCopy("constsequence"));
      actcleanup->addRule( new RuleStringStore("constsequence"));
