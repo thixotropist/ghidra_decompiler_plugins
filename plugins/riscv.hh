@@ -27,7 +27,7 @@ namespace ghidra{
 extern std::shared_ptr<spdlog::logger> riscvVectorLogger;
 
 static const int TRANSFORM_LIMIT = INT_MAX; ///<@brief maximum number of transforms to execute
-//static const int TRANSFORM_LIMIT = 22; ///<@brief maximum number of transforms to execute
+//static const int TRANSFORM_LIMIT = 8; ///<@brief maximum number of transforms to execute
 extern int transformCount;
 extern Architecture* arch;
 extern AddrSpace* registerAddrSpace;

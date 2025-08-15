@@ -35,6 +35,47 @@ index ebd0e843..b8d50b4e 100644
    ActionDatabase allacts;	///< Actions that can be applied in this architecture
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
+index a4b2029d..500a7a48 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
+@@ -1617,6 +1617,23 @@ void BlockGraph::setStartBlock(FlowBlock *bl)
+   bl->flags |= f_entry_point;
+ }
+ 
++/// Replace a block in our list, resetting the parent
++void BlockGraph::replaceBlock(FlowBlock* bl, int4 index)
++{
++  list[index]->parent = nullptr;
++  bl->parent = this;
++  list[index] = bl;
++}
++
++void BlockGraph::removeBlockReference(const FlowBlock* bl)
++{
++  auto it = std::find(list.begin(), list.end(), bl);
++  if (it != list.end())
++  {
++    list.erase(it);
++  }
++}
++
+ /// Throw an exception if no entry point is registered
+ /// \return the entry point FlowBlock
+ FlowBlock *BlockGraph::getStartBlock(void) const
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
+index 1b3146ed..463368ff 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
+@@ -398,6 +398,8 @@ public:
+   void removeFromFlowSplit(FlowBlock *bl,bool flipflow);	///< Remove FlowBlock splitting flow between input and output edges
+   void spliceBlock(FlowBlock *bl);		///< Splice given FlowBlock together with its output
+   void setStartBlock(FlowBlock *bl);		///< Set the entry point FlowBlock for \b this graph
++  void replaceBlock(FlowBlock* bl, int4 index); ///< Replace an existing FlowBlock at list[index]
++  void removeBlockReference(const FlowBlock* bl);  ///< Remove a block reference without deleting the block itself
+   FlowBlock *getStartBlock(void) const;		///< Get the entry point FlowBlock
+ 				// Factory functions
+   FlowBlock *newBlock(void);							///< Build a new plain FlowBlock
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 index c76121c4..bd0f9333 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc

@@ -5,6 +5,8 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
+#include "inspector.hh"
+
 namespace ghidra{
 class VectorMatcher {
   public:
@@ -15,7 +17,7 @@ class VectorMatcher {
      * @param vsetOp A vsetvl instruction that initiates a loop to be matched
      */
     VectorMatcher(Funcdata& fData, PcodeOp* vsetOp);
-
+    Inspector inspector;     /// Dump interior Ghidra objects to a logger
     Funcdata& data;          /// Function context data
     AddrSpace* codeSpace;    /// The code address space containing the loop
     bool loopFound;          /// does the block contain a loop?
@@ -46,10 +48,6 @@ class VectorMatcher {
     const bool trace;        /// true if logger would process loglevel=trace
     const bool info;         /// true if logger would process loglevel=info
     /**
-     * @brief Perform basic analysis and feature extraction
-     */
-    void analyze();
-    /**
      * @brief is this selection a simple memcpy?
      */
     bool isMemcpy();
@@ -63,11 +61,11 @@ class VectorMatcher {
      */
     ~VectorMatcher();
 
-    private:
-  /**
-   * @brief construct basic control flow data to determine
-   * if this is a simple loop
-   */
+  private:
+    /**
+    * @brief construct basic control flow data to determine
+    * if this is a simple loop
+    */
     void collect_control_flow_data();
 
     /**
@@ -110,6 +108,12 @@ class VectorMatcher {
      * @brief Remove duplicate varnodes in a Phi opcode
      */
     void reducePhiNode(PcodeOp* op);
+
+    /**
+     * @brief Remove any enclosing DoWhile block
+     * @param blk The BlockBasic possibly wrapped with an empty DoWhile
+     */
+    void removeDoWhileWrapperBlock(BlockBasic* blk);
 
   };
 }

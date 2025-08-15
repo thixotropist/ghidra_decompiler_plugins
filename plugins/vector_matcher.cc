@@ -17,6 +17,7 @@ namespace ghidra
 {
 
 VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
+    inspector(riscvVectorLogger),
     data(fData),
     codeSpace(nullptr),
     loopFound(false),
@@ -575,9 +576,105 @@ void VectorMatcher::collect_loop_registers()
     }
 }
 
+void VectorMatcher::removeDoWhileWrapperBlock(BlockBasic* blk)
+{
+    FlowBlock* parentBlock = nullptr;
+    FlowBlock* grandparentBlock = nullptr;
+    riscvVectorLogger->info("Searching for an enclosing DoWhile block");
+    FlowBlock* copyBlk = blk->getCopyMap();
+    if (copyBlk == nullptr)
+        riscvVectorLogger->trace("\tblk->getCopyMap() returns null");
+    else
+    {
+        parentBlock = copyBlk->getParent();
+        if (parentBlock == nullptr)
+            riscvVectorLogger->trace("\tcopyBlk->getParent() returns null");
+        else
+        {
+            std::stringstream ss;
+            parentBlock->printRaw(ss);
+            riscvVectorLogger->trace("Found candidate Parent block:\n{0:s}", ss.str());
+            grandparentBlock = parentBlock->getParent();
+            ss.str("");
+            if (grandparentBlock == nullptr)
+                riscvVectorLogger->trace("\tparentBlock->getParent() returns null");
+            else
+            {
+                grandparentBlock->printRaw(ss);
+                riscvVectorLogger->trace("Found candidate Grandparent block:\n{0:s}", ss.str());
+            }
+        }
+    }
+    if (grandparentBlock == nullptr) riscvVectorLogger->trace("Found no grandparent block");
+    else
+    {
+        if ((parentBlock->getType() == FlowBlock::t_dowhile) &&
+            (grandparentBlock->getType() == FlowBlock::t_ls))
+        {
+            riscvVectorLogger->info("Removing pointless DoWhile block");
+            BlockList* lsb = reinterpret_cast<BlockList*>(grandparentBlock);
+            BlockGraph* doWhile = reinterpret_cast<BlockDoWhile*>(parentBlock);
+            intb index = -1;
+            const vector< FlowBlock * > & list = lsb->getList();
+            for (intb i = 0; i < list.size(); i++)
+            {
+                riscvVectorLogger->trace("Checking list entry {0:d} of type {1:d}",
+                    i, (int)(list[i]->getType()));
+                if (list[i] == parentBlock)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1)
+            {
+                riscvVectorLogger->error("Unable to locate DoWhile block in List Block");
+            }
+            else
+            {
+                // Removing loop edge from the vector block to itself, remembering that
+                // removeEdge is a method of the BlockGraph parent common to each.
+                // TODO: collect all doWhile inEdges and outEdges into two vectors,
+                //       *before* we reparent the vector block, then install these as vector block
+                //       edges *after* we reparent the vector block.
+                std::vector<FlowBlock*> edgesIn;
+                for (int i = 0; i < doWhile->sizeIn(); i++)
+                {
+                    FlowBlock* ib = doWhile->getIn(i);
+                    edgesIn.push_back(ib);
+                    lsb->removeEdge(ib, doWhile);
+                }
+                std::vector<FlowBlock*> edgesOut;
+                for (int i = 0; i < doWhile->sizeOut(); i++)
+                {
+                    FlowBlock* ob = doWhile->getOut(i);
+                    edgesOut.push_back(ob);
+                    lsb->removeEdge(doWhile, ob);
+                }
+
+                riscvVectorLogger->info("Removing internal loop edge from vector block");
+                doWhile->removeEdge(copyBlk, copyBlk);
+                lsb->replaceBlock(copyBlk, index);
+                // restore the edges extracted from the doWhile block
+                for (auto b: edgesIn)
+                {
+                    lsb->addEdge(b, copyBlk);
+                }
+                for (auto b: edgesOut)
+                {
+                    lsb->addEdge(copyBlk, b);
+                }
+                doWhile->removeBlockReference(copyBlk);
+                inspector.log("doWhile prior to deletion", doWhile);
+                delete doWhile;
+            }
+        }
+    }
+}
+
 int VectorMatcher::transform()
 {
-    const bool EXPLORE_BLOCKS = true;
+    const bool EXPLORE_BLOCKS = false;
     const int TRANSFORM_COMPLETED = 1;
     const int TRANSFORM_ROLLED_BACK = 0;
     std::stringstream ss;
@@ -745,10 +842,12 @@ int VectorMatcher::transform()
     }
     riscvVectorLogger->info("Preparing to edit the flow block graph to remove the loop edge");
     graph.removeEdge(loopBlock, loopBlock);
+    //TODO: the following currently segfaults in processing unstructured gotos
+    //removeDoWhileWrapperBlock(loopBlock);
     if (!nextInstructionAddress.isInvalid())
     {
         // if there is a following block add a goto to close the block and reach the next block
-        // place the goto at the end of the current block to satisfy BasicBlock constraints
+        // place the goto at the end of the current block to satisfy BlockBasic constraints
         Address gotoLocation(codeSpace, loopEndAddr);
         PcodeOp* gotoOp = insertBranchOp(data, gotoLocation, nextInstructionAddress);
         if (trace)
@@ -759,13 +858,11 @@ int VectorMatcher::transform()
         }
         data.opInsertEnd(gotoOp, loopBlock);
     }
-
+    riscvVectorLogger->flush();
     if (info)
     {
-        riscvVectorLogger->flush();
-        loopBlock->printRaw(ss);
-        riscvVectorLogger->info("Vector loop block after all immediate transforms is\n{0:s}", ss.str());
-        ss.str("");
+        inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
+        inspector.log("basic block after replacement", loopBlock);
     }
 
     // Optionally explore the BlockGraph around our loop to see if we can

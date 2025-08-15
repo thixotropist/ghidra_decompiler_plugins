@@ -145,6 +145,10 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         {
             riscvVectorLogger->warn("Found possible orphan vset op at 0x{0:x}", firstOp->getAddr().getOffset());
         }
+        else
+        {
+            deleteSet.push_back(firstOp);
+        }
         for (auto iter: deleteSet)
         {
             riscvVectorLogger->info("Attempting deletion of vector op at 0x{0:x}", iter->getAddr().getOffset());
