@@ -52,8 +52,6 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
 
     const int RETURN_NO_TRANSFORM = 0;
     const int RETURN_TRANSFORM_PERFORMED = 1;
-    riscvVectorLogger->trace("Testing for early termination of the transform search");
-    if (transformCount >= TRANSFORM_LIMIT) return 0;
     int4 returnCode = RETURN_NO_TRANSFORM;
     [[maybe_unused]] bool trace = riscvVectorLogger->should_log(spdlog::level::trace);
     riscvVectorLogger->trace("Vector context discovered");
@@ -77,6 +75,8 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
         // For each vector dependency in the form of a vector store operation, convert the
         // load and store ops into vector_memset or vector_memcpy invocations.
         // This is the only current loop-free vector pattern - refactor when we find others.
+        riscvVectorLogger->trace("Testing for early termination of the non-loop transform search");
+        if (transformCountNonLoop >= TRANSFORM_LIMIT_NONLOOPS) return 0;
         PcodeOp* op = firstOp->nextOp();
         int numPcodes = 1;
         std::vector<PcodeOp*> deleteSet;
@@ -127,7 +127,7 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
                     PcodeOp* newOp = insertBuiltin(data, (*it)->getAddr(), builtinOp, destVn, sourceVn, new_size_varnode);
                     pcodesToBeBuilt.push_back(new std::pair<PcodeOp*,PcodeOp*>(newOp, *it));
                     deleteSet.push_back(*it);
-                    ++transformCount;
+                    ++transformCountNonLoop;
                     returnCode = RETURN_TRANSFORM_PERFORMED;
                 }
                 for (auto it: pcodesToBeBuilt) {
@@ -173,7 +173,8 @@ int4 RuleVectorTransform::applyOp(PcodeOp *firstOp, Funcdata &data) {
     riscvVectorLogger->trace("Testing the vector stanza for a vector_memcpy match");
     if (matcher.isMemcpy())
     {
-        ++transformCount;
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return 0;
+        ++transformCountLoop;
         return matcher.transform();
     }
     return 0;
