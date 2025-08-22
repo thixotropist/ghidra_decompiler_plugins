@@ -149,7 +149,7 @@ class T1Datatests(unittest.TestCase):
         """
         Verify processing of several Whisper functions that previously threw exceptions
         """
-        sample_set = (2,3,5,6,7,8)
+        sample_set = (2,3,5,6,7,8,10)
         for i in sample_set:
             command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_sample_{i}.ghidra"
             logger.info(f"Running {command} with output to /tmp/whisper_sample_{i}.testlog")

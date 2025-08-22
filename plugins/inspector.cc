@@ -47,7 +47,6 @@ void Inspector::log(const string label, const FlowBlock* fb)
         blockType = "BlockCopy";
         copyMap = nullptr;
         parent = fb->getParent();
-        collectSubBlocks(reinterpret_cast<const BlockGraph*>(fb), list);
         break;
       case FlowBlock::t_goto:
         blockType = "BlockGoto";

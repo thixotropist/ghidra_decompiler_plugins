@@ -36,46 +36,50 @@ index ebd0e843..b8d50b4e 100644
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-index a4b2029d..500a7a48 100644
+index a4b2029d..3ab07715 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-@@ -1617,6 +1617,23 @@ void BlockGraph::setStartBlock(FlowBlock *bl)
-   bl->flags |= f_entry_point;
+@@ -1235,6 +1235,12 @@ void BlockGraph::clear(void)
+   list.clear();
  }
  
-+/// Replace a block in our list, resetting the parent
-+void BlockGraph::replaceBlock(FlowBlock* bl, int4 index)
++void BlockGraph::removeComponentLink(FlowBlock* bl)
 +{
-+  list[index]->parent = nullptr;
-+  bl->parent = this;
-+  list[index] = bl;
++  std::vector<FlowBlock*>::iterator position = std::find(list.begin(),list.end(), bl);
++  if (position != list.end()) list.erase(position);
 +}
 +
-+void BlockGraph::removeBlockReference(const FlowBlock* bl)
-+{
-+  auto it = std::find(list.begin(), list.end(), bl);
-+  if (it != list.end())
-+  {
-+    list.erase(it);
-+  }
-+}
-+
- /// Throw an exception if no entry point is registered
- /// \return the entry point FlowBlock
- FlowBlock *BlockGraph::getStartBlock(void) const
+ void BlockGraph::markUnstructured(void)
+ 
+ {
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-index 1b3146ed..463368ff 100644
+index 1b3146ed..cecdefba 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-@@ -398,6 +398,8 @@ public:
-   void removeFromFlowSplit(FlowBlock *bl,bool flipflow);	///< Remove FlowBlock splitting flow between input and output edges
-   void spliceBlock(FlowBlock *bl);		///< Splice given FlowBlock together with its output
-   void setStartBlock(FlowBlock *bl);		///< Set the entry point FlowBlock for \b this graph
-+  void replaceBlock(FlowBlock* bl, int4 index); ///< Replace an existing FlowBlock at list[index]
-+  void removeBlockReference(const FlowBlock* bl);  ///< Remove a block reference without deleting the block itself
-   FlowBlock *getStartBlock(void) const;		///< Get the entry point FlowBlock
- 				// Factory functions
-   FlowBlock *newBlock(void);							///< Build a new plain FlowBlock
+@@ -159,6 +159,7 @@ public:
+   virtual ~FlowBlock(void) {}			///< Destructor
+   int4 getIndex(void) const { return index; }	///< Get the index assigned to \b this block
+   FlowBlock *getParent(void) { return parent; }	///< Get the parent FlowBlock of \b this
++  void setParent(FlowBlock* newParent) {parent = newParent;} ///< Set the parent FlowBlock of \b this
+   FlowBlock *getImmedDom(void) const { return immed_dom; }	///< Get the immediate dominator FlowBlock
+   FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock
+   const FlowBlock *getParent(void) const { return (const FlowBlock *) parent; }	///< Get the parent FlowBlock of \b this
+@@ -370,6 +371,7 @@ protected:
+ public:
+   void clear(void);					///< Clear all component FlowBlock objects
+   virtual ~BlockGraph(void) { clear(); }		///< Destructor
++  void removeComponentLink(FlowBlock* bl); ///< Remove a component FlowBlock link without removing the FlowBlock itself
+   const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
+   int4 getSize(void) const { return list.size(); }	///< Get the number of components
+   FlowBlock *getBlock(int4 i) const { return list[i]; }	///< Get the i-th component
+@@ -538,6 +540,7 @@ class BlockGoto : public BlockGraph {
+ public:
+   BlockGoto(FlowBlock *bl) { gototarget = bl; gototype = f_goto_goto; }	///< Construct given target block
+   FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target block of the goto
++  void setGotoTarget(FlowBlock *bl){ gototarget = bl; }		///< Set the target block of the goto
+   uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured branch
+   bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
+   virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 index c76121c4..bd0f9333 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc

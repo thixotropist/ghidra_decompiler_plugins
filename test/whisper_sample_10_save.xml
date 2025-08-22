@@ -1,0 +1,237 @@
+<xml_savefile name="drwav__on_write_memory" target="default" adjustvma="0">
+<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<bytechunk space="ram" offset="0x2a606" readonly="true">
+            8338050f0338850f3287
+aa8733860841ae86637fe612397122f8
+06fc8000130300106384080013931800
+330603416374e6003303e800f06f03b8
+0703033e0600630b080690739a857285
+2338e4fc233cd4fc2330f4fe233464fe
+0298033384fe833704fe833684fd0337
+04fd2a86630b0510ec6f03b8870f3a85
+90e1f06fb68523b8670e1462c2965776
+050c87800502118db295a7800602b296
+7df5f47ff077ba96f4ff6363d60afc73
+e270427490e33a85216182809077233c
+e4fc2330d4fe2334c4ff233014fd55ce
+8c7fc5cd8c731a852334f4fc233864fc
+02962a865dc1033e84fe033304fd8337
+84fc833604fe033784fde30f0ef68338
+04fc7288d7f5080c87000802b388b840
+2e98a70005022e95e39608fe03b88703
+8c7372852334e4fc2338d4fc233cc4fc
+233064fe2334f4fe0298033784fc8336
+04fd033684fd033304fe833784fe2db7
+f4f73686a9bf706d3a851462c2965776
+050c87800502118db295a7800602b296
+7df5f47ff077ba96f4ff6374d600f4f7
+3686fc733a8590e38280e27042740145
+21618280
+</bytechunk>
+</binaryimage>
+
+<coretypes>
+  <type name="uint3" size="3" metatype="uint" id="0xc0000000000000c0"/>
+  <type name="uint5" size="5" metatype="uint" id="0xc0000000000000c1"/>
+  <type name="code" size="1" metatype="code" id="0xe000000000000001"/>
+  <type name="uint6" size="6" metatype="uint" id="0xc0000000000000c2"/>
+  <type name="double" size="8" metatype="float" id="0xc000000000000082"/>
+  <type name="uint7" size="7" metatype="uint" id="0xc0000000000000c3"/>
+  <type name="uint" size="4" metatype="uint" id="0xc0000000000000c4"/>
+  <type name="float10" size="10" metatype="float" id="0xc000000000000084"/>
+  <type name="float16" size="16" metatype="float" id="0xc000000000000085"/>
+  <type name="ulong" size="8" metatype="uint" id="0xc0000000000000c6"/>
+  <type name="float2" size="2" metatype="float" id="0xc000000000000086"/>
+  <type name="ushort" size="2" metatype="uint" id="0xc0000000000000c8"/>
+  <type name="void" size="0" metatype="void" id="0xc0000000000000c9"/>
+  <type name="float" size="4" metatype="float" id="0xc00000000000008a"/>
+  <type name="wchar32" size="4" metatype="int" utf="true" id="0xc0000000000000cc"/>
+  <type name="wchar_t" size="2" metatype="int" utf="true" id="0xc0000000000000cd"/>
+  <type name="int16" size="16" metatype="int" id="0xc000000000000090"/>
+  <type name="int3" size="3" metatype="int" id="0xc000000000000091"/>
+  <type name="int5" size="5" metatype="int" id="0xc000000000000092"/>
+  <type name="int6" size="6" metatype="int" id="0xc000000000000093"/>
+  <type name="int7" size="7" metatype="int" id="0xc000000000000094"/>
+  <type name="int" size="4" metatype="int" id="0xc000000000000095"/>
+  <type name="long" size="8" metatype="int" id="0xc000000000000097"/>
+  <type name="short" size="2" metatype="int" id="0xc0000000000000a8"/>
+  <type name="sbyte" size="1" metatype="int" id="0xc0000000000000a9"/>
+  <type name="undefined1" size="1" metatype="unknown" id="0xc0000000000000b4"/>
+  <type name="undefined2" size="2" metatype="unknown" id="0xc0000000000000b5"/>
+  <type name="undefined3" size="3" metatype="unknown" id="0xc0000000000000b6"/>
+  <type name="undefined4" size="4" metatype="unknown" id="0xc0000000000000b7"/>
+  <type name="undefined5" size="5" metatype="unknown" id="0xc0000000000000b8"/>
+  <type name="undefined6" size="6" metatype="unknown" id="0xc0000000000000b9"/>
+  <type name="bool" size="1" metatype="bool" id="0xc000000000000079"/>
+  <type name="undefined7" size="7" metatype="unknown" id="0xc0000000000000ba"/>
+  <type name="byte" size="1" metatype="uint" id="0xc00000000000007a"/>
+  <type name="undefined8" size="8" metatype="unknown" id="0xc0000000000000bb"/>
+  <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b"/>
+  <type name="uint16" size="16" metatype="uint" id="0xc0000000000000bf"/>
+</coretypes><save_state>
+
+<typegrp structalign="4">
+  <type name="undefined" id="0xc000000000000000" metatype="unknown" size="1"/>
+  <type name="" metatype="ptr" size="8">
+    <void/>
+  </type>
+</typegrp><db scopeidbyname="false">
+<scope name="" id="0x0">
+<symbollist>
+
+<mapsym>
+  <function id="0x3c0" name="drwav__on_write_memory" size="1">
+    <addr space="ram" offset="0x2a606"/>
+    <localdb lock="false" main="stack">
+      <scope name="drwav__on_write_memory">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist>
+          <mapsym>
+            <symbol id="0x2c30" name="local_28" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000bb"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffd8" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2c31" name="local_20" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000bb"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffe0" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2c32" name="local_18" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000bb"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffe8" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2024" name="param_1" typelock="true" namelock="true" merge="false" cat="0" index="0x0">
+              <type name="" metatype="ptr" size="8">
+                <void/>
+              </type>
+            </symbol>
+            <addr space="register" offset="0x2050" size="8"/>
+            <rangelist>
+              <range space="ram" first="0x2a605" last="0x2a605"/>
+            </rangelist>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2025" name="param_2" typelock="true" namelock="true" merge="false" cat="0" index="0x1">
+              <type name="" metatype="ptr" size="8">
+                <void/>
+              </type>
+            </symbol>
+            <addr space="register" offset="0x2058" size="8"/>
+            <rangelist>
+              <range space="ram" first="0x2a605" last="0x2a605"/>
+            </rangelist>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2026" name="param_3" typelock="true" namelock="true" merge="false" cat="0" index="0x2">
+              <type name="ulong" id="0xc0000000000000c6" metatype="uint" size="8"/>
+            </symbol>
+            <addr space="register" offset="0x2060" size="8"/>
+            <rangelist>
+              <range space="ram" first="0x2a605" last="0x2a605"/>
+            </rangelist>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2c2d" name="local_40" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000bb"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffc0" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2c2e" name="local_38" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000bb"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffc8" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x2c2f" name="local_30" typelock="false" namelock="true" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000bb"/>
+            </symbol>
+            <addr space="stack" offset="0xffffffffffffffd0" size="8"/>
+            <rangelist/>
+          </mapsym>
+        </symbollist>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="__stdcall" modellock="true">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x2a606" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <symbol id="0x213" name="__global_pointer$" typelock="true" namelock="true" merge="false" cat="-1">
+    <typeref name="undefined" id="0xc000000000000000"/>
+  </symbol>
+  <addr space="ram" offset="0x144438" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <labelsym name="LAB_0002a678" id="0x400000000002a678"/>
+  <addr space="ram" offset="0x2a678"/>
+  <rangelist/>
+</mapsym></symbollist>
+</scope>
+</db>
+<context_points>
+
+<context_pointset space="ram" offset="0x2a606">
+  <set name="RVA" val="1"/>
+  <set name="RVB" val="0"/>
+  <set name="RVC" val="1"/>
+  <set name="RVD" val="1"/>
+  <set name="RVE" val="0"/>
+  <set name="RVF" val="1"/>
+  <set name="RVG" val="0"/>
+  <set name="RVH" val="1"/>
+  <set name="RVI" val="1"/>
+  <set name="RVJ" val="0"/>
+  <set name="RVK" val="0"/>
+  <set name="RVL" val="0"/>
+  <set name="RVM" val="1"/>
+  <set name="RVN" val="0"/>
+  <set name="RVO" val="0"/>
+  <set name="RVP" val="0"/>
+  <set name="RVQ" val="1"/>
+  <set name="RVR" val="0"/>
+  <set name="RVS" val="1"/>
+  <set name="RVT" val="0"/>
+  <set name="RVU" val="1"/>
+  <set name="RVV" val="0"/>
+  <set name="RVW" val="0"/>
+  <set name="RVX" val="0"/>
+  <set name="RVY" val="0"/>
+  <set name="RVZ" val="0"/>
+  <set name="MXL" val="2"/>
+</context_pointset>
+<tracked_pointset space="ram" offset="0x2a606">
+  <set space="register" offset="0x2018" size="8" val="0x144438"/>
+</tracked_pointset></context_points>
+
+<commentdb>
+  <comment type="header">
+    <addr space="ram" offset="0x2a606"/>
+    <addr space="ram" offset="0x2a606"/>
+    <text>drwav__on_write_memory(void*, void const*, unsigned long)</text>
+  </comment>
+</commentdb>
+<optionslist>
+  <readonly>on</readonly>
+  <setlanguage>c-language</setlanguage>
+  <protoeval>__stdcall</protoeval>
+</optionslist></save_state>
+</xml_savefile>

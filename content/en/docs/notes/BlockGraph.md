@@ -1077,11 +1077,82 @@ transform blocks, which would be a problem.  And there is some evidence that pro
 The main function is rather large, so let's switch to the smaller whisper_sample_5 test case, as that fails in a similar fashion.  Additionally, disable the printTree invocation over the entire function
 to minimize log file clutter.
 
-#### whisper_wrap_segment visual inspection
+#### whisper_wrap_segment inspection
+
+Inspect `whisper_wrap_segment` in Ghidra with vector plugins enabled but with `DoWhile` block removal disabled.
+
+* 24 `vector_memcpy` transforms completed
+    * 16 loop transforms
+        * 2 of these have a size varnode like `register0x00002050`
+    * 8 non-loop transforms
+* 1 `vector_strlen` stanza present but not recognized
+* 1 vsetivli instruction located outside of the matching vector load and store instructions
+* 1 possible `vector_memcpy` transforms not taken at 0xb9d50 - nested do loop?
+
+The log file shows some issues:
+
+```console
+$ grep warn ghidraRiscvLogger.log
+[2025-08-17 10:24:48.265] [riscv_vector] [warning]     Unexpected op found in analysis: 13
+[2025-08-17 10:24:48.278] [riscv_vector] [warning] Unable to safely remove register dependencies at 0xb9d50:4fb
+[2025-08-17 10:24:48.291] [riscv_vector] [warning] Found possible orphan vset op at 0xba0a8
+[2025-08-17 10:25:59.219] [riscv_vector] [warning]     Unexpected op found in analysis: 13
+[2025-08-17 10:25:59.223] [riscv_vector] [warning] Unable to safely remove register dependencies at 0xb9d50:4fb
+$ grep free ghidraRiscvLogger.log|grep -v goto
+		syscall[#0x11000001:4](s0xffffffffffffff10(0x000b9de0:1871),s6(0x000b9dfe:574),a0(free))
+0x000ba4e8:20e1:	vector_memcpy(s0xffffffffffffff10(0x000b9de0:1871),s6(0x000b9dfe:574),a0(free))
+0x000ba4e8:20e1:	vector_memcpy(s0xffffffffffffff10(0x000b9de0:1871),s6(0x000b9dfe:574),a0(free))
+		syscall[#0x11000001:4](s0xffffffffffffff10(0x000b9de0:1871),s6(0x000b9dfe:574),a2(free))
+0x000ba550:20e5:	vector_memcpy(s0xffffffffffffff10(0x000b9de0:1871),s6(0x000b9dfe:574),a2(free))
+0x000ba550:20e5:	vector_memcpy(s0xffffffffffffff10(0x000b9de0:1871),s6(0x000b9dfe:574),a2(free))
+```
+
+Where is that `free` coming from?  It looks like Ghidra will assign an address to a pcodeop
+that does not fall within the address range for that block.  Tighten up the definition of `VectorMatcher::isDefinedInLoop` and the free parameter is no longer there.
+
+#### whisper_wrap_segment debugging
+
+This section explores segfaults thrown during a datatest built from `whisper_wrap_segment`:
 
 ```c
 void whisper_wrap_segment(void*, void*, int, int); // loaded at 0xb97c0
 ```
 
+Run under valgrind to see we have use-after-free problem.
 
+```console
+$ SLEIGHHOME=/opt/ghidra_12.0_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so valgrind --num-callers=500 /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest < test/whisper_sample_5.ghidra > /tmp/whisper_sample_5.testlog
+==353775== Memcheck, a memory error detector
+==353775== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==353775== Using Valgrind-3.25.1 and LibVEX; rerun with -h for copyright info
+==353775== Command: /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest
+==353775== 
+==353775== Invalid read of size 4
+==353775==    at 0xA0DBA8: ghidra::FlowBlock::getIndex() const (block.hh:160)
+==353775==    by 0xA0AC52: ghidra::BlockIf::scopeBreak(int, int) (block.cc:3054)
+...
+==353775==    by 0xA04CD5: ghidra::BlockGraph::scopeBreak(int, int) (block.cc:1275)
+==353775==    by 0xA04CD5: ghidra::BlockGraph::scopeBreak(int, int) (block.cc:1275)
+==353775==    by 0xA22470: ghidra::ActionFinalStructure::apply(ghidra::Funcdata&) (blockaction.cc:2201)
+...
+==353775==  Address 0x8556698 is 40 bytes inside a block of size 128 free'd
+==353775==    at 0x4842E78: operator delete(void*, unsigned long) (vg_replace_malloc.c:1181)
+==353775==    by 0xA1B2B2: ghidra::BlockDoWhile::~BlockDoWhile() (block.hh:711)
+==353775==    by 0x727FBCA: ghidra::VectorMatcher::removeDoWhileWrapperBlock(ghidra::BlockBasic*) (vector_matcher.cc:671)
 
+```
+
+Current guess: the doWhile parent is not the only place referencing a doWhile block.  It can also be referenced in the list of an If block and possibly a goto block.  We need to replace *all* list references.
+
+We need to find smaller test cases.  Run Ghidra with the plugin, exporting all functions as C.  We get
+51 exceptions.  Collect some of these and identify the function throwing the exception.
+
+| Address| Function | Size |
+| 0x00020fd0 | main | 10844 |
+| 0x0002a606 | drwav__on_write_memory | 398 |
+| 0x0003e604 |  |  |
+| 0x00040aba |  |  |
+| 0x00041596 | gpt_split_words | 1928 |
+| 0x00041d9e |  |  |
+| 0x000454ce | __copy_move_a2<false,... |	666  |
+| 0x0004e81c | lookup_collatename<char_const*> | 738 |
