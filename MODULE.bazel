@@ -10,9 +10,9 @@ http_archive = use_repo_rule("@@bazel_tools//tools/build_defs/repo:http.bzl", "h
 http_archive(
     name = "ghidra",
     build_file = "//:BUILD.ghidra",
-    urls = ["https://github.com/NationalSecurityAgency/ghidra/archive/refs/tags/Ghidra_11.4_build.tar.gz"],
-    sha256="20143ebb46b3ce18110f4718d5741586cf1ad31a1e470e32d0f18e3c960c47c0",
-    strip_prefix = "ghidra-Ghidra_11.4_build/",
+    urls = ["https://github.com/NationalSecurityAgency/ghidra/archive/refs/tags/Ghidra_11.4.1_build.tar.gz"],
+    sha256="8a3f955f04f4a2945afc571a70f1c2140052cdd230fbab99615b1de8480ce4f0",
+    strip_prefix = "ghidra-Ghidra_11.4.1_build/",
     patches = ["ghidra.pat"],
     patch_strip = 1,
 )

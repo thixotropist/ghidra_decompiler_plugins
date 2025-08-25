@@ -1,11 +1,14 @@
 # Overview
 
+>Note: This project is one of [several](https://github.com/thixotropist) projects exploring Ghidra tools to make
+>      analysis of RISC-V AI-enhanced applications easier.
+
 The bulk of this project's documentation is structured as a Hugo + Docsys static web site,
 with source material collected under `content/en`. Local browsing is enabled with `hugo serve`.
 
 The intended audience includes Ghidra users wishing to extend or research Ghidra's decompiler subsystem,
 especially in support of processor-specific Rules and Actions.
-This sample project concentrates on rules supporting instruction set architecture extensions like the
+This sample project concentrates on rules enhancing readability analyzing programs using instruction set architecture extensions like the
 RISC-V vector instruction set.
 
 This is a research project intended to show what *may* be done with the Ghidra decompiler and at what complexity.
@@ -48,6 +51,8 @@ can be:
 2. Acquire a Ghidra distribution source tarball to get the decompiler sources, patch a simple plugin manager into
    those sources, and rebuild the decompiler.  The rebuilt decompiler will export all linkage symbols for access by
    a plugin.
+    * The Ghidra decompiler patch set will likely include other methods needed to edit control structures, as
+      many vector transforms involve absorbing simple loops or merging blocks.
 3. Build a local plugin as a Sharable Object library accessing the decompiler's API.  In this example, the
    plugin is `libriscv_vector.so`.
 4. Copy the plugin to some accessible location, for example `/tmp`.
@@ -71,7 +76,8 @@ $ cp -f bazel-bin/plugins/libriscv_vector.so /tmp
 $ DECOMP_PLUGIN=/tmp/libriscv_vector.so ghidraRun
 ```
 
-Plugin development uses the decompiler's datatest infrastructure, so compile/link/test cycles can be a matter of seconds.
+Plugin development uses the decompiler's datatest infrastructure, so compile/link/test cycles can be a matter of seconds
+with no involvement of the Ghidra GUI.
 There is no need to rebuild either Ghidra or the decompiler module for every small change to the plugin logic.
 
 This approach to decompiler extensions avoids any Pull Request approvals to decompiler sources. The decompiler patches
@@ -86,16 +92,15 @@ What works:
 * The plugin manager adds hooks to add custom actions and new Datatyped builtin functions like `vector_memcpy` and `vector_memset`.
 * The elementary proof-of-concept plugin recognizes *some* RISCV vector sequences and transforms them into `vector_memcpy` and
   `vector_memset` calls.
-* Applying the new plugin rule to a vectorized RISC-V build of `whisper-cpp` completes without crashing and generates over 1000
+* Applying the new plugin rule to a vectorized RISC-V build of `whisper-cpp` completes without crashing and generates over 1500
   vector transforms.
+* Varnodes assigned by the decompiler and used exclusively within a vector stanza are deleted, reducing clutter.
+* Vector stanza loops are absorbed into `vector_*` function calls, updating the parent function's `BlockGraph` to show the
+  simplified control flow
 
 What's pending:
 
-* Vector stanzas often consist of short loops with scalar registers assigned for source pointer, destination pointer, and counts.
-  Ghidra generally considers these scratch registers as having larger scope.  If the loop is absorbed into a function call
-  like `vector_memcpy` these register varnodes need to be deleted along with their descendants.  Figuring out when this is
-  safe is more art than science.
-* Vector stanza loops are replaced with function calls but the `BlockGraph` is not updated for the parent function.  This
-  leaves `DoWhile` `FlowBlock` objects in the function's `BlockGraph`, adding clutter to the decompiler output.  We need some
-  way to delete these `DoWhile` blocks and merge their interior BlockBasic code into the following blocks.
-* We need a general model for vector instruction stanzas implementing loops over arrays of structures.
+* Add more builtins, like `vector_strlen`.
+* General editing for consistency and ease of access.
+* We need a general model for vector instruction stanzas implementing loops over arrays of structures.  This *may* lead
+  to `vector_map` transforms similar to `std::transform` where the scalar operation is a lambda expression.

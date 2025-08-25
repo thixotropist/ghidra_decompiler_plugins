@@ -61,8 +61,7 @@ this kind of transform?
 
 ## Installation
 
->Note: This project is tested against Ghidra 11.4, 11.5, and 12.0-DEV.  Documentation may refer to any release
-       with no known release dependencies.
+>Note: This project is tested against Ghidra 11.4.1 and 12.0-DEV.  Documentation may refer to any release with no known release dependencies.
 
 This project patches an existing Ghidra deployment, replacing the standard decompiler executable
 with one supporting a simple plugin manager.  It also provides a framework for developing and
@@ -72,12 +71,12 @@ testing decompiler plugins capable of adding new rules, actions, and transformat
    This will provide every Ghidra component *except* for the decompiler.
 2. Allow changes to the decompiler directory.
    ```console
-   $ chown -R username:groupname /opt/ghidra_11.5_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
+   $ chown -R username:groupname /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
    ```
 3. Install [Bazel](https://bazel.build/) as a workspace/build manager on your system.
 4. Download this project from the github repository.
 5. Select the Ghidra tarball providing decompiler source, then edit the path into `MODULE.bazel`.
-   We will use `Ghidra_11.4_build.tar.gz` from Github.
+   We will use `Ghidra_11.4.1_build.tar.gz` from Github.
 6. Build the patched decompiler and its associated datatest and unittest executables
     ```console
     $ bazel build -c dbg @ghidra//:decompile @ghidra//:decompile_datatest @ghidra//:decompile_unittest
@@ -85,14 +84,14 @@ testing decompiler plugins capable of adding new rules, actions, and transformat
 7. Replace the original decompiler with the patched decompiler
     ```console
     $ cp -f bazel-out/k8-dbg/bin/external/+_repo_rules+ghidra/{decompile,decompile_datatest,decompile_unittest} \
-    /opt/ghidra_11.5_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
+    /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
     ```
 
 Notes:
 
 * This project interworks two Ghidra versions, so there is a possibility of version skew.  The Ghidra GUI and processor/SLEIGH
-  code is currently built from a fork of the Ghidra development code, e.g. `ghidra_11.5_DEV`.  The decompiler is built from
-  a patched full release, e.g. `ghidra_11.4`.  The API between the two changes slowly, and is unlikely to raise serious issues
+  code is currently built from a fork of the Ghidra development code, e.g. `ghidra_12.0_DEV`.  The decompiler is built from
+  a patched full release, e.g. `ghidra_11.4.1`.  The API between the two changes slowly, and is unlikely to raise serious issues
   during experiments.
 * Bazel will fetch and locally cache the Ghidra source archive on the first build.
     * If you later want to alter the decompiler patch file `ghidra.pat`, you should execute `bazel clean --expunge` to update the cached and patched
@@ -127,5 +126,38 @@ Notes:
     ```c
     #include "Ghidra/Features/Decompiler/src/decompile/cpp/ruleaction.hh"
     ```
+
+### Example
+
+With no plugin present, Ghidra's decompiler will often render vector instruction
+sequences like this:
+
+```c
+if (local_4a8 == local_498) {
+  puVar21 = local_4a0 + 1;
+  plVar35 = local_4a8;
+  do {
+    lVar16 = vsetvli_e8m1tama(puVar21);
+    auVar49 = vle8_v(plVar35);
+    puVar21 = puVar21 + -lVar16;
+    plVar35 = (long *)((long)plVar35 + lVar16);
+    vse8_v(auVar49,puVar31);
+    puVar31 = (undefined8 *)((long)puVar31 + lVar16);
+  } while (puVar21 != (undefined *)0x0);
+}
+```
+
+With a RISC-V vector transform plugin enabled, this sequence is displayed as:
+
+```c
+
+if (local_4a8 == local_498) {
+  vector_memcpy((void *)((long)local_8f0 + 0x10),(void *)local_4a8,(ulong)(local_4a0 + 1));
+}
+```
+
+The plugin has introduced a rule to recognize sequences of vector instructions along
+with the pointer and conditional branch operations that implement a vector memory copy
+RTL sequence.
 
 {{% /blocks/section %}}

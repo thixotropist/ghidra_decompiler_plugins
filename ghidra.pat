@@ -1,5 +1,5 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index 494d160d..97384ddd 100644
+index e71bf7ad..a9cd6735 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 @@ -639,6 +639,12 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
@@ -35,11 +35,56 @@ index ebd0e843..b8d50b4e 100644
    ActionDatabase allacts;	///< Actions that can be applied in this architecture
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
+index a4b2029d..3ab07715 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
+@@ -1235,6 +1235,12 @@ void BlockGraph::clear(void)
+   list.clear();
+ }
+ 
++void BlockGraph::removeComponentLink(FlowBlock* bl)
++{
++  std::vector<FlowBlock*>::iterator position = std::find(list.begin(),list.end(), bl);
++  if (position != list.end()) list.erase(position);
++}
++
+ void BlockGraph::markUnstructured(void)
+ 
+ {
+diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
+index 1b3146ed..cecdefba 100644
+--- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
++++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
+@@ -159,6 +159,7 @@ public:
+   virtual ~FlowBlock(void) {}			///< Destructor
+   int4 getIndex(void) const { return index; }	///< Get the index assigned to \b this block
+   FlowBlock *getParent(void) { return parent; }	///< Get the parent FlowBlock of \b this
++  void setParent(FlowBlock* newParent) {parent = newParent;} ///< Set the parent FlowBlock of \b this
+   FlowBlock *getImmedDom(void) const { return immed_dom; }	///< Get the immediate dominator FlowBlock
+   FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock
+   const FlowBlock *getParent(void) const { return (const FlowBlock *) parent; }	///< Get the parent FlowBlock of \b this
+@@ -370,6 +371,7 @@ protected:
+ public:
+   void clear(void);					///< Clear all component FlowBlock objects
+   virtual ~BlockGraph(void) { clear(); }		///< Destructor
++  void removeComponentLink(FlowBlock* bl); ///< Remove a component FlowBlock link without removing the FlowBlock itself
+   const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
+   int4 getSize(void) const { return list.size(); }	///< Get the number of components
+   FlowBlock *getBlock(int4 i) const { return list[i]; }	///< Get the i-th component
+@@ -538,6 +540,7 @@ class BlockGoto : public BlockGraph {
+ public:
+   BlockGoto(FlowBlock *bl) { gototarget = bl; gototype = f_goto_goto; }	///< Construct given target block
+   FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target block of the goto
++  void setGotoTarget(FlowBlock *bl){ gototarget = bl; }		///< Set the target block of the goto
+   uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured branch
+   bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
+   virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index 436b8431..4116abe3 100644
+index c76121c4..bd0f9333 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5330,7 +5330,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5342,7 +5342,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -48,7 +93,7 @@ index 436b8431..4116abe3 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5611,6 +5611,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5624,6 +5624,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleSplitStore("splitpointer") );
      actcleanup->addRule( new RuleStringCopy("constsequence"));
      actcleanup->addRule( new RuleStringStore("constsequence"));

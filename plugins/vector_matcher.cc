@@ -16,7 +16,54 @@
 namespace ghidra
 {
 
+
+// recurse through the function's graph to replace all references to old with new.
+//TODO: move this into a patch to the BlockGraph class
+static void replaceBlock(const BlockGraph& sblocks, FlowBlock* oldBlock, FlowBlock* newBlock)
+{
+    riscvVectorLogger->trace("Entering replaceBlock");
+    if (sblocks.getType() == FlowBlock::t_plain) return;
+
+    vector<FlowBlock*>& list = const_cast<vector<FlowBlock*>&>(sblocks.getList());
+    for(auto iter=list.begin();iter!=list.end();++iter)
+    {
+        if ((*iter)->getType() == FlowBlock::t_plain) continue;
+        if ((*iter)->getType() == FlowBlock::t_copy) continue;
+        BlockGraph* bg = reinterpret_cast<BlockGraph*>(*iter);
+        if (*iter == oldBlock)
+        {
+            riscvVectorLogger->trace("\tReplacing oldBlock reference in BlockGraph index {0:d}",
+                bg->getIndex());
+            *iter = newBlock;
+        }
+        if ((*iter)->getType() == FlowBlock::t_if)
+        {
+            BlockIf* blkIf = reinterpret_cast<BlockIf*>(bg);
+            riscvVectorLogger->trace("\tChecking BlockIf index {0:d}",
+                blkIf->getIndex());
+            if (blkIf->getGotoTarget() == oldBlock)
+            {
+                riscvVectorLogger->trace("\tReplacing oldBlock reference in BlockIf");
+                blkIf->setGotoTarget(newBlock);
+            }
+        }
+        if ((*iter)->getType() == FlowBlock::t_goto)
+        {
+            BlockGoto* blkGt = reinterpret_cast<BlockGoto*>(bg);
+            riscvVectorLogger->trace("\tChecking BlockGoto index {0:d}",
+                blkGt->getIndex());
+            if (blkGt->getGotoTarget() == oldBlock)
+            {
+                riscvVectorLogger->trace("\tReplacing oldBlock reference in a new BlockGoto");
+                blkGt->setGotoTarget(newBlock);
+            }
+        }
+       replaceBlock(*bg, oldBlock, newBlock);
+    }
+}
+
 VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
+    inspector(riscvVectorLogger),
     data(fData),
     codeSpace(nullptr),
     loopFound(false),
@@ -134,7 +181,9 @@ bool VectorMatcher::isDefinedInLoop(const Varnode* vn)
     const PcodeOp* definingOp = vn->getDef();
     if (definingOp == nullptr) return false; 
     intb offset = definingOp->getAddr().getOffset();
-    return (offset >= loopStartAddr) && (offset <= loopEndAddr);
+    bool addressInLoop = (offset >= loopStartAddr) && (offset <= loopEndAddr);
+    bool blockIsLoopblock = definingOp->getParent() == loopBlock;
+    return addressInLoop && blockIsLoopblock;
 }
 
 void VectorMatcher::reducePhiNode(PcodeOp* op)
@@ -575,30 +624,125 @@ void VectorMatcher::collect_loop_registers()
     }
 }
 
+void VectorMatcher::removeDoWhileWrapperBlock(BlockBasic* blk)
+{
+    FlowBlock* parentBlock = nullptr;
+    FlowBlock* grandparentBlock = nullptr;
+    riscvVectorLogger->info("Searching for an enclosing DoWhile block");
+    FlowBlock* copyBlk = blk->getCopyMap();
+    if (copyBlk == nullptr)
+        riscvVectorLogger->trace("\tblk->getCopyMap() returns null");
+    else
+    {
+        parentBlock = copyBlk->getParent();
+        if (parentBlock == nullptr)
+            riscvVectorLogger->trace("\tcopyBlk->getParent() returns null");
+        else
+        {
+            std::stringstream ss;
+            parentBlock->printRaw(ss);
+            riscvVectorLogger->trace("Found candidate Parent block:\n{0:s}", ss.str());
+            grandparentBlock = parentBlock->getParent();
+            ss.str("");
+            if (grandparentBlock == nullptr)
+                riscvVectorLogger->trace("\tparentBlock->getParent() returns null");
+            else
+            {
+                grandparentBlock->printRaw(ss);
+                riscvVectorLogger->trace("Found candidate Grandparent block:\n{0:s}", ss.str());
+            }
+        }
+    }
+    if (grandparentBlock == nullptr) riscvVectorLogger->trace("Found no grandparent block");
+    else
+    {
+        if ((parentBlock->getType() == FlowBlock::t_dowhile) &&
+            (grandparentBlock->getType() == FlowBlock::t_ls))
+        {
+            riscvVectorLogger->info("Removing pointless DoWhile block");
+            BlockList* lsb = reinterpret_cast<BlockList*>(grandparentBlock);
+            BlockGraph* doWhile = reinterpret_cast<BlockDoWhile*>(parentBlock);
+            intb index = -1;
+            const vector< FlowBlock * > & list = lsb->getList();
+            for (intb i = 0; i < list.size(); i++)
+            {
+                riscvVectorLogger->trace("Checking list entry {0:d} of type {1:d}",
+                    i, (int)(list[i]->getType()));
+                if (list[i] == parentBlock)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index == -1)
+            {
+                riscvVectorLogger->error("Unable to locate DoWhile block in List Block");
+            }
+            else
+            {
+                // Removing loop edge from the vector block to itself, remembering that
+                // removeEdge is a method of the BlockGraph parent common to each.
+                // TODO: collect all doWhile inEdges and outEdges into two vectors,
+                //       *before* we reparent the vector block, then install these as vector block
+                //       edges *after* we reparent the vector block.
+                std::vector<FlowBlock*> edgesIn;
+                for (int i = 0; i < doWhile->sizeIn(); i++)
+                {
+                    FlowBlock* ib = doWhile->getIn(i);
+                    edgesIn.push_back(ib);
+                    lsb->removeEdge(ib, doWhile);
+                }
+                std::vector<FlowBlock*> edgesOut;
+                for (int i = 0; i < doWhile->sizeOut(); i++)
+                {
+                    FlowBlock* ob = doWhile->getOut(i);
+                    edgesOut.push_back(ob);
+                    lsb->removeEdge(doWhile, ob);
+                }
+                riscvVectorLogger->info("Removing internal loop edge from vector block");
+                doWhile->removeEdge(copyBlk, copyBlk);
+                const BlockGraph& graph = data.getStructure();
+                // cast away const until we can move this code into the BlockGraph or Funcdata structure
+                const BlockGraph& sblocks = data.getStructure();
+                std::stringstream ss;
+                graph.printTree(ss, 1);
+                riscvVectorLogger->trace("Full tree before block replacement:\n{0:s}", ss.str());
+                ss.str("");
+                copyBlk->setParent(grandparentBlock);
+                replaceBlock(sblocks, parentBlock, copyBlk);
+                doWhile->removeComponentLink(copyBlk);
+                graph.printTree(ss, 1);
+                riscvVectorLogger->trace("Full tree after block replacement:\n{0:s}", ss.str());
+                ss.str("");
+                // restore the edges extracted from the doWhile block
+                for (auto b: edgesIn)
+                {
+                    lsb->addEdge(b, copyBlk);
+                }
+                for (auto b: edgesOut)
+                {
+                    lsb->addEdge(copyBlk, b);
+                }
+                delete doWhile;
+                graph.printTree(ss, 1);
+                riscvVectorLogger->trace("Full tree after dowhile deletion:\n{0:s}", ss.str());
+            }
+        }
+    }
+}
+
 int VectorMatcher::transform()
 {
     const bool EXPLORE_BLOCKS = false;
     const int TRANSFORM_COMPLETED = 1;
     const int TRANSFORM_ROLLED_BACK = 0;
     std::stringstream ss;
+    BlockGraph& graph = data.getStructure();
 
     if (info)
     {
         loopBlock->printRaw(ss);
         riscvVectorLogger->info("Vector loop block before transforms is\n{0:s}", ss.str());
-        ss.str("");
-    }
-
-    // Optionally show the current block structure around the code we will transform
-    if (EXPLORE_BLOCKS && trace)
-    {
-        BlockGraph& graph = data.getStructure();
-        graph.printRaw(ss);
-        graph.printTree(ss, 1);
-        riscvVectorLogger->trace("Examining BlockGraph (Raw and Tree forms) after transform:\n{0:s}", ss.str());
-        ss.str("");
-        loopBlock->printRaw(ss);
-        riscvVectorLogger->trace("\tThe loop block identifies as\n{0:s}", ss.str());
         ss.str("");
     }
 
@@ -743,10 +887,27 @@ int VectorMatcher::transform()
         ss.str("");
     }
     data.opInsertEnd(newVectorOp, loopBlock);
+    if (trace)
+    {
+        Datatype* p1Type = newVectorOp->getIn(1)->getType();
+        riscvVectorLogger->trace("\tparam1 datatypeId=0x{0:x}, name={1:s}, displayName={2:s}",
+            p1Type->getId(), p1Type->getName(), p1Type->getDisplayName());
+        if (newVectorOp->getOut() != nullptr)
+        {
+            Datatype* resultType = newVectorOp->getOut()->getType();
+            riscvVectorLogger->trace("\tresult datatypeId=0x{0:x}, name={1:s}, displayName={2:s}",
+                resultType->getId(), resultType->getName(), resultType->getDisplayName());
+        }
+    }
+    riscvVectorLogger->info("Preparing to edit the flow block graph to remove the loop edge");
+    graph.removeEdge(loopBlock, loopBlock);
+    riscvVectorLogger->flush();
+    //TODO: the following currently segfaults in processing unstructured gotos
+    removeDoWhileWrapperBlock(loopBlock);
     if (!nextInstructionAddress.isInvalid())
     {
         // if there is a following block add a goto to close the block and reach the next block
-        // place the goto at the end of the current block to satisfy BasicBlock constraints
+        // place the goto at the end of the current block to satisfy BlockBasic constraints
         Address gotoLocation(codeSpace, loopEndAddr);
         PcodeOp* gotoOp = insertBranchOp(data, gotoLocation, nextInstructionAddress);
         if (trace)
@@ -757,13 +918,11 @@ int VectorMatcher::transform()
         }
         data.opInsertEnd(gotoOp, loopBlock);
     }
-
+    riscvVectorLogger->flush();
     if (info)
     {
-        riscvVectorLogger->flush();
-        loopBlock->printRaw(ss);
-        riscvVectorLogger->info("Vector loop block after all immediate transforms is\n{0:s}", ss.str());
-        ss.str("");
+        inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
+        inspector.log("basic block after replacement", loopBlock);
     }
 
     // Optionally explore the BlockGraph around our loop to see if we can
@@ -773,29 +932,28 @@ int VectorMatcher::transform()
     // earlier, between the point blocks are identified and the DOWHILE block is created?
     if (EXPLORE_BLOCKS && trace)
     {
-        riscvVectorLogger->info("Notify Funcdata of control flow reset");
-        BlockGraph& graph = data.getStructure();
-        graph.printRaw(ss);
         graph.printTree(ss, 1);
-        riscvVectorLogger->trace("Examining BlockGraph (Raw and Tree forms) after transform:\n{0:s}", ss.str());
+        riscvVectorLogger->trace("Examining full function BlockGraph Tree form after transform:\n{0:s}", ss.str());
         ss.str("");
         loopBlock->printRaw(ss);
-        riscvVectorLogger->trace("\tThe loop block identifies as\n{0:s}", ss.str());
+        riscvVectorLogger->trace("\tThe loop block identifies as:\n{0:s}", ss.str());
         ss.str("");
-        riscvVectorLogger->trace("\t\tBlock ins = {0:d}, outs = {1:d}", loopBlock->sizeIn(), loopBlock->sizeOut());
+        riscvVectorLogger->trace("\t\tLoop block ins = {0:d}, outs = {1:d}", loopBlock->sizeIn(), loopBlock->sizeOut());
         int index = 0;
         FlowBlock* fb = loopBlock->subBlock(index);
+        if (fb == nullptr)
+            riscvVectorLogger->trace("\t\tloop block has no sub blocks");
         while (fb != nullptr)
         {
             fb->printRaw(ss);
-            riscvVectorLogger->trace("\tInterior  block {0:d} identifies as\n{0:s}", index, ss.str());
+            riscvVectorLogger->trace("\tInterior subblock {0:d} identifies as\n{0:s}", index, ss.str());
             index++;
             riscvVectorLogger->trace("\t\tBlock ins = {0:d}, outs = {1:d}", fb->sizeIn(), fb->sizeOut());
             fb = loopBlock->subBlock(index);
         }
         FlowBlock* parentBlock = loopBlock->getParent();
         parentBlock->printRaw(ss);
-        riscvVectorLogger->trace("\tThe parent basic block to our loop block identifies as\n{0:s}", ss.str());
+        riscvVectorLogger->trace("\tThe parent basic block to our loop block identifies as:\n{0:s}", ss.str());
         ss.str("");
         riscvVectorLogger->trace("\t\tParent block ins = {0:d}, outs = {1:d}", parentBlock->sizeIn(), parentBlock->sizeOut());
         // identify the output edge blocks
@@ -803,13 +961,22 @@ int VectorMatcher::transform()
         {
             fb = loopBlock->getOut(index);
             fb->printRaw(ss);
-            riscvVectorLogger->trace("\t\tOutput block {0:d} identifies as\n{1:s}", index, ss.str());
+            riscvVectorLogger->trace("\t\tParent's output block {0:d} identifies as\n{1:s}", index, ss.str());
             ss.str("");
         }
-        riscvVectorLogger->info("Preparing to edit the flow block graph");
-        graph.removeEdge(loopBlock, loopBlock);
-        graph.printTree(ss, 1);
-        riscvVectorLogger->info("\t\tBlock tree after loop edge removal is\n{0:s}",ss.str());
+        FlowBlock* dominator = loopBlock->getImmedDom();
+        dominator->printRaw(ss);
+        riscvVectorLogger->trace("\tThe immediate dominator block to our loop block identifies as:\n{0:s}", ss.str());
+        ss.str("");
+        riscvVectorLogger->trace("List of FlowBlocks in the function:");
+        int i = 0;
+        while (i < graph.getSize())
+        {
+            graph.subBlock(i)->printRaw(ss);
+            riscvVectorLogger->trace("\t{0:s}", ss.str());
+            ss.str("");
+            i++;
+        }
     }
     riscvVectorLogger->flush();
     return TRANSFORM_COMPLETED;

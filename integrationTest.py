@@ -70,7 +70,7 @@ class T0BuildPlugin(unittest.TestCase):
         self.assertEqual(0, result.returncode,
             "unable to clean previous decompiler plugin")
         logger.info("Building and installing the plugin")
-        command = "bazel build -c opt plugins:riscv_vector"
+        command = "bazel build -c dbg plugins:riscv_vector"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
@@ -149,7 +149,7 @@ class T1Datatests(unittest.TestCase):
         """
         Verify processing of several Whisper functions that previously threw exceptions
         """
-        sample_set = (2,3,4,5,6,7,8,9)
+        sample_set = (2,3,5,6,7,8,10)
         for i in sample_set:
             command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_sample_{i}.ghidra"
             logger.info(f"Running {command} with output to /tmp/whisper_sample_{i}.testlog")

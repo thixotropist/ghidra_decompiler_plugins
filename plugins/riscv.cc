@@ -70,7 +70,8 @@ const RiscvUserPcode* RiscvUserPcode::getUserPcode(PcodeOp& op)
 std::map<int, RiscvUserPcode*> riscvPcodeMap;
 std::shared_ptr<spdlog::logger> riscvVectorLogger;
 
-int transformCount;
+int transformCountNonLoop;
+int transformCountLoop;
 Architecture* arch;
 AddrSpace* registerAddrSpace;
 
@@ -83,8 +84,10 @@ extern "C" int plugin_init(void *context)
     riscvVectorLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
     riscvVectorLogger->set_level(spdlog::level::warn);
-    transformCount = 0;
-    riscvVectorLogger->info("Maximum number of vector transforms: {0:d}", TRANSFORM_LIMIT);
+    transformCountNonLoop = 0;
+    transformCountLoop = 0;
+    riscvVectorLogger->info("Maximum number of vector transforms:\tloop: 0x{0:x}, non-loop: 0x{1:x})",
+        TRANSFORM_LIMIT_LOOPS, TRANSFORM_LIMIT_NONLOOPS);
     arch = reinterpret_cast<Architecture*>(context);
     registerAddrSpace = arch->getSpaceByName("register");
     riscvVectorLogger->info("Plugin initialized");

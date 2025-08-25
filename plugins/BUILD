@@ -1,6 +1,8 @@
 cc_library(
     name = "riscv_vector",
     srcs = [
+        "inspector.hh",
+        "inspector.cc",
         "riscv.hh",
         "riscv.cc",
         "vector_transformer.hh",
