@@ -60,7 +60,6 @@ code_r0x000209fe:
   pcVar4[*this] = '\0';
   return;
 }
-
 ```
 
 ```text
@@ -94,15 +93,20 @@ The container relationship here is roughly:
 * every `BlockGraph` contains a vector of `FlowBlock*` named `list`.
 * the `printTree` method iterates over this vector,
   adding an indent level at each descent if the list element `FlowBlock` is itself a `BlockGraph`.
-* PcodeOps are contained within `BasicBlocks`.
+  Not all links into `FlowBlock`  objects are present in these `list` objects - only container links,
+  not goto links or If alternates.
+* PcodeOps are contained within `BasicBlocks`, derived from `FlowBlock` but not from `BlockGraph`.
 * The BlockGraph doesn't reference `BasicBlocks` directly, but indirectly through `BlockCopy` clones of
   `BasicBlocks`.
-    * If a `BasicBlock` is copied its `copymap` member will point to the copied `BlockCopy`
+    * If a `BasicBlock` is copied to a `BlockCopy` its `copymap` member will point to the copied `BlockCopy`.
 
-If we wanted to remove the `Dowhile` block we would need to edit the `list` of `List block 9`
-to remove `Dowhile block 9` after promoting the `BlockCopy` of `Basic Block 9` in its place.
+If we wanted to remove the `DoWhile` block we would need to edit the `list` of `List block 9`
+to remove `DoWhile block 9` after promoting the `BlockCopy` of `Basic Block 9` in its place.
 
 ## possible exemplars
+
+`BlockGraph` objects are generally not edited after creation, so we need to hunt for methods and constraints
+relevant to our edit exercise.
 
 ### ActionDoNothing
 
@@ -124,13 +128,13 @@ void Funcdata::spliceBlockBasic(BlockBasic *bl)
 
  ### BlockDoWhile
 
-* defined in `block.hh`, derived from class BlockGraph
+* defined in `block.hh`, derived from class `BlockGraph`
 * built with `newBlockDoWhile`
     * calling `identifyInternal`, `addBlock`, and `forceOutputNum`
 * created in `blockaction.cc`
 * associated with rule `ruleBlockDoWhile`
 
-* BlockGraph::removeBlock looks relevant
+* `BlockGraph::removeBlock` looks relevant
     * used by `spliceBlock`, `Funcdata::blockRemoveInternal`
 
 ## Design considerations
@@ -141,7 +145,12 @@ invoking private or protected member functions within those classes.  We need to
 match the design and consistency requirements of the existing Ghidra decompiler code, for example renumbering
 blocks and verifying edge consistency.
 
+>TODO: It's not clear whether edge consistency is required, as edges are used in generating the function's
+>      BlockGraph tree and may not be used during the cleanup ActionGroup holding our plugin.
+
 ## Design iterations
+
+>Warning: the methods added in this section have been replaced in later iterations.
 
 Patch the released decompiler code to add two new methods to `BlockGraph`.
 The first implementation is simply:
@@ -252,9 +261,9 @@ Program received signal SIGSEGV, Segmentation fault.
     at external/+_repo_rules+ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/consolemain.cc:234
 ```
 
-The segfault occurs at block.cc:358
+The segfault occurs at `block.cc:358`
 
-```
+```c
 FlowBlock *FlowBlock::getFrontLeaf(void)
 
 {
@@ -284,7 +293,7 @@ int4 ActionFinalStructure::apply(Funcdata &data)
 }
 ```
 
-The backtrace suggests that a BlockGoto has a corrupted getGotoTarget().
+The backtrace suggests that a `BlockGoto` has a corrupted `getGotoTarget()`.
 
 Narrow the scope some by trying different values for `TRANSFORM_LIMIT`.  With 7 transforms allowed the decompilation completes with no errors.
 
@@ -1052,12 +1061,12 @@ The immediate cause of the segfault appears to be a descent of the function's Bl
 to an invalid block. This occurs well after our plugin finishes work, during a final cleanup
 phase where the decompiler is inserting any explicit goto instructions not already covered by
 C structured control blocks.  Apparently unstructured goto branches may not count as edges,
-so we may be missing some link cleanup when deleting a DoWhile block.
+so we may be missing some link cleanup when deleting a `DoWhile` block.
 
 Let's examine the main function in a vanilla Ghidra, identifying the structures that *should*
 result in valid transforms.
 
-There are 21 vset* instructions, of which 12 are vsetivli instructions. Seven of the vsetvli
+There are 21 `vset*` instructions, of which 12 are `vsetivli` instructions. Seven of the `vsetvli`
 instructions take the number of elements from a register, and may be eligible for transformation.
 
 | Address | Notes |
@@ -1067,14 +1076,14 @@ instructions take the number of elements from a register, and may be eligible fo
 | 0x21b64 | vector_memcpy in DoWhile block, not transformed |
 | 0x21f72 | vector_memcpy in While block, not transformed |
 | 0x230c8 | vector_memcpy in DoWhile block, not transformed, with goto |
-| 0x23298 | vector_memcpy in While block, no</21552t transformed |
+| 0x23298 | vector_memcpy in While block, not transformed |
 | 0x23866 | vector_memcpy in DoWhile block, not transformed |
 
-The results suggest a problem involving the BlockBasic <-> BlockCopy relationship, possibly edgeless goto blocks, block parents, or possibly block indexing.  We may still have some 'free' Varnodes in
+The results suggest a problem involving the BlockBasic ⇔ BlockCopy relationship, possibly edgeless goto blocks, block parents, or possibly block indexing.  We may still have some 'free' Varnodes in
 transform blocks, which would be a problem.  And there is some evidence that problems occur during a
 *second* pass through the function.
 
-The main function is rather large, so let's switch to the smaller whisper_sample_5 test case, as that fails in a similar fashion.  Additionally, disable the printTree invocation over the entire function
+The main function is rather large, so let's switch to the smaller `whisper_sample_5` test case, as that fails in a similar fashion.  Additionally, disable the `printTree` invocation over the entire function
 to minimize log file clutter.
 
 #### whisper_wrap_segment inspection
@@ -1087,7 +1096,7 @@ Inspect `whisper_wrap_segment` in Ghidra with vector plugins enabled but with `D
     * 8 non-loop transforms
 * 1 `vector_strlen` stanza present but not recognized
 * 1 vsetivli instruction located outside of the matching vector load and store instructions
-* 1 possible `vector_memcpy` transforms not taken at 0xb9d50 - nested do loop?
+* 1 possible `vector_memcpy` transforms not taken at 0xb9d50 - a nested do loop?
 
 The log file shows some issues:
 
@@ -1142,12 +1151,13 @@ $ SLEIGHHOME=/opt/ghidra_12.0_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so valgrin
 
 ```
 
-Current guess: the doWhile parent is not the only place referencing a doWhile block.  It can also be referenced in the list of an If block and possibly a goto block.  We need to replace *all* list references.
+Current guess: the `DoWhile` parent is not the only place referencing a `DoWhile` block.  It can also be referenced in the list of an If block and possibly a goto block.  We need to replace *all* list references.
 
 We need to find smaller test cases.  Run Ghidra with the plugin, exporting all functions as C.  We get
 51 exceptions.  Collect some of these and identify the function throwing the exception.
 
 | Address| Function | Size |
+|--------|----------|------|
 | 0x00020fd0 | main | 10844 |
 | 0x0002a606 | drwav__on_write_memory | 398 |
 | 0x0003e604 |  |  |
@@ -1156,3 +1166,22 @@ We need to find smaller test cases.  Run Ghidra with the plugin, exporting all f
 | 0x00041d9e |  |  |
 | 0x000454ce | __copy_move_a2<false,... |	666  |
 | 0x0004e81c | lookup_collatename<char_const*> | 738 |
+
+Pick the smallest of these, `drwav__on_write_memory`, and continue.
+The smaller size makes debugging much easier, identifying goto-like links from an IfBlock to the DoWhile block.
+Add some more setter methods to the Ghidra patch, and get a successful decompilation.
+
+Returning to the `main` decompilation, we find several goto blocks referencing a dowhile block we intend to
+delete.  One more Ghidra setter method added, with added recursion into the `gototarget`.
+
+Now all test cases complete without a decompiler exception - other than those datatests that fail without a plugin present.
+
+Load the plugin into the Ghidra GUI path, and collect overall statistics:
+
+| transform | instances completed |
+|-----------|---------------------|
+| vector_memset | 468 |
+| vector_memcpy | 1113 |
+
+
+The code has some truly ugly components, which we will address later during refactoring.
