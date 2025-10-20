@@ -1,17 +1,10 @@
 #include <string>
 #include "spdlog/spdlog.h"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "framework.hh"
 #include "inspector.hh"
 
 namespace ghidra{
-
-static void collectSubBlocks(const BlockGraph* bg, std::vector<const FlowBlock*>& list)
-{
-    for (int i = 0; i < bg->getSize(); i++)
-    {
-        list.push_back(bg->subBlock(i));
-    }
-}
 
 Inspector::Inspector(std::shared_ptr<spdlog::logger> myLogger) :
     logger(myLogger)
@@ -39,9 +32,12 @@ void Inspector::log(const string label, const FlowBlock* fb)
         copyMap = fb->getCopyMap();
         break;
       case FlowBlock::t_graph:
-        blockType = "BlockGraph";
-        parent = fb->getParent();
-        collectSubBlocks(reinterpret_cast<const BlockGraph*>(fb), list);
+        {
+          blockType = "BlockGraph";
+          parent = fb->getParent();
+          BlockGraphEditor bgEditor = BlockGraphEditor(dynamic_cast<const BlockGraph&>(*fb));
+          bgEditor.collectSubBlocks(list);
+        }
         break;
       case FlowBlock::t_copy:
         blockType = "BlockCopy";
@@ -49,30 +45,58 @@ void Inspector::log(const string label, const FlowBlock* fb)
         parent = fb->getParent();
         break;
       case FlowBlock::t_goto:
-        blockType = "BlockGoto";
-        parent = fb->getParent();
-        collectSubBlocks(reinterpret_cast<const BlockGraph*>(fb), list);
+        {
+          // Goto targets aren't considered subblocks, so we collect any such independently
+          blockType = "BlockGoto";
+          parent = fb->getParent();
+          const BlockGoto* blkGt = dynamic_cast<const BlockGoto*>(fb);
+          BlockGraphEditor bgEditor = BlockGraphEditor(*blkGt);
+          bgEditor.collectSubBlocks(list);
+          FlowBlock* gotoTarget = blkGt->getGotoTarget();
+          if (gotoTarget != nullptr) list.push_back(gotoTarget);
+        }
+        break;
+      case FlowBlock::t_if:
+        {
+          // Goto targets within BlockIfs aren't considered subblocks, so we collect any such independently
+            blockType = "BlockIf";
+            parent = fb->getParent();
+            const BlockIf* blkIf = dynamic_cast<const BlockIf*>(fb);
+            BlockGraphEditor bgEditor = BlockGraphEditor(*blkIf);
+            bgEditor.collectSubBlocks(list);
+            FlowBlock* gotoTarget = blkIf->getGotoTarget();
+            if (gotoTarget != nullptr) list.push_back(gotoTarget);
+        }
         break;
       case FlowBlock::t_ls:
-        blockType = "BlockList";
-        parent = fb->getParent();
-        collectSubBlocks(reinterpret_cast<const BlockGraph*>(fb), list);
+        {
+          blockType = "BlockList";
+          parent = fb->getParent();
+          BlockGraphEditor bgEditor = BlockGraphEditor(dynamic_cast<const BlockGraph&>(*fb));
+          bgEditor.collectSubBlocks(list);
+        }
         break;
       case FlowBlock::t_whiledo:
+      {
         blockType = "BlockWhileDo";
         parent = fb->getParent();
-        collectSubBlocks(reinterpret_cast<const BlockGraph*>(fb), list);
+        BlockGraphEditor bgEditor = BlockGraphEditor(dynamic_cast<const BlockGraph&>(*fb));
+        bgEditor.collectSubBlocks(list);
+      }
         break;
       case FlowBlock::t_dowhile:
+      {
         blockType = "BlockDoWhile";
         parent = fb->getParent();
-        collectSubBlocks(reinterpret_cast<const BlockGraph*>(fb), list);
+        BlockGraphEditor bgEditor = BlockGraphEditor(dynamic_cast<const BlockGraph&>(*fb));
+        bgEditor.collectSubBlocks(list);
+      }
         break;
       default:
         blockType = "Other";
     }
     logger->trace("Inspect FlowBlock {0:s} of type {1:s}", label, blockType);
-    logger->trace("\tEdgesIn = {0:d}; EdgesOut = {1:d}; List Elements = {2:d}; Flags = 0x{3:x};", 
+    logger->trace("\tEdgesIn = {0:d}; EdgesOut = {1:d}; List Elements = {2:d}; Flags = 0x{3:x};",
         edgesIn, edgesOut, list.size(), flags);
     std::stringstream ss;
     if (parent != nullptr)
@@ -93,6 +117,5 @@ void Inspector::log(const string label, const FlowBlock* fb)
         logger->trace("\tcopyMap is:\n{0:s}", ss.str());
         ss.str("");
     }
-    
 }
 }

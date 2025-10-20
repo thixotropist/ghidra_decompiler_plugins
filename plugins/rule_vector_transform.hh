@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __VECTOR_TRANSFORMER_HH__
-#define __VECTOR_TRANSFORMER_HH__
+#ifndef __RULE_VECTOR_TRANSFORM_HH__
+#define __RULE_VECTOR_TRANSFORM_HH__
 
 #include <iostream>
 #include <unordered_set>
@@ -24,6 +24,10 @@
 
 namespace ghidra{
 /**
+ * @file rule_vector_transform.hh
+ */
+
+ /**
  * @brief A Rule collecting individual vector instructions into vector_* function invocations
  */
 class RuleVectorTransform : public Rule
@@ -31,31 +35,30 @@ class RuleVectorTransform : public Rule
 public:
     /**
      * @brief Construct a new Rule Vector Transform object
-     * 
+     *
      * @param g the name of an existing Ghidra rule group
      */
     explicit RuleVectorTransform(const string &g); ///< Constructor
     /**
      * @brief Allow the ActionDatabase to clone this rule
-     * 
-     * @param grouplist 
-     * @return Rule* 
+     *
+     * @param grouplist
+     * @return Rule*
      */
     virtual Rule *clone(const ActionGroupList &grouplist) const override;
     /**
      * @brief Register the Ghidra ops for which we want callbacks
-     * 
+     *
      * @param oplist
      */
     virtual void getOpList(vector<uint4> &oplist) const override;
     /**
      * @brief the callback function telling us of a relevant Ghidra op
-     * 
      * @param op the PcodeOp triggering this callback
      * @param data the Funcdata object of the enclosing function
-     * @return int4 0 if no changes made, 1 if changes made
+     * @return 0 if no changes made, 1 if changes made
      */
     virtual int4 applyOp(PcodeOp *op, Funcdata &data) override;
 };
 }
-#endif /* __VECTOR_TRANSFORMER_HH__ */
+#endif /* __RULE_VECTOR_TRANSFORM_HH__ */

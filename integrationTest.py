@@ -21,6 +21,10 @@ PLUGIN_LOAD_DIR = "/tmp/"
 PLUGIN_NAME = "libriscv_vector.so"
 PLUGIN_PATH = PLUGIN_LOAD_DIR + PLUGIN_NAME
 
+def trimOutput(result):
+    if (len(result) > 800):
+        result = result[0:800] +'...'
+
 class T0BuildPlugin(unittest.TestCase):
     """
     Build the Ghidra decompiler executables and the sample RISC-V vector plugin
@@ -95,6 +99,7 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/memcpy_exemplars.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
+        trimOutput(result.stdout)
         self.assertIn("successfully loaded: RISC-V 64", result.stdout,
                          "Failed to load test/memcpy_exemplars_save.xml")
         self.assertIn("vector_memcpy((void *)to,(void *)from,2);", result.stdout,
@@ -122,6 +127,7 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/whisper_sample_1.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
+        trimOutput(result.stdout)
         self.assertIn("vector_memcpy((void *)lVar1,(void *)param1,(ulong)pcVar4)", result.stdout,
                       "Vector_memcpy transform was not as expected")
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
@@ -140,6 +146,7 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/whisper_main.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
+        trimOutput(result.stdout)
         self.assertIn("vector_memset((void *)auStack_650,0,0x10)", result.stdout,
                       "Vector_memset transform was not as expected")
         self.assertIn("vector_memcpy((void *)&uStack_274,(void *)0x107f20,0x10)", result.stdout,
