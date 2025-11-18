@@ -23,6 +23,23 @@ LAB_00020a3e
 00020a50  c.bnez   param_2,LAB_00020a3e
 @endverbatim
 
+The corresponding Ghidra Pcode for this loop is:
+
+@verbatim
+0x20a3e: a2(0x00020a3e:a8) = a2(0x00020a46:46) ? a5(0x000209ee:24) ? a5(0x000209ee:24)
+0x20a3e: a1(0x00020a3e:a3) = a1(0x00020a48:47) ? a1(i) ? a1(i)
+0x20a3e: a0(0x00020a3e:9e) = a0(0x00020a4e:4a) ? a0(0x000209c8:c) ? a0(0x00020a28:62)
+0x20a3e: a3(0x00020a3e:43) = vsetvli_e8m1tama(a2(0x00020a3e:a8))
+0x20a42: v1(0x00020a42:45) = vle8_v(a1(0x00020a3e:a3))
+0x20a46: u0x1000001a(0x00020a46:cf) = a3(0x00020a3e:43) * #0xffffffffffffffff
+0x20a46: a2(0x00020a46:46) = a2(0x00020a3e:a8) + u0x1000001a(0x00020a46:cf)(*#0x1)
+0x20a48: a1(0x00020a48:47) = a1(0x00020a3e:a3) + a3(0x00020a3e:43)(*#0x1)
+0x20a4a: vse8_v(v1(0x00020a42:45),a0(0x00020a3e:9e))
+0x20a4e: a0(0x00020a4e:4a) = a0(0x00020a3e:9e) + a3(0x00020a3e:43)
+0x20a50: u0x00018500:1(0x00020a50:4b) = a2(0x00020a46:46) != #0x0
+0x20a50: goto r0x00020a3e:1(free) if (u0x00018500:1(0x00020a50:4b) != 0)
+@endverbatim
+
 This should transform into `vector_memcpy(this, param_1, param_2)`
 
 Features:
@@ -51,6 +68,22 @@ LAB_000209d2:
 000209e8  blt      a6,zero,LAB_000209d2
 000209ec  c.add    a5,a6
 @endverbatim
+
+The corresponding Ghidra Pcode for the loop component is:
+
+@verbatim
+0x209d2: a5(0x000209d2:bb) = a1(i) ? a5(0x000209d6:16)
+0x209d2: a3(0x000209d2:b2) = a3(0x000209ce:13) ? vl(i)
+0x209d2: a2(0x000209d2:15) = vsetvli_e8m1tama(#0x0)
+0x209d6: a5(0x000209d6:16) = a5(0x000209d2:bb) + a3(0x000209d2:b2)(*#0x1)
+0x209d8: v1(0x000209d8:18) = vle8ff_v(a5(0x000209d6:16))
+0x209dc: v1(0x000209dc:1a) = vmseq_vi(v1(0x000209d8:18),#0x0)
+0x209e4: a6(0x000209e4:20) = vfirst_m(v1(0x000209dc:1a))
+0x209e8: u0x00001f80:1(0x000209e8:21) = a6(0x000209e4:20) < #0x0
+0x209e8: goto r0x000209d2:1(free) if (u0x00001f80:1(0x000209e8:21) != 0)
+@endverbatim
+
+>Note: the `csrrs    a3,vl,zero` instruction generates no visible pcode!
 
 This should transform into `a5 = vector_strlen(param_1)`
 
@@ -163,6 +196,67 @@ How do these models drive our refactoring?
 
 We're missing something that captures the size of source and destination vectors.
 
+@subsection riscv_vector_models_strlen Modeling Strlen Operations
+
+How do we model vectorized encodings of `strlen`?  An unpatched Ghidra disassembles this as:
+
+@code{as}
+000209ce c.li     a3,0x0
+000209d0 c.mv     a5,param_1
+LAB_000209d2:
+000209d2 vsetvli  param_2,zero               ; e8m1tama
+000209d6 c.add    a5,a3
+000209d8 vle8ff.v v1,(a5)
+000209dc vmseq.vi v1,v1,0x0
+000209e0 csrrs    a3,vl,zero
+000209e4 vfirst.m a6,v1
+000209e8 blt      a6,zero,LAB_000209d2
+000209ec c.add    a5,a6
+000209ee c.sub    a5,param_1
+@endcode
+
+The most natural way to render this would be:
+@code{cc}
+a5 = strlen(param_1);
+@endcode
+
+An alternate rendering based on the c++ standard library might be:
+
+@code{cc}
+auto it = std::find_if(param_1.begin(), param_1.end(), [](uint8_t b) {
+         return b == 0; });
+a5 = std::distance(param_1.begin(), it);
+@endcode
+
+Issues include:
+- The alternate rendering conflates a standard vector with a char *.
+- param_1 has no known end
+- would a `vector_find_if` or `vector_e8_find_if` be a better choice to apply the lambda?
+
+Can we remove some of the std::vector elements in favor of simple C array's?
+
+@code{cc}
+char* p = vector_find_if(param_1, [](uint8_t b) {return b == 0;});
+a5 = p - param_1;
+@endcode
+
+Or try to reconstruct the loop itself, avoiding the lambda expression altogether:
+
+@code{cc}
+for (char* p = param_1; *p != 0; p++);
+a5 = p - param_1;
+@endcode
+
+The minimalist solution would be to leave the vector loop unchanged, adding a comment block
+to identify the loop as a likely strlen.
+
+The recurring themes here may help us find the first steps along a path we can later extend:
+
+- Vector loop stanzas may be terminated by some combination of a vector element data test (a lambda expresion), a
+  counter, or a pointer limit expression.  This suggests a `VectorLoop::terminationFlags` bitmap.
+- Translating vector expressions into their equivalent element-by-element scalar pcode is
+  useful in several potential renderings.
+
 @section riscv_vector_algorithms Transform Algorithms
 
 All of these examples share a common component - a sequence of instructions forming
@@ -186,7 +280,31 @@ to handle groups of different RISC-V user pcodes.  There are currently over 1300
 with run-time identifiers assigned, so another `switch` statement is not feasible.
 
 Instead, let's explore adding a `map` of callback functions for vector opcodes found within loops,
-loop prefixes, and loop suffixes.  For `vector_strlen` that means callback functions for `vsetvli_e8m1tama`,
-`vle8ff_v`, `vmseq_vi`, and `vfirst_m`.  For `vector_memcpy` that means callback functions for `vsetvli_e8m1tama`,
-`vle8_v`, and `vse8_v`.
+loop prefixes, and loop suffixes.  For `vector_strlen` that means callback functions for
+`vle8ff_v`, `vmseq_vi`, and `vfirst_m`.  For `vector_memcpy` that means callback functions for
+`vle8_v`, and `vse8_v`.  We'll build those callback functions as lambda expressions, inserted
+into the map during a static initialization phase.
+
+@subsection riscv_vector_design_notes Design Working Notes
+
+Summarize the current design first.  We start by requesting a call-back for every vset* instruction,
+then analyze every loop that begins with a vset* instruction.  The loop analysis consists of these steps:
+
+- VectorLoop::examine_control_flow to identify the bounds of the loop and verify it as a simple loop
+  common to vector stanzas.
+- VectorLoop::collect_phi_nodes to collect the Phi nodes at the top of the loop.  These show the registers
+  modified during the loop and their external initializations.
+- VectorLoop::examine_loop_pcodeops examines each of the Ghidra PcodeOps within the loop, collecting the native Ghidra
+  scalar operations and the RISC-V vector CALL_OTHER operations in separate vectors.
+- TODO: identify arguments of any vector load and store instructions, tracing pointer registers and their loop increments
+- TODO: identify any counter register operations leading to a conditional branch
+- TODO: identify register descendents of loop operations to be used in any transforms and dependency pruning.
+
+Once generic vector analysis is complete specific tests can be applied.
+
+- VectorMatcher::isMemcpy applies VectorLoop generic tests first, then match-specific tests to identify
+  vector_memcpy stanzas.
+- VectorMatcher::isStrlen similarly applies its own VectorLoop generic tests first, then match-specific tests to identify
+  vector_strlen stanzas
+
 */

@@ -18,19 +18,12 @@ namespace ghidra
 {
 
 VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
-    modelFunction(),
+    loopModel(fData, pLogger->should_log(spdlog::level::trace)),
     inspector(pLogger),
     data(fData),
     codeSpace(nullptr),
-    loopFound(false),
-    loopStartAddr(0),
-    loopEndAddr(0),
     numElementsConstant(false),
     numElementsVariable(false),
-    foundSimpleComparison(false),
-    foundOtherUserPcodes(false),
-    simpleFlowStructure(true),
-    simpleLoadStoreStructure(true),
     vectorRegistersMatch(false),
     multiplier(1),
     elementSize(0),
@@ -60,19 +53,10 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
     }
     vNumElem = vsetOp->getIn(1);
     // determine if we have a loop and if so, where does it start and stop
-    collect_control_flow_data();
+    loopBlock = vsetOp->getParent();
+    loopModel.analyze(vsetOp);
     // terminate construction if this vset op doesn't start a loop
-    if (!loopFound) return;
-    pLogger->info("Analyzing potential vector loop stanza at 0x{0:x}",
-        loopStartAddr);
-    // Phi (or Multiequal nodes) provide the locations at which
-    // registers and memory locations are set. They are found at the top of a block
-    // and are essential in determining heritages and dependencies
-    collect_phi_nodes();
-    // Identify key registers and vector operations within a loop,
-    // checking for unexpected elements that may veto a match.
-    // Begin modeling this as a potential vector function.
-    modelFunction.examine_loop_pcodeops(loopBlock);
+    if (!loopModel.loopFound) return;
     // Follow dependencies of phi nodes within the loop to identify
     // source and destination pointer registers and the counter register
     collect_loop_registers();
@@ -82,31 +66,28 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
         "\telementSize = {1:d}\n"
         "\tmultiplier = {2:d}\n"
         "\tcode size = 0x{3:x}",
-        loopStartAddr, elementSize, multiplier, loopEndAddr - loopStartAddr);
+        loopModel.firstAddr, elementSize, multiplier, loopModel.lastAddr - loopModel.firstAddr);
     pLogger->info("\n"
         "\tNumber of loop vector opcodes = {0:d}\n"
         "\tNumber of Phi nodes affected by loop = {1:d}\n"
-        "\tNumber of other UserPcodes = {2:d}\n"
-        "\tNumber of arithmetic ops = {3:d}",
-        modelFunction.numLoopVectorOps, phiNodesAffectedByLoop.size(), modelFunction.otherUserPcodes.size(),
-        modelFunction.numArithmeticOps);
+        "\tNumber of arithmetic ops = {2:d}",
+        loopModel.vectorOps.size(), loopModel.phiNodesAffectedByLoop.size(),
+        loopModel.scalarOps.size());
     pLogger->info("\n"
         "\tNumber of elements is constant = {0:s}\n"
         "\tNumber of elements is variable = {1:s}\n"
-        "\tFound simple comparison = {2:s}\n"
-        "\tFound unexpected opcode = {3:s}",
+        "\tFound unexpected Ghidra opcode = {2:s}\n"
+        "\tFound unexpected vector opcode = {3:s}\n"
+        "\tFound unexpected user pcodes = {4:s}",
         numElementsConstant ? "true" : "false",
         numElementsVariable ? "true" : "false",
-        foundSimpleComparison ? "true" : "false",
-        modelFunction.foundUnexpectedOpcode ? "true" : "false");
-    pLogger->info("\n"
-        "\tFound other user opcode = {0:s}\n"
-        "\tFound simple flow structure = {1:s}\n"
-        "\tFound simple load/store pattern = {2:s}\n"
-        "\tFound vector registers match = {3:s}",
-        foundOtherUserPcodes ? "true" : "false",
-        simpleFlowStructure ? "true" : "false",
-        simpleLoadStoreStructure ? "true" : "false",
+        (loopModel.otherScalarOps.size() > 0) ? "true" : "false",
+        (loopModel.otherVectorOps.size() > 0) ? "true" : "false",
+        (loopModel.otherUserPcodes.size() > 0) ? "true" : "false"
+    );
+    pLogger->info("\tFound simple flow structure = {0:s}\n"
+        "\tFound vector registers match = {1:s}",
+        loopModel.simpleFlowStructure ? "true" : "false",
         vectorRegistersMatch ? "true" : "false");
     pLogger->info("\n"
         "\tNumber of elements varnode identified = {0:s}\n"
@@ -117,8 +98,8 @@ VectorMatcher::VectorMatcher(Funcdata& fData, PcodeOp* initialVsetOp) :
         vNumPerLoop != nullptr ? "true" : "false",
         vLoad != nullptr ? "true" : "false",
         vStore != nullptr ? "true" : "false");
-    // log the new VectorFunction results
-    modelFunction.log();
+    // log the new VectorLoop results
+    loopModel.log();
 }
 
 VectorMatcher::~VectorMatcher()
@@ -128,27 +109,33 @@ VectorMatcher::~VectorMatcher()
 
 bool VectorMatcher::isMemcpy()
 {
-    bool match = simpleFlowStructure && simpleLoadStoreStructure && foundSimpleComparison &&
-        vectorRegistersMatch && (modelFunction.numArithmeticOps >=3) && (!modelFunction.foundUnexpectedOpcode) &&
-        (modelFunction.numLoopVectorOps == 3)&& (!modelFunction.foundOtherUserPcodes);
+    // apply generic tests first
+    bool pre_match =
+        (loopModel.loopFlags == 0x0) &&              // no flagged features
+        loopModel.simpleFlowStructure &&             // no other  branches or calls
+        (loopModel.vectorOps.size() == 3) &&         // vset, vload, vstore
+        (loopModel.scalarOps.size() >= 5) &&         // expected pointer and counter arithmetic
+        (loopModel.otherScalarOps.size() == 0) &&    // no other ghidra pcodeops
+        (loopModel.otherVectorOps.size() == 0) &&    // no unhandled vector instructions
+        (loopModel.otherUserPcodes.size() == 0);     // no other CALL_OTHER
+    // add more complex tests specific to this pattern
+    bool match = pre_match && vectorRegistersMatch;  // vector load and store use the same register
     return match;
 }
 
 bool VectorMatcher::isStrlen()
 {
-    bool match = simpleFlowStructure && foundSimpleComparison &&
-        (modelFunction.numLoopVectorOps == 4);
+    // apply generic tests first
+    bool pre_match =
+        (loopModel.loopFlags == ghidra::RISCV_VEC_INSN_FAULT_ONLY_FIRST) && // vector fault only first load
+        loopModel.simpleFlowStructure &&            // no other  branches or calls
+        (loopModel.vectorOps.size() == 4) &&        // vset, vload, vseq, vfirst
+        (loopModel.scalarOps.size() == 3) &&        // expected pointer and counter arithmetic
+        (loopModel.otherScalarOps.size() == 0) &&   // no other ghidra pcodeops
+        (loopModel.otherVectorOps.size() == 0) &&   // no unhandled vector instructions
+        (loopModel.otherUserPcodes.size() == 0);    // no other CALL_OTHER
+    bool match = pre_match;
     return match;
-}
-
-bool VectorMatcher::isDefinedInLoop(const Varnode* vn)
-{
-    const PcodeOp* definingOp = vn->getDef();
-    if (definingOp == nullptr) return false;
-    intb offset = definingOp->getAddr().getOffset();
-    bool addressInLoop = (offset >= loopStartAddr) && (offset <= loopEndAddr);
-    bool blockIsLoopblock = definingOp->getParent() == loopBlock;
-    return addressInLoop && blockIsLoopblock;
 }
 
 void VectorMatcher::reducePhiNode(PcodeOp* op)
@@ -195,7 +182,7 @@ bool VectorMatcher::removeExteriorDependencies()
         PcodeOp* op = it;
         for (int slot = 0; slot < op->numInput(); ++slot)
         {
-            if (isDefinedInLoop(op->getIn(slot)))
+            if (loopModel.isDefinedInLoop(op->getIn(slot)))
             {
                 pLogger->info("Removing exterior dependency at 0x{0:x}:{1:x}",
                     op->getAddr().getOffset(), op->getTime());
@@ -207,111 +194,12 @@ bool VectorMatcher::removeExteriorDependencies()
     return true;
 }
 
-void VectorMatcher::collect_control_flow_data()
-{
-    loopStartAddr = vsetOp->getAddr().getOffset();
-    codeSpace = vsetOp->getAddr().getSpace();
-    // Get the Ghidra block containing this loop
-    loopBlock = vsetOp->getParent();
-    Address lastAddr = loopBlock->getStop();
-    loopEndAddr = lastAddr.getOffset();
-    PcodeOp* lastOp = loopBlock->lastOp();
-    bool isBranch = lastOp->isBranch();
-    // this block forms a loop if it starts with a vset and ends
-    // with a conditional branch back to the start
-    if (isBranch && (lastOp->code() == CPUI_CBRANCH))
-    {
-        intb branchTarget = lastOp->getIn(0)->getAddr().getOffset();
-        if (branchTarget == loopStartAddr)
-        {
-            simpleFlowStructure = true;
-            loopFound = true;
-            foundSimpleComparison = true;
-        }
-        else
-        {
-            simpleFlowStructure = false;
-            loopFound = false;
-            foundSimpleComparison = false;
-        }
-    }
-    const FlowBlock* nextBlock = loopBlock->nextInFlow();
-    const bool SHOW_NEXT_BLOCK = false;
-    if (nextBlock != nullptr)
-    {
-        nextInstructionAddress = nextBlock->getStart();
-        if (SHOW_NEXT_BLOCK && trace)
-        {
-        std::stringstream ss;
-        nextBlock->printRaw(ss);
-        pLogger->trace("The next block identifies as: {0:s}\n\tNext instruction address is 0x:{1:x}",
-            ss.str(), nextInstructionAddress.getOffset());
-        }
-    }
-    else nextInstructionAddress=Address();
-    if (loopFound)
-    {
-        pLogger->info("Loop instruction range: 0x{0:x} to 0x{1:x} within AddrSpace {2:s}",
-            loopStartAddr, loopEndAddr, codeSpace->getName());
-        pLogger->info("loopFound = {0:d}; simpleFlowStructure = {1:d}; "
-                         "foundSimpleComparison = {2:d}",
-                         loopFound, simpleFlowStructure, foundSimpleComparison);
-    }
-}
-
-void VectorMatcher::collect_phi_nodes()
-{
-    PcodeOpTree::const_iterator iter = data.beginOp(vsetOp->getAddr());
-    PcodeOpTree::const_iterator enditer = data.endOp(vsetOp->getAddr());
-    // This loop collects PcodeOps that share an instruction address
-    // with the trigger vsetOp.
-    pLogger->trace("  Iterating over vset phi pcodes");
-    while(iter!=enditer) {
-        // iter points at a (SeqNum, PcodeOp*) pair
-        PcodeOp *op = (*iter).second;
-         ++iter;
-         if (op->code() == CPUI_MULTIEQUAL)
-         {
-            if (trace)
-            {
-                std::stringstream ss;
-                op->printRaw(ss);
-                pLogger->trace("  Analysis of Phi node: {0:s}",
-                    ss.str());
-            }
-            int numArgs = op->numInput();
-            for (int slot = 0; slot < numArgs; ++slot)
-            {
-                // where does this arg get written?
-                if (trace)
-                {
-                    std::stringstream ss;
-                    op->getIn(slot)->printRaw(ss);
-                    pLogger->trace("  Analysis of Varnode in slot {0:d}: {1:s}",
-                        slot, ss.str());
-                }
-                PcodeOp* definingOp = op->getIn(slot)->getDef();
-                if (definingOp != nullptr)
-                {
-                    intb offset = definingOp->getAddr().getOffset();
-                    if ((offset >= loopStartAddr) && (offset <= loopEndAddr))
-                    {
-                        // we might want to record the slot number and register
-                        phiNodesAffectedByLoop.push_back(op);
-                    }
-                }
-            }
-         }
-    }
-    pLogger->trace("  Found {0:d} Phi nodes affected by the loop", phiNodesAffectedByLoop.size());
-}
-
 void VectorMatcher::collect_loop_registers()
 {
     // use lists instead of vectors to allow for push_back inside iterative loops
     std::list<Varnode *> dependentVarnodesInLoop;
     std::list<Varnode *> dependentVarnodesOutsideLoop;
-    std::list<PcodeOp *> opsToVisit(phiNodesAffectedByLoop.begin(), phiNodesAffectedByLoop.end());
+    std::list<PcodeOp *> opsToVisit(loopModel.phiNodesAffectedByLoop.begin(), loopModel.phiNodesAffectedByLoop.end());
     Varnode* vLoopStoreVn = nullptr;
     Varnode* vectorNumElemVn = nullptr;
     Varnode* vectorLoadRegisterVn = nullptr;
@@ -332,7 +220,7 @@ void VectorMatcher::collect_loop_registers()
         // descendent ops with no return value need to be checked for content but not dependencies.
         bool opIsVoid = (resultVn == nullptr);
         intb offset = op->getAddr().getOffset();
-        bool isInsideLoop = (offset >= loopStartAddr) && (offset <= loopEndAddr);
+        bool isInsideLoop = (offset >= loopModel.firstAddr) && (offset <= loopModel.lastAddr);
         if (info && !opIsVoid)
         {
             string regName;
@@ -436,7 +324,7 @@ void VectorMatcher::collect_loop_registers()
     // do load and store registers match?
     vectorRegistersMatch = (vectorLoadRegisterVn == vectorStoreRegisterVn);
     // find the Phi node defining the loop registers
-    for (auto op: phiNodesAffectedByLoop)
+    for (auto op: loopModel.phiNodesAffectedByLoop)
     {
         if (trace)
         {
@@ -542,9 +430,9 @@ int VectorMatcher::transformMemcpy()
                 Varnode* v0 = op->getIn(0);
                 Varnode* v1 = op->getIn(1);
                 Varnode* vParam;
-                if (isDefinedInLoop(v0))
+                if (loopModel.isDefinedInLoop(v0))
                     vParam = v1;
-                else if (isDefinedInLoop(v1))
+                else if (loopModel.isDefinedInLoop(v1))
                     vParam = v0;
                 else
                 {
@@ -583,7 +471,7 @@ int VectorMatcher::transformMemcpy()
                 pLogger->trace("\tRemoving interior Varnodes from thisPcodeOP");
                 for (int slot=0; slot < op->numInput(); ++slot)
                 {
-                    if ((op->getIn(slot)->isFree()) || (isDefinedInLoop(op->getIn(slot))))
+                    if ((op->getIn(slot)->isFree()) || (loopModel.isDefinedInLoop(op->getIn(slot))))
                     {
                         pLogger->trace("\tRemoved interior varnode in slot {0:d}", slot);
                         pLogger->flush();
@@ -658,7 +546,7 @@ int VectorMatcher::transformMemcpy()
     {
         // if there is a following block add a goto to close the block and reach the next block
         // place the goto at the end of the current block to satisfy BlockBasic constraints
-        Address gotoLocation(codeSpace, loopEndAddr);
+        Address gotoLocation(codeSpace, loopModel.lastAddr);
         PcodeOp* gotoOp = insertBranchOp(data, gotoLocation, nextInstructionAddress);
         if (trace)
         {

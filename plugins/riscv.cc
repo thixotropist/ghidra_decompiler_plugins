@@ -15,6 +15,7 @@
 
 #include "riscv.hh"
 #include "rule_vector_transform.hh"
+#include "vector_ops.hh"
 
 static const bool DO_SURVEY = false;  ///< survey the loaded architecture
 static const bool SURVEY_USERPCODEOPS = false;  ///< show user pcode ops by name and index
@@ -98,7 +99,7 @@ extern "C" int plugin_init(void *context)
         TRANSFORM_LIMIT_LOOPS, TRANSFORM_LIMIT_NONLOOPS);
     arch = reinterpret_cast<Architecture*>(context);
     registerAddrSpace = arch->getSpaceByName("register");
-    pLogger->info("Plugin initialized");
+    pLogger->info("Plugin framework initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=MAX_USER_PCODES; index++) {
         const UserPcodeOp* op = arch->userops.getOp(index);
@@ -107,6 +108,9 @@ extern "C" int plugin_init(void *context)
         riscvNameToGhidraId.insert(std::make_pair(op->getName(), index));
     }
     pLogger->trace("Found {0} user pcode ops during plugin_init", riscvPcodeMap.size());
+    // handle any static initializers
+    riscv_vector::VectorLoop::static_init();
+    pLogger->info("Plugin RISC-V Vector support initialized");
     pLogger->flush();
     return 0;
 }

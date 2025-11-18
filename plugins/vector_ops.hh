@@ -48,10 +48,9 @@ class VectorOperand
         indexer,     ///< load a vector register with (0, 1, 2, 3, ...) or similar
         other
     };
-    /// @brief Provide string names for enum types
-    const std::vector<std::string> opTypeToString {
-      "load", "store", "constant", "indexer", "other"
-    };
+    /// @brief Provide string names for enum types during trace
+    /// @brief initialize static objects once
+    static void static_init();
     OperandType opType;                  ///< The role for this operand
     std::vector<VectorStripe*> stripes;  ///< One or more stripes manipulating the vector
     /**
@@ -62,106 +61,178 @@ class VectorOperand
     ~VectorOperand();                    ///< destructor
 };
 
+enum OperationType      ///< Scalar and Vector operations fall into several categories
+{
+  unknown,                 ///< not yet recognized
+  addition,                ///< add to register
+  pointerAddition,        ///< add to pointer register
+  subtraction,             ///< subtract from register
+  multiplication,          ///< multiplication
+  twosComplement,         ///< twos complement
+  comparison,              ///< various comparison operations
+  conditionalBranch,      ///< conditional branch
+  vectorSetup,             ///< vsetvli*
+  vectorLoad,              ///< vector load from memory
+  vectorLoadFF,            ///< vector load fail on first
+  vectorStore,             ///< vector store to memory
+  vectorToVector,          ///< vector operand to vector result
+  vectorImmediateToVector, ///< vector and scalar immediate operands to vector result
+  vectorPairToVector,      ///< two vector operands to a vector result
+  vectorToScalar           ///< vector operand to scalar result
+};
+
 /**
- * @brief Vector operations (other than load or store) transform a vector operand
+ * @brief Vector operations (including load or store) transform a vector operand
  * into a vector or scalar result.
  */
 class VectorOperation
 {
   public:
-    enum OperationType      ///< Vector operations fall into several categories
-    {
-      vectorToVector,       ///< vector operand to vector result
-      vectorPairToVector,   ///< two vector operands to a vector result
-      vectorToScalar        ///< vector operand to scalar result
-    };
-    OperationType typ;      ///< the OperationType for this operation.
+
+    OperationType type;      ///< the OperationType for this operation.
+    ghidra::PcodeOp* op;     ///< the original Ghidra PcodeOp
+    ghidra::Varnode* result;///< the result of this operation
+    ghidra::Varnode* arg0;  ///< the first argument of this operation
+    ghidra::Varnode* arg1;  ///< the second argument of this operation, or null
+    ghidra::Varnode* arg2;  ///< the third argument of this operation, or null
+    VectorOperation(OperationType typeParam, ghidra::PcodeOp* opParam);  ///< Constructor
+    static void static_init(); ///< initialize static objects once on initialization
 };
 
 /**
- * @brief Scalar operations within a vector loop are often pointer or counter increments or decrements
+ * @brief Scalar operations include counter increments, pointer increments, and comparisons
  */
 class ScalarOperation
 {
   public:
-    ghidra::intb scalar_register; ///< the register adjusted in this operation
-    ghidra::Varnode* adjustment;  ///< increment or decrement value
+    OperationType type;   ///< generic operation type
+    ghidra::PcodeOp* op;     ///< the original Ghidra PcodeOp
+    ghidra::Varnode* result; ///< the register adjusted in this operation, identified by its Ghidra ID
+    ghidra::Varnode* arg0;  ///< the first argument of this operation
+    ghidra::Varnode* arg1;  ///< the second argument of this operation, or null
+    ghidra::Varnode* arg2;  ///< the third argument of this operation, or null
+    ghidra::OpCode opcode; ///< the Ghidra operation code
+    std::vector<ghidra::Varnode*> arguments;  ///< increment or decrement value
+    ScalarOperation(OperationType typeParam, ghidra::PcodeOp* opParam);
 };
 
 /**
- * @brief Model a generic vector function, such as those defined in std::
- * @todo Consider renaming this class from VectorFunction to VectorLoop, as it
- * primarily considers pcode only within a tight loop.
+ * @brief Model a vector loop iterating over a variable number of elements
  */
-class VectorFunction
+class VectorLoop
 {
-  using Operation = std::function<void(int ghidraOp, const ghidra::PcodeOp* op)>;
   public:
-    std::map<int, Operation> operations; ///< Map of loop instruction callbacks keyed by Ghidra opcode id
+    /// @brief @brief Lambda expressions used to process user pcode operators
+    using userPcodeOpHandler = std::function<void(VectorLoop& loop, int ghidraOp, ghidra::PcodeOp* op)>;
+
+    static const uint32_t TERMINATES_ON_COUNTDOWN = 0x00000001;   ///< This loop counts down to zero
+    static const uint32_t TERMINATES_ON_POINTER_TEST = 0x00000002;///< This loop exits on pointer test
+    static const uint32_t TERMINATES_ON_DATA_TEST = 0x00000004;   ///< This loop exits on data element test
+    uint32_t terminationConditionFlags;  ///< collect tests controlling the termination of this loop
+    enum TerminationCondition    ///< What kind of conditional expression(s) terminate this loop?
+    {
+      countDown,                 ///< An integer count of the number of elements left to process
+      pointerTest,               ///< Incrementing or decrementing a pointer until it reaches the end of an array
+      dataTest                   ///< A test against a data element read
+    };
+
     /**
     * @brief the generic type of this vector function
     */
     enum fType {
-        memcpy,
-        memset,
-        strlen,
-        transform,
-        reduce,
-        innerProduct,
-        unknown,
-        other
+        memcpy,           ///< similar to the stdlib memcpy
+        memset,           ///< similar to the stdlib memset
+        strlen,           ///< similar to the stdlib strlen
+        transform,        ///< apply a scalar function to each element of a vector
+        reduce,           ///< reduce a vector to a scalar
+        innerProduct,     ///< inner product between two vectors
+        unknown,          ///< unrecognized type
+        other             ///< generic type not yet established
     };
-    /// @brief labels for logging fType values
-    const std::vector<std::string> fTypeToString =
-        {"memcpy", "memset", "strlen",  "transform",  "reduce",
-            "innerProduct", "unknown", "other"};
     fType typ;             ///< this function type
     std::string name;      ///< display name
     // collect features we can use to identify matching transforms
     uint loopFlags;        ///< aggregated instruction flags found within the loop
-    int numLoopVectorOps;  ///< number of vector operations found within the loop
-    int numArithmeticOps;  ///< number of arithmetic pcodes found within the loop
-    bool foundOtherUserPcodes; ///< are their unrecognized pcodes found within the loop?
+    bool loopFound;        ///< was a simple loop found?
+    const ghidra::Funcdata& data;  ///< The ghidra function data top level information
+    ghidra::PcodeOp* vsetOp; ///< The vsetvli or vsetivli pcode op found at the beginning of the loop
+    ghidra::AddrSpace* codeSpace;   ///< The code address space containing the loop
+    ghidra::intb firstAddr; ///< the first RAM address of this loop
+    ghidra::intb lastAddr; ///< the last RAM address of this loop
+    ghidra::BlockBasic* loopBlock;   ///< the parent block of the loop
+    std::vector<ghidra::PcodeOp*> phiNodesAffectedByLoop;  ///< Phi or MULTIEQUAL opcodes referencing loop variables
+    ghidra::OpCode comparisonOp; ///< Ghidra opcode for an integer comparison test
     bool simpleFlowStructure; ///< is this a simple loop?
-    bool foundSimpleComparison; ///< does this loop end with a simple comparison and conditional branch?
-    bool foundUnexpectedOpcode;   /// unexpected user opcode found within the loop
     std::vector<ghidra::PcodeOp*> otherUserPcodes; ///< Other user pcodes found within the loop
-    std::vector<VectorOperand*> operands; ///< unordered operands collected within this function
+    std::vector<VectorOperation*> vectorOps; ///< ordered vector operations with handlers assigned found within this loop
+    std::vector<VectorOperation*> otherVectorOps; ///< ordered vector operations without handlers assigned found within this loop
+    std::vector<ScalarOperation*> scalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
+    std::vector<ScalarOperation*> otherScalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
+    ghidra::Varnode* numElements;  ///< Varnode tracking the number of elements remaining to be processed
+    ghidra::Varnode* vSliceCount;  ///< Varnode tracking the number of elements processed this loop
+    ghidra::Varnode* vnSrc;        ///< Varnode tracking the source load address
+    ghidra::Varnode* vnDst;        ///< Varnode tracking the destination store address
     /**
      * @brief Construct a new Vector Function object to hold model parameters
+     * @param dataParam The Ghidra function data top level object
+     * @param traceParam True if the current log level includes tracing
      */
-    VectorFunction();
+    VectorLoop(const ghidra::Funcdata& dataParam, const bool traceParam);
     /**
-     * @brief Add a new vector load operand or slice
-     * @param op The Vle* PcodeOp loading a vector register from memory
+     * @brief Destroy the Vector Function object
      */
-    void addLoadOperand(const ghidra::PcodeOp* const op);
+    ~VectorLoop();
     /**
-     * @brief Add a new vector store operand or slice
-     * @param op The Vse* PcodeOp loading a vector register from memory
+     * @brief Is this Varnode defined within (generated within) the current loop?
+     * @param vn a Varnode reference
+     * @return true if the pcode defining this VN lies inside our loop
      */
-    void addStoreOperand(const ghidra::PcodeOp* const op);
+    bool isDefinedInLoop(const ghidra::Varnode* vn);
+
     /**
-     * @brief Invoke a vector instruction (user PcodeOp) handler to update the VectorFunction model.
-     * @details This handler triggers on user PcodeOps when iterating through a vector loop.
-     * Don't confuse it with a generic higher level vector operation.
-     *
-     * @param op The ghidra PcodeOp implementing the Operation.
+     * @brief perform one-time static initialization
      */
-    bool invokeVectorOpHandler(ghidra::PcodeOp* op);
+    static void static_init();
+    /**
+     * @brief Analyze the loop to collect traits useful in matching and transforms
+     * @param vsetOp The vsetvli or vsetivli instruction found at the top of the loop
+     */
+    void analyze(ghidra::PcodeOp* vsetOp);
     /**
      * @brief log this model to the current logfile
      */
     void log();
+  private:
+    bool trace; ///< is tracing enabled?
+    /**
+     * @brief Invoke a vector instruction (user PcodeOp) handler to update the VectorLoop model.
+     * @details This handler triggers on user PcodeOps when iterating through a vector loop.
+     * Don't confuse it with a generic higher level vector operation.
+     *
+     * @param op The ghidra PcodeOp implementing the userPcodeOpHandler.
+     */
+    bool invokeVectorOpHandler(ghidra::PcodeOp* op);
+    /**
+    * @brief construct basic control flow data around a vset op to determine
+    * if this is a simple loop
+    */
+    void examine_control_flow(ghidra::PcodeOp* vsetOp);
+    /**
+     * @brief Collect other PcodeOps bound to the initial vset instruction
+     * @details These Pcodes may include Phi nodes showing register heritage,
+     * or cast operations.  We are especially interested in Phi Pcodes that
+     * reference loop registers
+     */
+    void collect_phi_nodes();
     /**
      * @brief Examine pcode ops within a loop to locate key vector operations.
      * @param loopBlock The Ghidra block containing the trigger vset instruction
      */
     void examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock);
     /**
-     * @brief Destroy the Vector Function object
+     * @brief Identify common loop elements like vector loads, vector stores, and element counters
      */
-    ~VectorFunction();
+    void collect_common_elements();
 };
 }
 #endif /* VECTOR_OPS_HH */
