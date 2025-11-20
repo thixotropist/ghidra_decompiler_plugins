@@ -1,5 +1,5 @@
 <xml_savefile name="drwav__on_write_memory" target="default" adjustvma="0">
-<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<binaryimage arch="RISCV:LE:64:default">
 <bytechunk space="ram" offset="0x2a606" readonly="true">
             8338050f0338850f3287
 aa8733860841ae86637fe612397122f8

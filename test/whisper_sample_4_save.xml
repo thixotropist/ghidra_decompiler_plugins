@@ -1,5 +1,5 @@
 <xml_savefile name="whisper_model_load" target="default" adjustvma="0">
-<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<binaryimage arch="RISCV:LE:64:default">
 <bytechunk space="ram" offset="0xb3824" readonly="true">
         417186f717f7080003378708
 a2f36aeb801b6ee7a6efcaebcee7d2e3

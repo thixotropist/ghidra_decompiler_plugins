@@ -1,5 +1,5 @@
 <xml_savefile name="quantize_q4_0" target="default" adjustvma="0">
-<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<binaryimage arch="RISCV:LE:64:default">
 <bytechunk space="ram" offset="0x97772" readonly="true">
     4571a2e386e7800bba8217b70a00
 033747131c63233cf4f681472334c4e4
