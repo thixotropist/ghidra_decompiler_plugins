@@ -19,6 +19,7 @@
 #include <string>
 #include <map>
 #include <climits>
+#include <fstream>
 
 #include "spdlog/spdlog.h"
 #include "framework.hh"
@@ -94,6 +95,11 @@ extern std::map<int, RiscvUserPcode*> riscvPcodeMap;
  * @brief Map providing the ghidra identifier for a given Risc-v opcode name
  */
 extern std::map<std::string, uintb> riscvNameToGhidraId;
+
+/**
+ * @brief Report file collecting summary data on vector sequences
+ */
+extern std::ofstream reportFile;
 
 // Begin identifiers for *typed* user pcode builtins
 static const uint4 VECTOR_MEMSET = 0x11000000;

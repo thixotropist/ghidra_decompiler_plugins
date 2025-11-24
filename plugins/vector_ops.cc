@@ -184,6 +184,10 @@ VectorLoop::VectorLoop(const ghidra::Funcdata& dataParam, bool traceParam) :
     vSliceCount(nullptr),
     vnSrc(nullptr),
     vnDst(nullptr),
+    multiplier(0),
+    elementSize(0),
+    vlReg(0),
+    vsReg(0),
     trace(traceParam)
 {
 }
@@ -205,6 +209,8 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     examine_loop_pcodeops(loopBlock);
     // Identify common loop elements like vector loads, vector stores, and element counters
     collect_common_elements();
+    // Summarize key features to a report file
+    generateReport();
 }
 
 bool VectorLoop::invokeVectorOpHandler(ghidra::PcodeOp* op)
@@ -427,18 +433,10 @@ void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
                     invokeVectorOpHandler(op);
                     break;
                 }
-                else if (opInfo->isVectorOp)
+                else
                 {
                     ghidra::pLogger->trace("Invoking a VectorLoop instruction handler");
                     invokeVectorOpHandler(op);
-                }
-                else
-                {
-                    otherUserPcodes.push_back(op);
-                    std::stringstream ss;
-                    op->printRaw(ss);
-                    ghidra::pLogger->warn("    Unexpected user pcode found at 0x{0:x}: {1:s}",
-                        opOffset, ss.str());
                 }
                 break;
             }
@@ -453,14 +451,6 @@ void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
 }
 void VectorLoop::collect_common_elements()
 {
-    std::vector<VectorOperation*> vLoadOps;
-    std::vector<VectorOperation*> vStoreOps;
-    std::vector<ScalarOperation*> sIntegerOps;
-    std::vector<ScalarOperation*> sComparisonOps;
-    int multiplier = 0;
-    int elementSize = 0;
-    ghidra::intb vlReg = -1;
-    ghidra::intb vsReg = -1;
 
     for (auto vOp: vectorOps)
     {
@@ -490,8 +480,22 @@ void VectorLoop::collect_common_elements()
         switch(op->type)
         {
             case OperationType::comparison:
+            {
                 sComparisonOps.push_back(op);
+                // where is the comparison register set?
+                ghidra::PcodeOp* testedOp = op->arg0->getDef();
+                const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*testedOp);
+                // very crude determination!
+                if (vsetInfo == nullptr)
+                    terminationConditionFlags |= TERMINATES_ON_COUNTDOWN;
+                else
+                    terminationConditionFlags |= TERMINATES_ON_DATA_TEST;
+                std::stringstream ss;
+                testedOp->printRaw(ss);
+                ghidra::pLogger->trace("Comparison target = {0:s}\n\tTermination flags = 0x{1:x}",
+                    ss.str(), terminationConditionFlags);
                 break;
+            }
             case OperationType::conditionalBranch:
                 break;
             case OperationType::multiplication:
@@ -516,20 +520,41 @@ void VectorLoop::collect_common_elements()
         vsReg = vStoreOps[0]->arg0->getAddr().getOffset();
         vnDst = vStoreOps[0]->arg1;
     }
-    ghidra::pLogger->info("Common elements (1):\n"
-        "\tvector loads: {0:d}\n"
-        "\tvector stores: {1:d}\n"
-        "\tcondition tests: {2:d}\n"
-        "\tinteger arithmetic: {3:d}\n",
-        vLoadOps.size(), vStoreOps.size(), sComparisonOps.size(), sIntegerOps.size());
-    ghidra::pLogger->info("Common elements (2):\n"
-        "\telement size: {0:d}\n"
-        "\tmultiplier: {1:d}",
-        elementSize, multiplier);
-    ghidra::pLogger->info("Common elements (3):\n"
-        "\tvector load register: {0:d}\n"
-        "\tvector store register: {1:d}",
-        vlReg, vsReg);
+}
+
+static std::set<ghidra::intb> loopsAnalyzed;
+void VectorLoop::generateReport()
+{
+    auto exists = loopsAnalyzed.find(firstAddr);
+    if(exists != loopsAnalyzed.end()) return;
+    loopsAnalyzed.insert(firstAddr);
+    ghidra::reportFile <<
+        "Vector Loop Report" << std::endl <<
+        "\tLoop start address: 0x" << std::hex << firstAddr << std::endl <<
+        "\tLoop length: 0x" << lastAddr - firstAddr << std::endl <<
+        "\tsetvli mode: element size=" << elementSize << ", multiplier=" << multiplier <<
+        ", vector load register=" << vlReg <<
+        ", vector store register=" << vsReg << std::endl <<
+        "\tvector loads: " << vLoadOps.size() << std::endl <<
+        "\tvector stores: " << vStoreOps.size() << std::endl <<
+        "\tcomparisons: " << sComparisonOps.size() << std::endl <<
+        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl;
+    ghidra::reportFile << "\tVector instructions (handled): ";
+    for (auto vOp: vectorOps)
+    {
+        ghidra::PcodeOp* op = vOp->op;
+        const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
+        ghidra::reportFile << vsetInfo->asmOpcode << ", ";
+    }
+    ghidra::reportFile << std::endl;
+    ghidra::reportFile << "\tVector instructions (unhandled): ";
+    for (auto vOp: otherVectorOps)
+    {
+        ghidra::PcodeOp* op = vOp->op;
+        const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
+        ghidra::reportFile << vsetInfo->asmOpcode << ", ";
+    }
+    ghidra::reportFile << std::endl;
 }
 
 VectorLoop::~VectorLoop()

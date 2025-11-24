@@ -79,6 +79,8 @@ std::map<int, RiscvUserPcode*> riscvPcodeMap;      /// lookup a user pcode given
 std::map<std::string, uintb> riscvNameToGhidraId;
 std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plugin
 
+std::ofstream reportFile; /// A file holding summary data for each possible vector stanza
+
 int transformCountNonLoop; /// Maximum number of non-loop transforms to complete
 int transformCountLoop;    /// Maximum number of loop transforms to complete
 Architecture* arch;        /// The Ghidra architecture object for this program
@@ -93,6 +95,8 @@ extern "C" int plugin_init(void *context)
     pLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
     // log levels are trace, debug, info, warn, error and critical.
     pLogger->set_level(spdlog::level::trace);
+    reportFile.open("/tmp/riscv_summaries.txt");
+    reportFile << "RISC-V Summary Report" << std::endl;
     transformCountNonLoop = 0;
     transformCountLoop = 0;
     pLogger->info("Maximum number of vector transforms:\tloop: 0x{0:x}, non-loop: 0x{1:x})",
@@ -183,5 +187,6 @@ extern "C" void plugin_exit()
     }
     riscvPcodeMap.clear();
     pLogger->flush();
+    reportFile.close();
 }
 }

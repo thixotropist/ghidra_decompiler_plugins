@@ -9,10 +9,11 @@
 #ifndef VECTOR_OPS_HH
 #define VECTOR_OPS_HH
 
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include <set>
 #include <vector>
 #include "spdlog/spdlog.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "riscv.hh"
 
 namespace riscv_vector{
@@ -113,7 +114,7 @@ class ScalarOperation
     ghidra::Varnode* arg2;  ///< the third argument of this operation, or null
     ghidra::OpCode opcode; ///< the Ghidra operation code
     std::vector<ghidra::Varnode*> arguments;  ///< increment or decrement value
-    ScalarOperation(OperationType typeParam, ghidra::PcodeOp* opParam);
+    ScalarOperation(OperationType typeParam, ghidra::PcodeOp* opParam); ///< Constructor
 };
 
 /**
@@ -203,6 +204,14 @@ class VectorLoop
      */
     void log();
   private:
+    std::vector<VectorOperation*> vLoadOps;    ///< vector load operations found
+    std::vector<VectorOperation*> vStoreOps;   ///< vector store operations found
+    std::vector<ScalarOperation*> sIntegerOps; ///< scalar integer operations found
+    std::vector<ScalarOperation*> sComparisonOps; ///< scalar comparison operations found
+    int multiplier;                        ///< vset multiplier
+    int elementSize;                       ///< vset element size
+    ghidra::intb vlReg;                    ///< vector load destination register
+    ghidra::intb vsReg;                    ///< vector store source register
     bool trace; ///< is tracing enabled?
     /**
      * @brief Invoke a vector instruction (user PcodeOp) handler to update the VectorLoop model.
@@ -233,6 +242,10 @@ class VectorLoop
      * @brief Identify common loop elements like vector loads, vector stores, and element counters
      */
     void collect_common_elements();
+    /**
+     * @brief Generate a summary report for this vector loop
+     */
+    void generateReport();
 };
 }
 #endif /* VECTOR_OPS_HH */
