@@ -529,25 +529,24 @@ void VectorLoop::generateReport()
     if(exists != loopsAnalyzed.end()) return;
     loopsAnalyzed.insert(firstAddr);
     ghidra::reportFile <<
-        "Vector Loop Report" << std::endl <<
+        "Vector Loop Report:" << std::endl <<
         "\tLoop start address: 0x" << std::hex << firstAddr << std::endl <<
         "\tLoop length: 0x" << lastAddr - firstAddr << std::endl <<
-        "\tsetvli mode: element size=" << elementSize << ", multiplier=" << multiplier <<
-        ", vector load register=" << vlReg <<
-        ", vector store register=" << vsReg << std::endl <<
-        "\tvector loads: " << vLoadOps.size() << std::endl <<
-        "\tvector stores: " << vStoreOps.size() << std::endl <<
-        "\tcomparisons: " << sComparisonOps.size() << std::endl <<
-        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl;
-    ghidra::reportFile << "\tVector instructions (handled): ";
+        "\tsetvli mode: element size=0x" << elementSize << ", multiplier=" << multiplier <<
+        ", vector load register: 0x" << vlReg <<
+        ", vector store register: 0x" << vsReg << std::endl <<
+        "\tvector loads: 0x" << vLoadOps.size() << std::endl <<
+        "\tvector stores: 0x" << vStoreOps.size() << std::endl <<
+        "\tcomparisons: 0x" << sComparisonOps.size() << std::endl <<
+        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl << std::dec;
+    ghidra::reportFile << "\tVector instructions (handled | unhandled): ";
     for (auto vOp: vectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
         const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
         ghidra::reportFile << vsetInfo->asmOpcode << ", ";
     }
-    ghidra::reportFile << std::endl;
-    ghidra::reportFile << "\tVector instructions (unhandled): ";
+    ghidra::reportFile << "| ";
     for (auto vOp: otherVectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;

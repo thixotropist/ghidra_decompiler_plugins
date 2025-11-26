@@ -88,14 +88,18 @@ AddrSpace* registerAddrSpace; /// The address space holding RISCV registers
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
- * @details The binary program should be loaded with no analysis yet performed
+ * @details The binary program should be loaded with no analysis yet performed.
+ * Ghidra's GUI will sometimes start multiple decompilers running in parallel,
+ * so we append the process ID to logfile and summaries file names.
  */
 extern "C" int plugin_init(void *context)
 {
-    pLogger = spdlog::basic_logger_mt("riscv_vector", "/tmp/ghidraRiscvLogger.log");
+    std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
+    pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
     pLogger->set_level(spdlog::level::trace);
-    reportFile.open("/tmp/riscv_summaries.txt");
+    std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
+    reportFile.open(summariesFilename);
     reportFile << "RISC-V Summary Report" << std::endl;
     transformCountNonLoop = 0;
     transformCountLoop = 0;
