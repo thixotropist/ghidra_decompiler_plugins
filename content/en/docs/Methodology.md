@@ -113,3 +113,51 @@ With this survey *and this specific binary* the user's priorities are likely:
 The `whisper.cpp` binary is a good example of an inference engine application, something that uses a lot of vector math.  Repeat the survey
 with a completely different type of binary, a Dataplane Development Kit network appliance.  This kind of binary will have little use for vector math
 like inner products.  What kind of vector operations will it have instead?
+
+## building the test binary
+
+Checkout dpdk at version 25.11-rc4 and build with gcc 15.2 and arch_id = 'rv64gcv'.  Verify the build parameters first:
+
+```console
+$ readelf -A build_riscv64/examples/dpdk-pipeline
+Attribute Section: riscv
+File Attributes
+  Tag_RISCV_stack_align: 16-bytes
+  Tag_RISCV_arch: "rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_v1p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0"
+  Tag_RISCV_priv_spec: 1
+  Tag_RISCV_priv_spec_minor: 11
+```
+
+## surveying the dpdk binary
+
+Load `dpdk-pipeline` into Ghidra which reports 2942862 instructions and 22999 functions found, with more than 10000 vset* instructions present.
+
+>Note: exporting the entire binary as C results in three exceptions, in the functions at 0x2ab4c2, 0x6ffda2, and 0x83ef14.  These exceptions do not
+>      occur when running Ghidra without a plugin.  More testing is needed here.
+
+Examine the summaries to categorize on `Vector instructions` for a sense of common patterns.  There are about 5790 vector loops found in the survey
+
+* 3495 likely `vector_memcpy` loops consisting of `vsetvli_e8m1tama, vle8_v, vse8_v,`
+* 1202 likely `vector_strcmp` loops
+* 300 likely `vector_strlen` loops
+* 367 unrecognized loops involving `vsetvli_e8mf8tama, vle64_v, vse64_v`
+
+The unrecognized loop structure *appears* to be a simple conversion from a vector of 8 bit elements to a vector of 64 bit elements.  This may
+be a pattern worth capturing in the plugin.
+
+## summary and path forward
+
+The methodology is iterative, driven by the results in our two exemplar binaries.  The priorities are now:
+
+* collect features for `vector_strcmp`
+* complete the transforms for `vector_strlen`
+* add collection of vector ops immediately following a vector loop without vector stores - looking for reduction stanzas.
+* identify the root causes of the three dpdk exceptions
+* add the dpdk and whisper binaries to the repo to better support regression testing
+* consider adding basic vector math and type conversion operations to the transforms
+
+Reduced priorities include:
+
+* support for detecting loop unrolling
+* support for complex vector loops
+* additional detection of false positive matches

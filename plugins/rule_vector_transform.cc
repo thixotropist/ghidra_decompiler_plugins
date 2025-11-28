@@ -70,8 +70,7 @@ static int evaluateNonLoopVectorStanza(PcodeOp *firstOp, VectorMatcher& matcher,
             {
                 const RiscvUserPcode *descOpInfo = RiscvUserPcode::getUserPcode(**it);
                 // we only transform vector store opcodes
-                if ((descOpInfo == nullptr) || !descOpInfo->isStore)
-                    continue;
+                if ((descOpInfo == nullptr) || !descOpInfo->isStore) continue;
                 pLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
                                 builtinOp, (*it)->getAddr().getOffset());
                 // vector_mem* invocations count bytes, not elements.

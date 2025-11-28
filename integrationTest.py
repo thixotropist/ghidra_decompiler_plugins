@@ -166,7 +166,7 @@ class T1Datatests(unittest.TestCase):
             with open(f"/tmp/whisper_sample_{i}.testlog", "w", encoding="utf8") as f:
                 f.write(result.stdout)
                 f.write(result.stderr)
-            self.assertNotIn("Low-level ERROR", result.stdout, 
+            self.assertNotIn("Low-level ERROR", result.stdout,
                              "Decompiler completes without a low level error")
             command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
             result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
@@ -199,6 +199,27 @@ class T1Datatests(unittest.TestCase):
             f.write(result.stderr)
         self.assertEqual(0, result.returncode,
             f"Datatest of {test_name} failed")
+    def test_05_dpdk_regressions(self):
+        """
+        The DPDK binary shows additional regressions
+        """
+        sample_set = (1,)
+        for i in sample_set:
+            command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/dpdk_sample_{i}.ghidra"
+            logger.info(f"Running {command} with output to /tmp/dpdk_sample_{i}.testlog")
+            result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
+            self.assertEqual(0, result.returncode,
+                f"Datatest of dpdk_sample_{i} failed")
+            with open(f"/tmp/dpdk_sample_{i}.testlog", "w", encoding="utf8") as f:
+                f.write(result.stdout)
+                f.write(result.stderr)
+            self.assertNotIn("Low-level ERROR", result.stdout,
+                             "Decompiler completes without a low level error")
+            command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/dpdk_sample_{i}.testlog|wc|awk '{{print $1}}'"
+            result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
+            self.assertEqual(0, result.returncode,
+                f"Transform count collection for dpdk_sample_{i} failed")
+            logger.info(f"Found {result.stdout.strip()} vector transforms in dpdk_sample_{i}")
 
 if __name__ == "__main__":
 
