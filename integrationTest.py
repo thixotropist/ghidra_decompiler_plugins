@@ -11,7 +11,7 @@ import shutil
 logging.basicConfig(level=logging.INFO)
 logger = logging
 
-GHIDRA_INSTALL_DIR = "/opt/ghidra_12.0_DEV/"
+GHIDRA_INSTALL_DIR = "/opt/ghidra_12.1_DEV/"
 DECOMPILER_DIR = GHIDRA_INSTALL_DIR + "Ghidra/Features/Decompiler/os/linux_x86_64/"
 DECOMPILER_PATH = DECOMPILER_DIR + "decompile"
 DATATEST_PATH = DECOMPILER_DIR + "decompile_datatest"
@@ -20,6 +20,10 @@ BAZEL_BUILD_DATATEST_PATH = "bazel-bin/external/+_repo_rules+ghidra/decompile_da
 PLUGIN_LOAD_DIR = "/tmp/"
 PLUGIN_NAME = "libriscv_vector.so"
 PLUGIN_PATH = PLUGIN_LOAD_DIR + PLUGIN_NAME
+
+def trimOutput(result):
+    if (len(result) > 800):
+        result = result[0:800] +'...'
 
 class T0BuildPlugin(unittest.TestCase):
     """
@@ -70,7 +74,7 @@ class T0BuildPlugin(unittest.TestCase):
         self.assertEqual(0, result.returncode,
             "unable to clean previous decompiler plugin")
         logger.info("Building and installing the plugin")
-        command = "bazel build -c dbg plugins:riscv_vector"
+        command = "bazel build -c opt plugins:riscv_vector"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
@@ -95,6 +99,7 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/memcpy_exemplars.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
+        trimOutput(result.stdout)
         self.assertIn("successfully loaded: RISC-V 64", result.stdout,
                          "Failed to load test/memcpy_exemplars_save.xml")
         self.assertIn("vector_memcpy((void *)to,(void *)from,2);", result.stdout,
@@ -159,7 +164,7 @@ class T1Datatests(unittest.TestCase):
             with open(f"/tmp/whisper_sample_{i}.testlog", "w", encoding="utf8") as f:
                 f.write(result.stdout)
                 f.write(result.stderr)
-            self.assertNotIn("Low-level ERROR", result.stdout, 
+            self.assertNotIn("Low-level ERROR", result.stdout,
                              "Decompiler completes without a low level error")
             command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
             result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")

@@ -1,5 +1,5 @@
 <xml_savefile name="drwav_f32_to_s16" target="default" adjustvma="0">
-<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<binaryimage arch="RISCV:LE:64:default">
 <bytechunk space="ram" offset="0x2f5fe" readonly="true">
                             4111
 22e006e4000835c297b70c0087a7c7b1

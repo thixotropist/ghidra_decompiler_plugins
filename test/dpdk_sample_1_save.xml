@@ -1,0 +1,100 @@
+<xml_savefile name="rte_member_create" target="default" adjustvma="0">
+  <binaryimage arch="RISCV:LE:64:default:gcc">
+    <bytechunk space="ram" offset="0x2ab4c2" readonly="true">
+      5d7186e426fc630b05245c49a2e0
+      2a846381072618515c51630df7241845
+      4af889470149630cf7184ef49719aa00
+      83b949ef52f0ef904b1d83b50900d9c9
+      83380400986993060002468613074709
+      814757f0060c3e96870006033e978701
+      0703f32700c257311062d7801166b1e3
+      17d5a9001305855197c0e4ffe780806d
+      c5471cc18144014a5285ef602c512685
+      ef60cc504a85ef60ea27ef902b1c0664
+      4279a279027a8144a6602685e2746161
+      828057a1206a9d8e57a82842e34b08f8
+      429642978346060083470700e382f6fa
+      8c61adf90146e14517456e0013058501
+      ef605c2b2a8a6309051c145c08601306
+      00049305000cef60dc13aa846305051e
+      146017f676001306e6fe930500021305
+      450997c0e4ffe780e0f2577002c99307
+      840007e107029307840187e007029767
+      8300938737560780b702184c145cd727
+      204298d023a8d408d720205e0547a7e0
+      0402638fe70e09476382e70e95f7a285
+      2685ef10c041e34105f297d7a90083b7
+      e7448c439840976771009387270e97b6
+      83009386a6cc17466e001306a6fe2145
+      9710e5ffe780a0a983b7890023389a00
+      23300a002334fa0023b0470123b44901
+      ef90cb0a06644279a279027af5b51461
+      17466e00130606eff5450a8597c0e4ff
+      e78040e71c58145c0a85fd371bd61700
+      5d8e9b5726005d8e9b5746005d8e9b57
+      86005d8e9b5706015d8e052601479145
+      ef50ba732a89e31205e297d7a90083b7
+      e73a8c43176771001307470497b68300
+      9386c6c217466e00130646e911459710
+      e5ffe780c09f06644279b5b5a2854a86
+      268597f0e4ffe7804009e34f05e231bf
+      a2852685ef605014e34805e239b717d5
+      a9001305a53297c0e4ffe780a04ed947
+      1cc115bd17d5a9001305453197c0e4ff
+      e780404d97d7a90083b747338c43d947
+      1cc117677100130767fc97b683009386
+      e6ba17466e001306e6dc11459710e5ff
+      e780e0970664c5bb97d7a90083b70730
+      8c4317677100130767f997b683009386
+      e6b717466e00130666e311459710e5ff
+      e780e09445b397d7a90083b7272d8c43
+      17677100130787f697b68300938606b5
+      17466e00130606e411459710e5ffe780
+      00929dbb
+</bytechunk>
+    <bytechunk space="ram" offset="0xd48a78" readonly="true">
+      d058320100000000
+</bytechunk>
+  </binaryimage>
+
+  <coretypes>
+    <type name="uint3" size="3" metatype="uint" id="0xc0000000000000c0" />
+    <type name="uint5" size="5" metatype="uint" id="0xc0000000000000c1" />
+    <type name="code" size="1" metatype="code" id="0xe000000000000001" />
+    <type name="uint6" size="6" metatype="uint" id="0xc0000000000000c2" />
+    <type name="double" size="8" metatype="float" id="0xc000000000000082" />
+    <type name="uint7" size="7" metatype="uint" id="0xc0000000000000c3" />
+    <type name="uint" size="4" metatype="uint" id="0xc0000000000000c4" />
+    <type name="float10" size="10" metatype="float" id="0xc000000000000084" />
+    <type name="float16" size="16" metatype="float" id="0xc000000000000085" />
+    <type name="ulong" size="8" metatype="uint" id="0xc0000000000000c6" />
+    <type name="float2" size="2" metatype="float" id="0xc000000000000086" />
+    <type name="ushort" size="2" metatype="uint" id="0xc0000000000000c8" />
+    <type name="void" size="0" metatype="void" id="0xc0000000000000c9" />
+    <type name="float" size="4" metatype="float" id="0xc00000000000008a" />
+    <type name="wchar32" size="4" metatype="int" utf="true" id="0xc0000000000000cc" />
+    <type name="wchar_t" size="2" metatype="int" utf="true" id="0xc0000000000000cd" />
+    <type name="int16" size="16" metatype="int" id="0xc000000000000090" />
+    <type name="int3" size="3" metatype="int" id="0xc000000000000091" />
+    <type name="int5" size="5" metatype="int" id="0xc000000000000092" />
+    <type name="int6" size="6" metatype="int" id="0xc000000000000093" />
+    <type name="int7" size="7" metatype="int" id="0xc000000000000094" />
+    <type name="int" size="4" metatype="int" id="0xc000000000000095" />
+    <type name="long" size="8" metatype="int" id="0xc000000000000097" />
+    <type name="short" size="2" metatype="int" id="0xc0000000000000a8" />
+    <type name="sbyte" size="1" metatype="int" id="0xc0000000000000a9" />
+    <type name="undefined" size="1" metatype="unknown" id="0xc0000000000000b3" />
+    <type name="undefined1" size="1" metatype="unknown" id="0xc0000000000000b4" />
+    <type name="undefined2" size="2" metatype="unknown" id="0xc0000000000000b5" />
+    <type name="undefined3" size="3" metatype="unknown" id="0xc0000000000000b6" />
+    <type name="undefined4" size="4" metatype="unknown" id="0xc0000000000000b7" />
+    <type name="undefined5" size="5" metatype="unknown" id="0xc0000000000000b8" />
+    <type name="undefined6" size="6" metatype="unknown" id="0xc0000000000000b9" />
+    <type name="bool" size="1" metatype="bool" id="0xc000000000000079" />
+    <type name="undefined7" size="7" metatype="unknown" id="0xc0000000000000ba" />
+    <type name="byte" size="1" metatype="uint" id="0xc00000000000007a" />
+    <type name="undefined8" size="8" metatype="unknown" id="0xc0000000000000bb" />
+    <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b" />
+    <type name="uint16" size="16" metatype="uint" id="0xc0000000000000bf" />
+  </coretypes>
+</xml_savefile>

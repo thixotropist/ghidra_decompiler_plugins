@@ -4,17 +4,29 @@
 #include "spdlog/spdlog.h"
 
 /**
- * @brief Inspect Ghidra objects relevant to graph editing
- * 
+ * @file inspector.hh
  */
 namespace ghidra{
 
-class Inspector{
+/**
+ * @brief Inspect Ghidra objects relevant to graph editing
+ */
+class Inspector
+{
+  std::shared_ptr<spdlog::logger> logger;     ///< the SPDLOG logger to use for output
   public:
-    std::shared_ptr<spdlog::logger> logger;
-    Inspector(std::shared_ptr<spdlog::logger> myLogger);
-    void log(const string label, const FlowBlock* fb); ///< log fb details
+    /**
+     * @brief Construct a new Inspector object
+     * @param myLogger the SPDLOG instance used for output
+     */
+    explicit Inspector(std::shared_ptr<spdlog::logger> myLogger);
+    /**
+     * @brief Inspect a single FlowBlock
+     *
+     * @param label a descriptive string for the FlowBlock's context
+     * @param fb the FlowBlock to be logged
+     */
+    void log(const string label, const FlowBlock* fb); /// log fb details
 };
-
 }
 #endif /* INSPECTOR_HH_ */

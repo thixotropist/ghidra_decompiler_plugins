@@ -1,0 +1,7 @@
+restore test/dpdk_sample_1_save.xml
+map function 0x2ab4c2 rte_member_create
+parse line extern void rte_member_create(void* this);
+load function rte_member_create
+decompile rte_member_create
+print C
+print raw

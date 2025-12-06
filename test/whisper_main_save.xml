@@ -1,5 +1,5 @@
 <xml_savefile name="main" target="default" adjustvma="0">
-    <binaryimage arch="RISCV:LE:64:RV64GC">
+    <binaryimage arch="RISCV:LE:64:default">
         <bytechunk space="ram" offset="0x20fd0" readonly="true">
             0d7186eea2eaa6e68012cae24efe5eee
             52fa56f65af262ea66e66ae2eefda2b5

@@ -1,10 +1,10 @@
 /**
  * @file riscv_doc.hh
- * 
+ *
  * @page plugins Ghidra Plugins
- * 
+ *
  * @section riscv_vector_transforms RISC-V Vector Transforms
- * 
+ *
  * This plugin generates additional rules and transforms intended to translate
  * common vector instruction sequences into recognizable calls to \em vector_memcpy and \em vector_memset.
  *
@@ -24,7 +24,7 @@
  * - the plugin is unloaded - unmapped - on a call to \ref ghidra::PluginManager.unloadPlugin.  This will erase any object destructors
  *   used by objects created within the plugin, making later destruction segfault.  Therefore \ref ghidra::PluginManager.unloadPlugin is
  *   not currently called.
- * 
+ *
  * @subsection initialization_deps Initialization Dependencies
  * Plugin operations are triggered at different points within Architecture object construction and initialization.
  * * the PluginManager is constructed as part of Architecture construction

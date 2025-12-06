@@ -1,0 +1,7 @@
+restore test/dpdk_sample_2_save.xml
+map function 0x100000 parse_dev_cap
+parse line extern void parse_dev_cap(long param_1,long param_2,long param_3);
+load function parse_dev_cap
+decompile parse_dev_cap
+print C
+print raw

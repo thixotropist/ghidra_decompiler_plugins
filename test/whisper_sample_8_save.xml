@@ -1,5 +1,5 @@
 <xml_savefile name="ggml_compute_forward_out_prod" target="default" adjustvma="0">
-<binaryimage arch="RISCV:LE:64:RV64GC:gcc">
+<binaryimage arch="RISCV:LE:64:default">
 <bytechunk space="ram" offset="0xe9ef2" readonly="true">
     4971a2f262f286f6801a03bc8509
 9307300203270c00cee6d2e263eee768
