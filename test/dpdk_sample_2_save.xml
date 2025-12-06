@@ -1,0 +1,158 @@
+<xml_savefile name="$xrv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_v1p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0" target="default" adjustvma="0">
+<binaryimage arch="RISCV:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+cee483c795000075938a05055770e1cc
+a307f40083c7c500137ad6ff2a8b2308
+f40083c7e500ae84b28b2309f40083c7
+6502a309f40083c7f500230af40083c7
+0501a30af40087d00a0263190a0283c6
+1501577002cd93878502230bd40007e1
+07025770e1ccd7b010021307c4015770
+02cd276107025770e1cc19a0230b0400
+93078401a7d007021709c20003394950
+8325090097c689009386860b17069000
+130686891d4503d7240183d7440197c9
+89009389e90918c42316f40083c76401
+2307f400ef00601b8348340103482401
+83471401034704018346f4004ee80346
+5401832509001d4532e40346440132e0
+1706900013064687ef00201883476401
+0347e4008356c400832509004e881706
+90001306668d1d45ef00201614448325
+09004e8717069000130686911d45ef00
+c0145c50032884021850544c83250900
+ce8817069000130626921d45ef00e012
+8947639dfb049c5cb440f8405cd483c7
+c40314d858d8b444f84483250900b337
+f00014dc58dca30bf400ce8617069000
+130606941d45ef00400f8328c4030328
+84035c58185854544ee0832509001706
+90001306e6941d45ef00200d83378b02
+9c47858bc5cb5770e1cc87d00a029307
+040463110a025770e00cd7b01002a7d0
+070203d7440583d7640505272312e404
+850731a0a7d007028147231204042313
+f40483c784059384940513079404b337
+f0002304f404878004028325090097c6
+89009386e6f3170690001306e6931d45
+a7000702ef0060050358640483574404
+0357240483560404067483250900a670
+e6644669a669066ae27a427ba27b97c8
+89009388e8ef170690001386e8ef1d45
+656121a8a6700674e6644669a669066a
+e27a427ba27b65618280
+</bytechunk>
+</binaryimage>
+
+<coretypes>
+  <type name="uint3" size="3" metatype="uint" id="0xc0000000000000c0"/>
+  <type name="uint5" size="5" metatype="uint" id="0xc0000000000000c1"/>
+  <type name="code" size="1" metatype="code" id="0xe000000000000001"/>
+  <type name="uint6" size="6" metatype="uint" id="0xc0000000000000c2"/>
+  <type name="double" size="8" metatype="float" id="0xc000000000000082"/>
+  <type name="uint7" size="7" metatype="uint" id="0xc0000000000000c3"/>
+  <type name="uint" size="4" metatype="uint" id="0xc0000000000000c4"/>
+  <type name="float10" size="10" metatype="float" id="0xc000000000000084"/>
+  <type name="float16" size="16" metatype="float" id="0xc000000000000085"/>
+  <type name="ulong" size="8" metatype="uint" id="0xc0000000000000c6"/>
+  <type name="float2" size="2" metatype="float" id="0xc000000000000086"/>
+  <type name="ushort" size="2" metatype="uint" id="0xc0000000000000c8"/>
+  <type name="void" size="0" metatype="void" id="0xc0000000000000c9"/>
+  <type name="float" size="4" metatype="float" id="0xc00000000000008a"/>
+  <type name="wchar32" size="4" metatype="int" utf="true" id="0xc0000000000000cc"/>
+  <type name="wchar_t" size="2" metatype="int" utf="true" id="0xc0000000000000cd"/>
+  <type name="int16" size="16" metatype="int" id="0xc000000000000090"/>
+  <type name="int3" size="3" metatype="int" id="0xc000000000000091"/>
+  <type name="int5" size="5" metatype="int" id="0xc000000000000092"/>
+  <type name="int6" size="6" metatype="int" id="0xc000000000000093"/>
+  <type name="int7" size="7" metatype="int" id="0xc000000000000094"/>
+  <type name="int" size="4" metatype="int" id="0xc000000000000095"/>
+  <type name="long" size="8" metatype="int" id="0xc000000000000097"/>
+  <type name="short" size="2" metatype="int" id="0xc0000000000000a8"/>
+  <type name="sbyte" size="1" metatype="int" id="0xc0000000000000a9"/>
+  <type name="undefined1" size="1" metatype="unknown" id="0xc0000000000000b4"/>
+  <type name="undefined2" size="2" metatype="unknown" id="0xc0000000000000b5"/>
+  <type name="undefined3" size="3" metatype="unknown" id="0xc0000000000000b6"/>
+  <type name="undefined4" size="4" metatype="unknown" id="0xc0000000000000b7"/>
+  <type name="undefined5" size="5" metatype="unknown" id="0xc0000000000000b8"/>
+  <type name="undefined6" size="6" metatype="unknown" id="0xc0000000000000b9"/>
+  <type name="bool" size="1" metatype="bool" id="0xc000000000000079"/>
+  <type name="undefined7" size="7" metatype="unknown" id="0xc0000000000000ba"/>
+  <type name="byte" size="1" metatype="uint" id="0xc00000000000007a"/>
+  <type name="undefined8" size="8" metatype="unknown" id="0xc0000000000000bb"/>
+  <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b"/>
+  <type name="uint16" size="16" metatype="uint" id="0xc0000000000000bf"/>
+</coretypes><save_state>
+
+<typegrp structalign="4"/><db scopeidbyname="false">
+<scope name="" id="0x0">
+<symbollist>
+
+<mapsym>
+  <function id="0x14f" name="$xrv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_v1p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0" size="1">
+    <addr space="ram" offset="0x100000"/>
+    <localdb lock="false" main="stack">
+      <scope name="$xrv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_v1p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist/>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x100000" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <function id="0x14e" name="rte_log" size="1">
+    <addr space="ram" offset="0x10027a"/>
+    <localdb lock="false" main="stack">
+      <scope name="rte_log">
+        <parent id="0x0"/>
+        <rangelist/>
+        <symbollist/>
+      </scope>
+    </localdb>
+    <prototype extrapop="0" model="unknown">
+      <returnsym>
+        <addr/>
+        <void/>
+      </returnsym>
+    </prototype>
+  </function>
+  <addr space="ram" offset="0x10027a" size="1"/>
+  <rangelist/>
+</mapsym>
+<mapsym>
+  <labelsym id="0x0" name="DAT_ram_00d2058c" typelock="true" namelock="true" merge="false" cat="-1"/>
+  <addr space="ram" offset="0xd2058c" size="1"/>
+  <rangelist/>
+</mapsym></symbollist>
+</scope>
+</db>
+<context_points>
+
+<context_pointset space="ram" offset="0x100000">
+  <set name="reserved" val="0"/>
+  <set name="MXL" val="2"/>
+</context_pointset>
+<tracked_pointset space="ram" offset="0x100000"/></context_points>
+
+<commentdb/>
+<optionslist>
+  <readonly>on</readonly>
+  <setlanguage>c-language</setlanguage>
+  <protoeval>__stdcall</protoeval>
+</optionslist><flowoverridelist>
+
+<flow type="callreturn">
+  <addr space="ram" offset="0x100000"/>
+  <addr space="ram" offset="0x100262"/>
+</flow></flowoverridelist>
+</save_state>
+</xml_savefile>

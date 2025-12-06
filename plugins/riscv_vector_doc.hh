@@ -9,7 +9,7 @@ This plugin offers transformations of common RISC-V vector patterns into
 C or C++ code offering more semantic clarity.  We start with GCC vectorization
 of common glibc library patterns like `memcpy` and `strlen`, then try to
 generalize to loop vectorization code likely found in AI, Machine Learning, and
-Inference Engine applications.
+embedded system Inference Engine applications.
 
 @subsection riscv_vector_memcpy Vector memcpy
 @verbatim
@@ -83,7 +83,6 @@ The corresponding Ghidra Pcode for the loop component is:
 0x209e8: goto r0x000209d2:1(free) if (u0x00001f80:1(0x000209e8:21) != 0)
 @endverbatim
 
->Note: the `csrrs    a3,vl,zero` instruction generates no visible pcode!
 
 This should transform into `a5 = vector_strlen(param_1)`
 
@@ -160,7 +159,7 @@ the number of vector loads and vector stores.
 - Reduction patterns also have one vector load and no vector store.
 - Inner product patterns have two vector loads and no vector store.
 
-Although not shown above, loops are often unrolled such that a single
+Although not shown above, loops can be unrolled such that a single
 vector is loaded in stripes, with two or four similar vector load operations
 occurring within each loop iteration.  This leads us to a possible
 factorization of vectorized loops, where we identify components of
@@ -168,14 +167,14 @@ vector iterators and transforms.
 
 The `vector_memcpy` example above might be
 narrowly transformed into `vector_memcpy(dest, src, size)` or
-more generally transformed into
+more generally transformed into:
 
 @code{.cc}
 std::transform(src.begin(), src.end(), dest.begin(),
-                   [](char s) { return s; }); // Lambda is a no-op
+                   [](char s) { return s; }); // the Lambda is a simple passthrough no-op
 @endcode
 
-The inner product example might become
+The inner product example might become:
 
 @code{.cc}
 double custom_multiply = [](float x, float y) { return (double)x * (double)y; }; // Custom element-wise operation
@@ -187,11 +186,10 @@ How do these models drive our refactoring?
 
 - We want to collect PcodeOp sequences into vector iterators, with initial values,
   incrementor, and vector load operations.
-- Vector iterators are collected into source and destination iterators.  Striping
-  should be supported.
-- Allow zero to two source iterators will cover inner-product cases
+- Vector iterators are collected into source and destination iterators.
+- Allow zero to two source iterators to cover inner-product cases
 - Allow zero or one destination iterator
-- Conditionals can be either counter-based or end-value based.
+- Conditionals can be either counter-based, pointer-based or data-value based.
 - per-element transformations are collected into lambda calculations.
 
 We're missing something that captures the size of source and destination vectors.
@@ -233,7 +231,7 @@ Issues include:
 - param_1 has no known end
 - would a `vector_find_if` or `vector_e8_find_if` be a better choice to apply the lambda?
 
-Can we remove some of the std::vector elements in favor of simple C array's?
+Can we remove some of the `std::vector` elements in favor of simple C array's?
 
 @code{cc}
 char* p = vector_find_if(param_1, [](uint8_t b) {return b == 0;});
@@ -279,7 +277,7 @@ Ghidra PcodeOp type.  For the CALL_OTHER PcodeType it then enters a forest of `i
 to handle groups of different RISC-V user pcodes.  There are currently over 1300 user pcodeops defined,
 with run-time identifiers assigned, so another `switch` statement is not feasible.
 
-Instead, let's explore adding a `map` of callback functions for vector opcodes found within loops,
+Instead, let's add a `map` of callback functions for vector opcodes found within loops,
 loop prefixes, and loop suffixes.  For `vector_strlen` that means callback functions for
 `vle8ff_v`, `vmseq_vi`, and `vfirst_m`.  For `vector_memcpy` that means callback functions for
 `vle8_v`, and `vse8_v`.  We'll build those callback functions as lambda expressions, inserted
@@ -287,14 +285,14 @@ into the map during a static initialization phase.
 
 @subsection riscv_vector_design_notes Design Working Notes
 
-Summarize the current design first.  We start by requesting a call-back for every vset* instruction,
-then analyze every loop that begins with a vset* instruction.  The loop analysis consists of these steps:
+Summarize the current design first.  We start by requesting a call-back for every `vset*` instruction,
+then analyze every loop that begins with a `vset*` instruction.  The loop analysis consists of these steps:
 
-- VectorLoop::examine_control_flow to identify the bounds of the loop and verify it as a simple loop
+- `VectorLoop::examine_control_flow` to identify the bounds of the loop and verify it as a simple loop
   common to vector stanzas.
-- VectorLoop::collect_phi_nodes to collect the Phi nodes at the top of the loop.  These show the registers
+- `VectorLoop::collect_phi_nodes` to collect the Phi nodes at the top of the loop.  These show the registers
   modified during the loop and their external initializations.
-- VectorLoop::examine_loop_pcodeops examines each of the Ghidra PcodeOps within the loop, collecting the native Ghidra
+- `VectorLoop::examine_loop_pcodeops` examines each of the Ghidra PcodeOps within the loop, collecting the native Ghidra
   scalar operations and the RISC-V vector CALL_OTHER operations in separate vectors.
 - TODO: identify arguments of any vector load and store instructions, tracing pointer registers and their loop increments
 - TODO: identify any counter register operations leading to a conditional branch
@@ -302,9 +300,8 @@ then analyze every loop that begins with a vset* instruction.  The loop analysis
 
 Once generic vector analysis is complete specific tests can be applied.
 
-- VectorMatcher::isMemcpy applies VectorLoop generic tests first, then match-specific tests to identify
-  vector_memcpy stanzas.
-- VectorMatcher::isStrlen similarly applies its own VectorLoop generic tests first, then match-specific tests to identify
-  vector_strlen stanzas
-
+- `VectorMatcher::isMemcpy` applies VectorLoop generic tests first, then match-specific tests to identify
+  `vector_memcpy` stanzas.
+- `VectorMatcher::isStrlen` similarly applies its own VectorLoop generic tests first, then match-specific tests to identify
+  `vector_strlen` stanzas
 */

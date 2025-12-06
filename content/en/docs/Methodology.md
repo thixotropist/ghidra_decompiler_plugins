@@ -5,9 +5,9 @@ weight: 80
 
 We want a decompiler plugin that provides the Ghidra user a net gain in insight-per-hour.
 In one extreme case, the plugin would be able to recognize and transform *any* RISC-V compiler vectorization into recognizable C or C++ source code.
-Any transform completed is guaranteed to be correct, with no false-positive matches.
+Any transform completed would be guaranteed to be correct, with no false-positive matches.
 That's infeasible in the face of the variety of RISC-V extensions, compilers, and compiler optimization flags.
-In another extreme case, vector stanza matching is very aggressive with minimal testing and a significant number of false-positive matches.
+In another extreme case, vector stanza matching may be very aggressive with minimal testing and a significant number of false-positive matches.
 In this case the plugin code can be simpler but the human operator needs to check each transform they encounter.
 
 Let's explore a case study applying Ghidra to a `whisper.cpp` RISC-V binary compiled with gcc 15 and the RVA23 profile.
@@ -130,10 +130,7 @@ File Attributes
 
 ## surveying the dpdk binary
 
-Load `dpdk-pipeline` into Ghidra which reports 2942862 instructions and 22999 functions found, with more than 10000 vset* instructions present.
-
->Note: exporting the entire binary as C results in three exceptions, in the functions at 0x2ab4c2, 0x6ffda2, and 0x83ef14.  These exceptions do not
->      occur when running Ghidra without a plugin.  More testing is needed here.
+Load `dpdk-pipeline` into Ghidra which reports 2942862 instructions and 22999 functions found, with more than 10000 `vset*` instructions present.
 
 Examine the summaries to categorize on `Vector instructions` for a sense of common patterns.  There are about 5790 vector loops found in the survey
 
@@ -152,8 +149,6 @@ The methodology is iterative, driven by the results in our two exemplar binaries
 * collect features for `vector_strcmp`
 * complete the transforms for `vector_strlen`
 * add collection of vector ops immediately following a vector loop without vector stores - looking for reduction stanzas.
-* identify the root causes of the three dpdk exceptions
-* add the dpdk and whisper binaries to the repo to better support regression testing
 * consider adding basic vector math and type conversion operations to the transforms
 
 Reduced priorities include:
@@ -161,3 +156,22 @@ Reduced priorities include:
 * support for detecting loop unrolling
 * support for complex vector loops
 * additional detection of false positive matches
+
+## dpdk debugging
+
+Previous plugin code generated many exceptions when processing the dpdk_pipeline binary.
+
+The DPDK test binary shows much more variation in how non-loop `vector_memcpy` sequences are assembled, including:
+
+* interleaved load and store operations with other, unrelated vector operations
+* interleaved `vsetivli` instructions with different element lengths
+* vector loads and stores moved into different blocks
+* vset instructions at the end of a block
+* vsetvli 0,0 instructions changing element lengths
+* the presence of more complex vector instructions like `vcompress` where Ghidra fails to track descendants.
+
+The ghidra decompiler tests failed within decompiler internals, without a clear indication of what the root cause might be.
+The next step was to generate some synthetic assembly sequences based on dpdk functions throwing decompiler exceptions,
+then patch individual instructions in the resulting binaries until the plugin stops corrupting the internal pcode.
+After that, refactor the non-loop `vector_memcpy` code to apply a set of clear tests followed by a single transform.
+The first exploratory correction is to make sure that vector loads and stores are within the same block.

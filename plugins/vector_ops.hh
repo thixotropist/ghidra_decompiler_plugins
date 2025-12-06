@@ -118,6 +118,31 @@ class ScalarOperation
 };
 
 /**
+ * @brief Model a series of vector operations not within or associated with a loop,
+ * most commonly a vector load/store combination.
+ * @details This class provides survey, matching, and transformation code within the
+ * constructor
+ */
+class VectorSeries
+{
+  public:
+    ghidra::Funcdata& data; ///< summary data for the enclosing function
+    ghidra::int4 numBytes; ///< number of bytes implied by the vsetivli trigger
+    ghidra::BlockBasic* currentBlock; ///< the BasicBlock holding the vsetivli trigger
+    std::vector<ghidra::PcodeOp *> loadSet; ///< vector load instructions found in the current block controlled by the first vsetivli
+    /**
+     * @brief Construct a vector series matcher, triggered by a vsetivli instruction
+     * @param firstOp the Ghidra CALLOTHER invoking the vsetivli instruction
+     * @param data Ghidra's accumulated context of the function being decompiled
+     * @param vsetInfo information decoded from the invoking vsetivli instruction
+     */
+    VectorSeries(ghidra::PcodeOp* firstOp, ghidra::Funcdata& data, const RiscvUserPcode* vsetInfo);
+    /// @brief match any simple series with fixed sizes like memset or memcpy
+    /// @return ghidra::RETURN_TRANSFORM_PERFORMED if the function was changed
+    int match();
+};
+
+/**
  * @brief Model a vector loop iterating over a variable number of elements
  */
 class VectorLoop

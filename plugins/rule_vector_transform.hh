@@ -22,7 +22,8 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/ruleaction.hh"
 
-namespace ghidra{
+namespace riscv_vector
+{
 /**
  * @file rule_vector_transform.hh
  */
@@ -30,7 +31,7 @@ namespace ghidra{
  /**
  * @brief A Rule collecting individual vector instructions into vector_* function invocations
  */
-class RuleVectorTransform : public Rule
+class RuleVectorTransform : public ghidra::Rule
 {
 public:
     /**
@@ -38,27 +39,27 @@ public:
      *
      * @param g the name of an existing Ghidra rule group
      */
-    explicit RuleVectorTransform(const string &g); ///< Constructor
+    explicit RuleVectorTransform(const std::string &g); ///< Constructor
     /**
      * @brief Allow the ActionDatabase to clone this rule
      *
      * @param grouplist
      * @return Rule*
      */
-    virtual Rule *clone(const ActionGroupList &grouplist) const override;
+    virtual ghidra::Rule *clone(const ghidra::ActionGroupList &grouplist) const override;
     /**
      * @brief Register the Ghidra ops for which we want callbacks
      *
      * @param oplist
      */
-    virtual void getOpList(vector<uint4> &oplist) const override;
+    virtual void getOpList(std::vector<ghidra::uint4> &oplist) const override;
     /**
      * @brief the callback function telling us of a relevant Ghidra op
      * @param op the PcodeOp triggering this callback
      * @param data the Funcdata object of the enclosing function
      * @return 0 if no changes made, 1 if changes made
      */
-    virtual int4 applyOp(PcodeOp *op, Funcdata &data) override;
+    virtual ghidra::int4 applyOp(ghidra::PcodeOp *op, ghidra::Funcdata &data) override;
 };
 }
 #endif /* __RULE_VECTOR_TRANSFORM_HH__ */

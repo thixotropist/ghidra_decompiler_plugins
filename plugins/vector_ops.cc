@@ -1,5 +1,5 @@
 /**
- * @file vectorOps.cc
+ * @file vector_ops.cc
  * @author thixotropist
  * @brief Model RISC-V vector operands
  * @date 2025-10-07
@@ -108,6 +108,155 @@ ScalarOperation::ScalarOperation(OperationType typeParam, ghidra::PcodeOp* opPar
     }
 }
 
+static std::set<ghidra::intb> seriesAnalyzed; // only report on a series on the first visit.
+VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_param, const RiscvUserPcode* vsetInfo) :
+    data(data_param)
+{
+    if (transformCountNonLoop >= TRANSFORM_LIMIT_NONLOOPS)
+        return;
+    // firstOp is a vsetivli instruction
+    numBytes = firstOp->getIn(1)->getOffset() * vsetInfo->multiplier * vsetInfo->elementSize;
+
+    // collect viable vector load instructions
+    currentBlock = firstOp->getParent();
+    ghidra::PcodeOp* nextOp = firstOp->nextOp();
+    while ((nextOp != nullptr) && (nextOp->getParent() == currentBlock))
+    {
+        ghidra::PcodeOp* op = nextOp;
+        nextOp = op->nextOp();
+        const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*op);
+        // ignore ops that have no vector component
+        if ((opInfo == nullptr))
+        {
+            continue;
+        }
+        // stop scanning if we find another vset instruction
+        if (opInfo->isVset || opInfo->isVseti)
+        {
+            break;
+        }
+        if (opInfo->isLoad || opInfo->isLoadImmediate)
+        {
+            ghidra::pLogger->trace("Found a load or load immediate instruction at 0x{0:x}",
+                op->getAddr().getOffset());
+            loadSet.push_back(op);
+        }
+    }
+    ghidra::intb firstAddr = firstOp->getAddr().getOffset();
+    auto exists = seriesAnalyzed.find(firstAddr);
+    if (exists == seriesAnalyzed.end())
+    {
+        seriesAnalyzed.insert(firstAddr);
+        reportFile << "Vector nonloop Report\n\tvector sequence found at 0x" <<std::hex <<
+            firstAddr << std::endl <<
+            "\tFound 0x" << loadSet.size() << " vector loads" << std::endl;
+    }
+}
+int VectorSeries::match()
+{
+    std::vector<std::pair<ghidra::PcodeOp *, ghidra::PcodeOp *> *> pcodesToBeBuilt;
+    std::vector<ghidra::PcodeOp *> deleteSet; ///< collect PcodeOps to delete if we get at least one successful transform
+    int numTransformedStores = 0;
+    // for each vector load instruction, locate matching vector store instructions
+    // within the same block
+    for (auto loadOp: loadSet)
+    {
+        ghidra::Varnode* sourceVn = loadOp->getIn(1);
+        const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*loadOp);
+        bool isMemset = sourceVn->isConstant() && opInfo->isLoadImmediate;
+        ghidra::intb builtinOp;
+        if (isMemset)
+            builtinOp = VECTOR_MEMSET;
+        else
+            builtinOp = VECTOR_MEMCPY;
+        // iterate over the descendents reading the output vector register
+        int numOtherDependencies = 0;
+        ghidra::Varnode *outputVn = loadOp->getOut();
+        if (outputVn == nullptr)
+        {
+            ghidra::pLogger->warn("Ghidra has lost the dependencies of the vector load op at 0x{0:x}",
+                loadOp->getAddr().getOffset());
+            continue;
+        }
+        ghidra::pLogger->info("Exploring dependencies of the vector load op at 0x{0:x}",
+            loadOp->getAddr().getOffset());
+        ghidra::pLogger->flush();
+        std::list<ghidra::PcodeOp *>::const_iterator enditer = outputVn->endDescend();
+        for (std::list<ghidra::PcodeOp *>::const_iterator it = outputVn->beginDescend(); it != enditer; ++it)
+        {
+            ghidra::PcodeOp* descOp = *it;
+            if (currentBlock != descOp->getParent()) continue;
+            const RiscvUserPcode *descOpInfo = RiscvUserPcode::getUserPcode(*descOp);
+            // we only transform vector store opcodes
+            if ((descOpInfo == nullptr) || (!descOpInfo->isStore)) {
+                // we can't delete this vector load op
+                reportFile << "\tLoad op at 0x" << loadOp->getAddr().getOffset() <<
+                    " has a non-store dependency at 0x" << descOp->getAddr().getOffset() <<
+                    " and can not be absorbed" << std::endl;
+                numOtherDependencies++;
+                break;
+            }
+            numTransformedStores++;
+            ghidra::pLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
+                            builtinOp, (*it)->getAddr().getOffset());
+            reportFile << "\tLoad op at 0x" << loadOp->getAddr().getOffset() <<
+                " has a valid dependent vector store op at 0x" <<
+                descOp->getAddr().getOffset() << std::endl;
+            // vector_mem* invocations count bytes, not elements.
+            // construct a new constant Varnode to hold the number of bytes
+            ghidra::Varnode *new_size_varnode = data.newConstant(1, numBytes);
+            ghidra::Varnode *destVn = (*it)->getIn(2);
+            // we have destination, source, and size so construct the vector_mem* op
+            ghidra::PcodeOp *newOp = insertVoidCallOther(data, (*it)->getAddr(), builtinOp, destVn, sourceVn, new_size_varnode);
+            std::stringstream ss;
+            newOp->printRaw(ss);
+            ghidra::pLogger->trace("  queued for insertion vector opcode: {0:s}",
+                ss.str());
+            ss.str("");
+            ghidra::pLogger->flush();
+            // accumulate pcode additions and deletions as a pending transaction
+            pcodesToBeBuilt.push_back(new std::pair<ghidra::PcodeOp *, ghidra::PcodeOp *>(newOp, *it));
+            deleteSet.push_back(*it);
+            ++transformCountNonLoop;
+        }
+        // Can we delete the vector load operation too?
+        if (numOtherDependencies == 0) deleteSet.push_back(loadOp);
+        for (auto it : pcodesToBeBuilt)
+        {
+            // queue pending vector_mem* insertions
+            data.opInsertBefore(it->first, it->second);
+            std::stringstream ss;
+            it->first->printRaw(ss);
+            ghidra::pLogger->trace("  Inserted vector opcode: {0:s}",
+                ss.str());
+            delete it;
+        }
+        pcodesToBeBuilt.clear();
+    }
+    for (auto iter : deleteSet)
+    {
+        ghidra::Varnode *outVn = iter->getOut();
+        if (outVn == nullptr)
+        {
+            ghidra::pLogger->info("Deleting vector op (no output) at 0x{0:x}", iter->getAddr().getOffset());
+            data.opUnlink(iter);
+        }
+        else
+        {
+            std::list<ghidra::PcodeOp *>::const_iterator endIter = outVn->endDescend();
+            std::list<ghidra::PcodeOp *>::const_iterator startIter = outVn->beginDescend();
+            if (startIter == endIter)
+            {
+                ghidra::pLogger->info("Deleting singleton descendent of vector op at 0x{0:x}", iter->getAddr().getOffset());
+                data.opUnlink(iter);
+            }
+        }
+    }
+    if (numTransformedStores == 0) return ghidra::RETURN_NO_TRANSFORM;
+    ghidra::pLogger->flush();
+    return ghidra::RETURN_TRANSFORM_PERFORMED;
+}
+
 static std::map<int, VectorLoop::userPcodeOpHandler> opHandlers;
 static std::vector<std::string> fTypeToString;
 void VectorLoop::static_init()
@@ -116,21 +265,21 @@ void VectorLoop::static_init()
         ghidra::pLogger->trace("Adding VectorLoop instruction handlers to opHandlers map");
 
     // instructions found in many vector stanzas, starting with vector_memcpy
-    opHandlers[ghidra::riscvNameToGhidraId["vsetvli_e8m1tama"]] =
+    opHandlers[riscvNameToGhidraId["vsetvli_e8m1tama"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vsetvli_e8m1tama instruction handler");
             VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup,
                 op);
             loop.vectorOps.push_back(vOp);
         };
-    opHandlers[ghidra::riscvNameToGhidraId["vle8_v"]] =
+    opHandlers[riscvNameToGhidraId["vle8_v"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vle8_v instruction handler");
             VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad,
                 op);
             loop.vectorOps.push_back(vOp);
         };
-    opHandlers[ghidra::riscvNameToGhidraId["vse8_v"]] =
+    opHandlers[riscvNameToGhidraId["vse8_v"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vse8_v instruction handler");
             VectorOperation* vOp = new VectorOperation(OperationType::vectorStore,
@@ -138,15 +287,15 @@ void VectorLoop::static_init()
             loop.vectorOps.push_back(vOp);
         };
     // instructions found in vector_strlen stanzas
-    opHandlers[ghidra::riscvNameToGhidraId["vle8ff_v"]] =
+    opHandlers[riscvNameToGhidraId["vle8ff_v"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vle8ff_v instruction handler");
-            loop.loopFlags |= ghidra::RISCV_VEC_INSN_FAULT_ONLY_FIRST;
+            loop.loopFlags |= RISCV_VEC_INSN_FAULT_ONLY_FIRST;
             VectorOperation* vOp = new VectorOperation(OperationType::vectorLoadFF,
                 op);
             loop.vectorOps.push_back(vOp);
         };
-    opHandlers[ghidra::riscvNameToGhidraId["vmseq_vi"]] =
+    opHandlers[riscvNameToGhidraId["vmseq_vi"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vmseq_vi instruction handler");
             // First operand is a vector register, second operand is an integer immediate.
@@ -155,7 +304,7 @@ void VectorLoop::static_init()
                 op);
             loop.vectorOps.push_back(vOp);
         };
-    opHandlers[ghidra::riscvNameToGhidraId["vfirst_m"]] =
+    opHandlers[riscvNameToGhidraId["vfirst_m"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vfirst_m instruction handler");
             VectorOperation* vOp = new VectorOperation(OperationType::vectorToScalar,
@@ -215,7 +364,7 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
 
 bool VectorLoop::invokeVectorOpHandler(ghidra::PcodeOp* op)
 {
-    const ghidra::RiscvUserPcode* opInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
+    const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
     ghidra::pLogger->trace("Looking for instruction handler for {0:s} with id {1:d}",
         opInfo->asmOpcode, opInfo->ghidraOp);
     auto f = opHandlers.find(opInfo->ghidraOp);
@@ -421,7 +570,7 @@ void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
             break;
           case ghidra::CPUI_CALLOTHER:
             {
-                const ghidra::RiscvUserPcode* opInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
+                const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
                 if ((opInfo == nullptr) || (!opInfo->isVectorOp))
                 {
                     // may be other builtin pcodes
@@ -455,7 +604,7 @@ void VectorLoop::collect_common_elements()
     for (auto vOp: vectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
-        const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
+        const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*op);
         switch(vOp->type)
         {
             case OperationType::vectorSetup:
@@ -484,7 +633,7 @@ void VectorLoop::collect_common_elements()
                 sComparisonOps.push_back(op);
                 // where is the comparison register set?
                 ghidra::PcodeOp* testedOp = op->arg0->getDef();
-                const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*testedOp);
+                const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*testedOp);
                 // very crude determination!
                 if (vsetInfo == nullptr)
                     terminationConditionFlags |= TERMINATES_ON_COUNTDOWN;
@@ -528,7 +677,7 @@ void VectorLoop::generateReport()
     auto exists = loopsAnalyzed.find(firstAddr);
     if(exists != loopsAnalyzed.end()) return;
     loopsAnalyzed.insert(firstAddr);
-    ghidra::reportFile <<
+    reportFile <<
         "Vector Loop Report:" << std::endl <<
         "\tLoop start address: 0x" << std::hex << firstAddr << std::endl <<
         "\tLoop length: 0x" << lastAddr - firstAddr << std::endl <<
@@ -539,21 +688,21 @@ void VectorLoop::generateReport()
         "\tvector stores: 0x" << vStoreOps.size() << std::endl <<
         "\tcomparisons: 0x" << sComparisonOps.size() << std::endl <<
         "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl << std::dec;
-    ghidra::reportFile << "\tVector instructions (handled | unhandled): ";
+    reportFile << "\tVector instructions (handled | unhandled): ";
     for (auto vOp: vectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
-        const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
-        ghidra::reportFile << vsetInfo->asmOpcode << ", ";
+        const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*op);
+        reportFile << vsetInfo->asmOpcode << ", ";
     }
-    ghidra::reportFile << "| ";
+    reportFile << "| ";
     for (auto vOp: otherVectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
-        const ghidra::RiscvUserPcode *vsetInfo = ghidra::RiscvUserPcode::getUserPcode(*op);
-        ghidra::reportFile << vsetInfo->asmOpcode << ", ";
+        const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*op);
+        reportFile << vsetInfo->asmOpcode << ", ";
     }
-    ghidra::reportFile << std::endl;
+    reportFile << std::endl;
 }
 
 VectorLoop::~VectorLoop()

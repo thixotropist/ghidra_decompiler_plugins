@@ -1,0 +1,241 @@
+.section .text
+.extern parse_dev_cap
+# Full function, copied from Ghidra
+parse_dev_cap:
+        c.sdsp                         s3,0x48(sp)
+        lbu                            a5,0x9(a1)
+        c.ld                           s0,0x28(a0)
+        addi                           s5,a1,0x50
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        sb                             a5,0xf(s0)
+        lbu                            a5,0xc(a1)
+        andi                           s4,a2,-0x3
+        c.mv                           s6,a0
+        sb                             a5,0x10(s0)
+        lbu                            a5,0xe(a1)
+        c.mv                           s1,a1
+        c.mv                           s7,a2
+        sb                             a5,0x12(s0)
+        lbu                            a5,0x26(a1)
+        sb                             a5,0x13(s0)
+        lbu                            a5,0xf(a1)
+        sb                             a5,0x14(s0)
+        lbu                            a5,0x10(a1)
+        sb                             a5,0x15(s0)
+        vle16.v                        v1,(s5)
+        bne                            s4,zero,LAB_ram_00125648
+        lbu                            a3,0x11(a1)
+        vsetivli                       zero,0x4,e32,m1,ta,ma
+        addi                           a5,a1,0x28
+        sb                             a3,0x16(s0)
+        vle32.v                        v2,(a5)
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        vadd.vi                        v1,v1,0x1
+        addi                           a4,s0,0x1c
+        vsetivli                       zero,0x4,e32,m1,ta,ma
+        vse32.v                        v2,(a4)
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        c.j                            LAB_ram_0012564c
+    LAB_ram_00125648:
+        sb                             zero,0x16(s0)
+    LAB_ram_0012564c:
+        addi                           a5,s0,0x18
+        vse16.v                        v1,(a5)
+        auipc                          s2,0xc20
+        ld                             s2,0x504(s2)
+        lw                             a1,0x0(s2)
+        auipc                          a3,0x89c
+        addi                           a3,a3,0xb8
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x768
+        c.li                           a0,0x7
+        lhu                            a4,0x12(s1)
+        lhu                            a5,0x14(s1)
+        auipc                          s3,0x89c
+        addi                           s3,s3,0x9e
+        c.sw                           a4,0x8(s0)
+        sh                             a5,0xc(s0)
+        lbu                            a5,0x16(s1)
+        sb                             a5,0xe(s0)
+        jal                            ra,rte_log
+        lbu                            a7,0x13(s0)
+        lbu                            a6,0x12(s0)
+        lbu                            a5,0x11(s0)
+        lbu                            a4,0x10(s0)
+        lbu                            a3,0xf(s0)
+        c.sdsp                         s3,0x10(sp)
+        lbu                            a2,0x15(s0)
+        lw                             a1,0x0(s2)
+        c.li                           a0,0x7
+        c.sdsp                         a2,0x8(sp)
+        lbu                            a2,0x14(s0)
+        c.sdsp                         a2,0x0(sp)
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x78c
+        jal                            ra,rte_log
+        lbu                            a5,0x16(s0)
+        lbu                            a4,0xe(s0)
+        lhu                            a3,0xc(s0)
+        lw                             a1,0x0(s2)
+        c.mv                           a6,s3
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x72a
+        c.li                           a0,0x7
+        jal                            ra,rte_log
+        c.lw                           a3,0x8(s0)
+        lw                             a1,0x0(s2)
+        c.mv                           a4,s3
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x6e8
+        c.li                           a0,0x7
+        jal                            ra,rte_log
+        c.lw                           a5,0x24(s0)
+        lw                             a6,0x28(s0)
+        c.lw                           a4,0x20(s0)
+        c.lw                           a3,0x1c(s0)
+        lw                             a1,0x0(s2)
+        c.mv                           a7,s3
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x6de
+        c.li                           a0,0x7
+        jal                            ra,rte_log
+        c.li                           a5,0x2
+        bne                            s7,a5,LAB_ram_00125778
+        c.lw                           a5,0x38(s1)
+        c.lw                           a3,0x40(s1)
+        c.lw                           a4,0x44(s1)
+        c.sw                           a5,0x2c(s0)
+        lbu                            a5,0x3c(s1)
+        c.sw                           a3,0x30(s0)
+        c.sw                           a4,0x34(s0)
+        c.lw                           a3,0x48(s1)
+        c.lw                           a4,0x4c(s1)
+        lw                             a1,0x0(s2)
+        sltu                           a5,zero,a5
+        c.sw                           a3,0x38(s0)
+        c.sw                           a4,0x3c(s0)
+        sb                             a5,0x17(s0)
+        c.mv                           a3,s3
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x6c0
+        c.li                           a0,0x7
+        jal                            ra,rte_log
+        lw                             a7,0x3c(s0)
+        lw                             a6,0x38(s0)
+        c.lw                           a5,0x34(s0)
+        c.lw                           a4,0x30(s0)
+        c.lw                           a3,0x2c(s0)
+        c.sdsp                         s3,0x0(sp)
+        lw                             a1,0x0(s2)
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x6b2
+        c.li                           a0,0x7
+        jal                            ra,rte_log
+    LAB_ram_00125778:
+        ld                             a5,0x28(s6)
+        c.lw                           a5,0x8(a5)
+        c.andi                         a5,0x1
+        c.beqz                         a5,LAB_ram_00125832
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        vle16.v                        v1,(s5)
+        addi                           a5,s0,0x40
+        bne                            s4,zero,LAB_ram_001257b0
+        vsetvli                        zero,zero,e16,mf4,ta,ma
+        vadd.vi                        v1,v1,0x1
+        vse16.v                        v1,(a5)
+        lhu                            a4,0x54(s1)
+        lhu                            a5,0x56(s1)
+        c.addiw                        a4,0x1
+        sh                             a4,0x44(s0)
+        c.addi                         a5,0x1
+        c.j                            LAB_ram_001257ba
+    LAB_ram_001257b0:
+        vse16.v                        v1,(a5)
+        c.li                           a5,0x0
+        sh                             zero,0x44(s0)
+    LAB_ram_001257ba:
+        sh                             a5,0x46(s0)
+        lbu                            a5,0x58(s1)
+        addi                           s1,s1,0x59
+        addi                           a4,s0,0x49
+        sltu                           a5,zero,a5
+        sb                             a5,0x48(s0)
+        vle8.v                         v1,(s1)
+        lw                             a1,0x0(s2)
+        auipc                          a3,0x89c
+        addi                           a3,a3,-0xc2
+        auipc                          a2,0x900
+        addi                           a2,a2,-0x6c2
+        c.li                           a0,0x7
+        vse8.v                         v1,(a4)
+        jal                            ra,rte_log
+        lhu                            a6,0x46(s0)
+        lhu                            a5,0x44(s0)
+        lhu                            a4,0x42(s0)
+        lhu                            a3,0x40(s0)
+        c.ldsp                         s0,0x60(sp)
+        lw                             a1,0x0(s2)
+        c.ldsp                         ra,0x68(sp)
+        c.ldsp                         s1,0x58(sp)
+        c.ldsp                         s2,0x50(sp)
+        c.ldsp                         s3,0x48(sp)
+        c.ldsp                         s4,0x40(sp)
+        c.ldsp                         s5,0x38(sp)
+        c.ldsp                         s6,0x30(sp)
+        c.ldsp                         s7,0x28(sp)
+        auipc                          a7,0x89c
+        addi                           a7,a7,-0x102
+        auipc                          a2,0x900
+        addi                           a2,a7,-0x102
+        c.li                           a0,0x7
+        c.addi16sp                     sp,0x70
+        j                              rte_log
+    LAB_ram_00125832:
+        c.ldsp                         ra,0x68(sp)
+        c.ldsp                         s0,0x60(sp)
+        c.ldsp                         s1,0x58(sp)
+        c.ldsp                         s2,0x50(sp)
+        c.ldsp                         s3,0x48(sp)
+        c.ldsp                         s4,0x40(sp)
+        c.ldsp                         s5,0x38(sp)
+        c.ldsp                         s6,0x30(sp)
+        c.ldsp                         s7,0x28(sp)
+        c.addi16sp                     sp,0x70
+        ret
+
+rte_log:
+        ret
+.extern slice_1
+slice1:
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        vle16.v                        v1,(s5)
+        bne                            s4,zero,LAB_ram_00125648_1
+        vsetivli                       zero,0x4,e32,m1,ta,ma
+        vle32.v                        v2,(a5)
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        vadd.vi                        v1,v1,0x1
+        vsetivli                       zero,0x4,e32,m1,ta,ma
+        vse32.v                        v2,(a4)
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        c.j                            LAB_ram_0012564c_1
+LAB_ram_00125648_1:
+        sb                             zero,0x16(s0)
+LAB_ram_0012564c_1:
+        addi                           a5,s0,0x18
+        vse16.v                        v1,(a5)
+        ret
+.extern slice_2
+slice_2:
+        vsetivli                       zero,0x2,e16,mf4,ta,ma
+        vle16.v                        v1,(s5)
+        bne                            s4,zero,LAB_ram_001257b0_2
+        vsetvli                        zero,zero,e16,mf4,ta,ma
+        vadd.vi                        v1,v1,0x1
+        vse16.v                        v1,(a5)
+        c.j                            LAB_ram_001257ba_2
+    LAB_ram_001257b0_2:
+        vse16.v                        v1,(a5)
+    LAB_ram_001257ba_2:
+        vle8.v                         v1,(s1)
+        vse8.v                         v1,(a4)
+        ret
