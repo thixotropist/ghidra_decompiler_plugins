@@ -1,7 +1,7 @@
 
 module(
     name = "riscv_transforms",
-    version = "0.1",
+    version = "0.2",
 )
 
 bazel_dep(name = "spdlog", version = "1.15.2")
@@ -10,9 +10,9 @@ http_archive = use_repo_rule("@@bazel_tools//tools/build_defs/repo:http.bzl", "h
 http_archive(
     name = "ghidra",
     build_file = "//:BUILD.ghidra",
-    urls = ["https://github.com/NationalSecurityAgency/ghidra/archive/refs/tags/Ghidra_11.4.1_build.tar.gz"],
-    sha256="8a3f955f04f4a2945afc571a70f1c2140052cdd230fbab99615b1de8480ce4f0",
-    strip_prefix = "ghidra-Ghidra_11.4.1_build/",
+    urls = ["https://github.com/NationalSecurityAgency/ghidra/archive/refs/tags/Ghidra_11.4.3_build.tar.gz"],
+    sha256="2143a4d2adde06dc7ab9487225aca7164cad1a04d3d5f361c4d216cfbf4a4809",
+    strip_prefix = "ghidra-Ghidra_11.4.3_build/",
     patches = ["ghidra.pat"],
     patch_strip = 1,
 )
