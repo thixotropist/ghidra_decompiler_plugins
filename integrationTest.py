@@ -127,6 +127,7 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/whisper_sample_1.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
+        trimOutput(result.stdout)
         self.assertIn("vector_memcpy((void *)lVar1,(void *)param1,(ulong)pcVar4)", result.stdout,
                       "Vector_memcpy transform was not as expected")
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
@@ -145,6 +146,7 @@ class T1Datatests(unittest.TestCase):
         with open("/tmp/whisper_main.testlog", "w", encoding="utf8") as f:
             f.write(result.stdout)
             f.write(result.stderr)
+        trimOutput(result.stdout)
         self.assertIn("vector_memset((void *)auStack_650,0,0x10)", result.stdout,
                       "Vector_memset transform was not as expected")
         self.assertIn("vector_memcpy((void *)&uStack_274,(void *)0x107f20,0x10)", result.stdout,
@@ -171,6 +173,27 @@ class T1Datatests(unittest.TestCase):
             self.assertEqual(0, result.returncode,
                 f"Transform count collection for whisper_sample_{i} failed")
             logger.info(f"Found {result.stdout.strip()} vector transforms in whisper_sample_{i}")
+    def test_05_dpdk_regressions(self):
+        """
+        The DPDK binary shows additional regressions
+        """
+        sample_set = (1,2)
+        for i in sample_set:
+            command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/dpdk_sample_{i}.ghidra"
+            logger.info(f"Running {command} with output to /tmp/dpdk_sample_{i}.testlog")
+            result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
+            self.assertEqual(0, result.returncode,
+                f"Datatest of dpdk_sample_{i} failed")
+            with open(f"/tmp/dpdk_sample_{i}.testlog", "w", encoding="utf8") as f:
+                f.write(result.stdout)
+                f.write(result.stderr)
+            self.assertNotIn("Low-level ERROR", result.stdout,
+                             "Decompiler completes without a low level error")
+            command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/dpdk_sample_{i}.testlog|wc|awk '{{print $1}}'"
+            result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
+            self.assertEqual(0, result.returncode,
+                f"Transform count collection for dpdk_sample_{i} failed")
+            logger.info(f"Found {result.stdout.strip()} vector transforms in dpdk_sample_{i}")
 
 if __name__ == "__main__":
 

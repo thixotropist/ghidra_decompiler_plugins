@@ -1,0 +1,7 @@
+restore test/dpdk_sample_3_save.xml
+map function 0xfbac0 ends_with
+parse line extern void ends_with(long param_1,long param_2);
+load function ends_with
+decompile ends_with
+print C
+print raw

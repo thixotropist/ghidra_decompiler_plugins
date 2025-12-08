@@ -29,7 +29,6 @@
  * @brief Components available to RISCV-64 plugins
  */
 
-
 namespace ghidra
 {
 static const int RETURN_NO_TRANSFORM = 0;

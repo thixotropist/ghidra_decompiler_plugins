@@ -36,10 +36,10 @@ index ebd0e843..b8d50b4e 100644
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-index a4b2029d..3ab07715 100644
+index bf7103d9..d957a3cb 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-@@ -1235,6 +1235,12 @@ void BlockGraph::clear(void)
+@@ -1246,6 +1246,12 @@ void BlockGraph::clear(void)
    list.clear();
  }
  
@@ -53,7 +53,7 @@ index a4b2029d..3ab07715 100644
  
  {
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-index 1b3146ed..cecdefba 100644
+index 8319d83b..8f3ac5c2 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 @@ -159,6 +159,7 @@ public:
@@ -64,7 +64,7 @@ index 1b3146ed..cecdefba 100644
    FlowBlock *getImmedDom(void) const { return immed_dom; }	///< Get the immediate dominator FlowBlock
    FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock
    const FlowBlock *getParent(void) const { return (const FlowBlock *) parent; }	///< Get the parent FlowBlock of \b this
-@@ -370,6 +371,7 @@ protected:
+@@ -379,6 +380,7 @@ protected:
  public:
    void clear(void);					///< Clear all component FlowBlock objects
    virtual ~BlockGraph(void) { clear(); }		///< Destructor
@@ -72,7 +72,7 @@ index 1b3146ed..cecdefba 100644
    const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
    int4 getSize(void) const { return list.size(); }	///< Get the number of components
    FlowBlock *getBlock(int4 i) const { return list[i]; }	///< Get the i-th component
-@@ -538,6 +540,7 @@ class BlockGoto : public BlockGraph {
+@@ -550,6 +552,7 @@ class BlockGoto : public BlockGraph {
  public:
    BlockGoto(FlowBlock *bl) { gototarget = bl; gototype = f_goto_goto; }	///< Construct given target block
    FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target block of the goto
@@ -81,10 +81,10 @@ index 1b3146ed..cecdefba 100644
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index c76121c4..bd0f9333 100644
+index 2d0a90ed..12ac75ac 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5342,7 +5342,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5352,7 +5352,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -93,7 +93,7 @@ index c76121c4..bd0f9333 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5624,6 +5624,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5634,6 +5634,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleSplitStore("splitpointer") );
      actcleanup->addRule( new RuleStringCopy("constsequence"));
      actcleanup->addRule( new RuleStringStore("constsequence"));

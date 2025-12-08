@@ -41,7 +41,7 @@ static std::vector<std::string> operationTypeToString;
 void VectorOperation::static_init()
 {
     VectorOperand::static_init();
-    if (ghidra::pLogger->should_log(spdlog::level::trace)) operationTypeToString = {
+    if (ghidra::pLogger->should_log(spdlog::level::info)) operationTypeToString = {
         "unknown",
         "addition",
         "pointer_addition",
@@ -147,9 +147,12 @@ VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_para
     if (exists == seriesAnalyzed.end())
     {
         seriesAnalyzed.insert(firstAddr);
-        reportFile << "Vector nonloop Report\n\tvector sequence found at 0x" <<std::hex <<
-            firstAddr << std::endl <<
-            "\tFound 0x" << loadSet.size() << " vector loads" << std::endl;
+        reportFile << "Vector Series:\n\tSequence start address: 0x" << std::hex <<
+            firstAddr << std::endl << std::dec <<
+            "\tvset op: " << vsetInfo->asmOpcode << std::endl <<
+            "\telement size: " << vsetInfo->elementSize << std::endl <<
+            "\tnumber of bytes: " << numBytes << std::endl <<
+            "\tvector loads: " << loadSet.size() << std::endl;
     }
 }
 int VectorSeries::match()
@@ -199,9 +202,9 @@ int VectorSeries::match()
             numTransformedStores++;
             ghidra::pLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
                             builtinOp, (*it)->getAddr().getOffset());
-            reportFile << "\tLoad op at 0x" << loadOp->getAddr().getOffset() <<
+            reportFile << "\tLoad op at 0x" << std::hex << loadOp->getAddr().getOffset() <<
                 " has a valid dependent vector store op at 0x" <<
-                descOp->getAddr().getOffset() << std::endl;
+                descOp->getAddr().getOffset() << std::endl << std::dec;
             // vector_mem* invocations count bytes, not elements.
             // construct a new constant Varnode to hold the number of bytes
             ghidra::Varnode *new_size_varnode = data.newConstant(1, numBytes);
@@ -311,7 +314,7 @@ void VectorLoop::static_init()
                 op);
             loop.vectorOps.push_back(vOp);
         };
-    if (ghidra::pLogger->should_log(spdlog::level::trace))
+    if (ghidra::pLogger->should_log(spdlog::level::info))
     {
         fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
             "innerProduct", "unknown", "other"};
@@ -678,7 +681,7 @@ void VectorLoop::generateReport()
     if(exists != loopsAnalyzed.end()) return;
     loopsAnalyzed.insert(firstAddr);
     reportFile <<
-        "Vector Loop Report:" << std::endl <<
+        "Vector Loop:" << std::endl <<
         "\tLoop start address: 0x" << std::hex << firstAddr << std::endl <<
         "\tLoop length: 0x" << lastAddr - firstAddr << std::endl <<
         "\tsetvli mode: element size=0x" << elementSize << ", multiplier=" << multiplier <<
@@ -708,6 +711,10 @@ void VectorLoop::generateReport()
 VectorLoop::~VectorLoop()
 {
     for (auto op:vectorOps)
+    {
+        delete op;
+    }
+    for (auto op:otherVectorOps)
     {
         delete op;
     }
