@@ -177,7 +177,7 @@ class T1Datatests(unittest.TestCase):
         """
         The DPDK binary shows additional regressions
         """
-        sample_set = (1,2)
+        sample_set = (1,2,3)
         for i in sample_set:
             command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/dpdk_sample_{i}.ghidra"
             logger.info(f"Running {command} with output to /tmp/dpdk_sample_{i}.testlog")
