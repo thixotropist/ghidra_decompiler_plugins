@@ -1,0 +1,11 @@
+# Global Bazel flags
+# Generate all Bazel artifacts in a RAM tmpfs owned by the user, in this case UID 1000
+# This does not include imported packages
+startup --output_base=/run/user/1000/bazel
+
+# Allow for local caching of imported packages
+build --distdir=/opt/bazel/distdir
+# Add global registry
+common --registry https://bcr.bazel.build
+# Add local registry
+common --registry file:///opt/bazel/bzlmod

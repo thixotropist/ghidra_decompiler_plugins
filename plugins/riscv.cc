@@ -180,7 +180,6 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
 
 /**
  * @brief deallocate any heap allocations
- *
  */
 extern "C" void plugin_exit()
 {
