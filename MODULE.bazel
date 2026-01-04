@@ -6,13 +6,15 @@ module(
 
 bazel_dep(name = "spdlog", version = "1.15.2")
 
-http_archive = use_repo_rule("@@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-http_archive(
+git_repository = use_repo_rule("@@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+# Ghidra sources will be cached into something like ~/.cache/bazel/_bazel_thixotropist/*/external/+_repo_rules+ghidra/
+git_repository(
     name = "ghidra",
+    remote = "git@github.com:thixotropist/ghidra.git",
+    # This commit should be within the "isa_ext" branch
+    commit = "6bbffe0e19903682ea1098d246d4c0a9dd33db63",
     build_file = "//:BUILD.ghidra",
-    urls = ["https://github.com/NationalSecurityAgency/ghidra/archive/refs/tags/Ghidra_12.0_build.tar.gz"],
-    sha256="32742f938c9225137ae0a22cc00307f81a396bcbd661626ac3177a3628920648",
-    strip_prefix = "ghidra-Ghidra_12.0_build/",
     patches = ["ghidra.pat"],
     patch_strip = 1,
 )

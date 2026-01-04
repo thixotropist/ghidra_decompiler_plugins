@@ -168,11 +168,39 @@ class T1Datatests(unittest.TestCase):
                 f.write(result.stderr)
             self.assertNotIn("Low-level ERROR", result.stdout,
                              "Decompiler completes without a low level error")
-            command = f"grep -P '^\\s+vector_(?:memcpy|memset|strlen)' /tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'"
-            result = subprocess.run(command, check=True, capture_output=True, shell=True, encoding="utf8")
+            command = ("grep -P '^\\s+vector_(?:memcpy|memset|strlen)' " +
+                       f"/tmp/whisper_sample_{i}.testlog|wc|awk '{{print $1}}'")
+            result = subprocess.run(command, check=True, capture_output=True,
+                                    shell=True, encoding="utf8")
             self.assertEqual(0, result.returncode,
                 f"Transform count collection for whisper_sample_{i} failed")
             logger.info(f"Found {result.stdout.strip()} vector transforms in whisper_sample_{i}")
+
+    def test_04_whisper_failures(self):
+        """
+        This once threw a std::vector assertion error even with no plugin
+        within ghidra::Heritage::splitByRefinement at heritage.cc:1748
+        """
+        test_name = "whisper_sample_4"
+        enable_plugin = False
+        enable_valgrind = False
+        if enable_plugin:
+            plugin = f"DECOMP_PLUGIN={PLUGIN_PATH}"
+        else:
+            plugin = ""
+        if enable_valgrind:
+            valgrind = "valgrind"
+        else:
+            valgrind = ""
+        command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} {plugin} {valgrind} {DATATEST_PATH} < test/{test_name}.ghidra"
+        logger.info(f"Running {command} with output to /tmp/{test_name}.testlog")
+        result = subprocess.run(command, check=False, capture_output=True, shell=True, encoding="utf8")
+        with open(f"/tmp/{test_name}.testlog", "w", encoding="utf8") as f:
+            f.write(result.stdout)
+            f.write(result.stderr)
+        self.assertEqual(0, result.returncode,
+            f"Datatest of {test_name} failed")
+
     def test_05_dpdk_regressions(self):
         """
         The DPDK binary shows additional regressions

@@ -361,6 +361,9 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     examine_loop_pcodeops(loopBlock);
     // Identify common loop elements like vector loads, vector stores, and element counters
     collect_common_elements();
+    // Identify vector and other instructions found immediately after the loop,
+    // perhaps indicative of a reduction operation
+    examine_loop_epilog();
     // Summarize key features to a report file
     generateReport();
 }
@@ -674,6 +677,27 @@ void VectorLoop::collect_common_elements()
     }
 }
 
+void VectorLoop::examine_loop_epilog()
+{
+    static const int EPILOG_SEARCH_DEPTH = 6; ///< How far to look after the loop
+    std::stringstream ss;
+    loopBlock->lastOp()->printRaw(ss);
+    ghidra::pLogger->info("LastOp: {0:s}", ss.str());
+    ss.str("");
+    const ghidra::PcodeOp* epiOp = loopBlock->lastOp()->nextOp();
+    int opCount = 0;
+    epilogPcodes.clear();
+    while ((opCount < EPILOG_SEARCH_DEPTH) && (epiOp != nullptr))
+    {
+        epiOp->printRaw(ss);
+        ghidra::pLogger->info("Epilog Pcode: {0:s}", ss.str());
+        ss.str("");
+        epilogPcodes.push_back(epiOp);
+        epiOp = epiOp->nextOp();
+        ++opCount;
+    }
+}
+
 static std::set<ghidra::intb> loopsAnalyzed;
 void VectorLoop::generateReport()
 {
@@ -691,7 +715,7 @@ void VectorLoop::generateReport()
         "\tvector stores: 0x" << vStoreOps.size() << std::endl <<
         "\tcomparisons: 0x" << sComparisonOps.size() << std::endl <<
         "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl << std::dec;
-    reportFile << "\tVector instructions (handled | unhandled): ";
+    reportFile << "\tVector instructions (handled | unhandled | epilog): ";
     for (auto vOp: vectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
@@ -704,6 +728,58 @@ void VectorLoop::generateReport()
         ghidra::PcodeOp* op = vOp->op;
         const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*op);
         reportFile << vsetInfo->asmOpcode << ", ";
+    }
+    reportFile << "| ";
+    bool endEpilog = false;
+    // Report on the epilog, trimmed to show at most one unexpected opcode
+    for (auto op: epilogPcodes)
+    {
+        if (endEpilog) break;
+        const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*op);
+        if (vsetInfo != nullptr) reportFile << vsetInfo->asmOpcode << ", ";
+        else
+        {
+            std::string opChar;
+            switch(op->code())
+            {
+                case ghidra::CPUI_BRANCH:
+                case ghidra::CPUI_CBRANCH:
+                case ghidra::CPUI_BRANCHIND:
+                case ghidra::CPUI_CALL:
+                case ghidra::CPUI_RETURN:
+                    endEpilog = true;
+                    opChar = "?";
+                    break;
+                case ghidra::CPUI_INT_EQUAL:
+                    opChar = "==";
+                    break;
+                case ghidra::CPUI_INT_NOTEQUAL:
+                    opChar = "!=";
+                    break;
+                case ghidra::CPUI_INT_SLESS:
+                case ghidra::CPUI_INT_LESS:
+                    opChar = "<";
+                    break;
+                case ghidra::CPUI_INT_SLESSEQUAL:
+                case ghidra::CPUI_INT_LESSEQUAL:
+                    opChar = "<=";
+                    break;
+                case ghidra::CPUI_PTRADD:
+                case ghidra::CPUI_INT_ADD:
+                    opChar = "+";
+                    break;
+                case ghidra::CPUI_INT_MULT:
+                    opChar = "*";
+                    break;
+                case ghidra::CPUI_CAST:
+                    opChar = "cast";
+                    break;
+                default:
+                    opChar = "?";
+                    endEpilog = true;
+            }
+            reportFile << opChar << ", ";
+        }
     }
     reportFile << std::endl;
 }
