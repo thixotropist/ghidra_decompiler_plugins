@@ -194,6 +194,7 @@ class VectorLoop
     std::vector<VectorOperation*> otherVectorOps; ///< ordered vector operations without handlers assigned found within this loop
     std::vector<ScalarOperation*> scalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
     std::vector<ScalarOperation*> otherScalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
+    std::vector<const ghidra::PcodeOp*> epilogPcodes; ///< vector operations found in the loop epilog
     ghidra::Varnode* numElements;  ///< Varnode tracking the number of elements remaining to be processed
     ghidra::Varnode* vSliceCount;  ///< Varnode tracking the number of elements processed this loop
     ghidra::Varnode* vnSrc;        ///< Varnode tracking the source load address
@@ -214,7 +215,6 @@ class VectorLoop
      * @return true if the pcode defining this VN lies inside our loop
      */
     bool isDefinedInLoop(const ghidra::Varnode* vn);
-
     /**
      * @brief perform one-time static initialization
      */
@@ -267,6 +267,11 @@ class VectorLoop
      * @brief Identify common loop elements like vector loads, vector stores, and element counters
      */
     void collect_common_elements();
+    /**
+     * @brief Identify key instructions following this loop, such
+     * as might be needed for reduction algorithms.
+     */
+    void examine_loop_epilog();
     /**
      * @brief Generate a summary report for this vector loop
      */
