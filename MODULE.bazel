@@ -1,11 +1,12 @@
 
 module(
-    name = "riscv_transforms",
-    version = "0.3",
+    name = "decompiler_plugins",
+    version = "0.4",
 )
-
+# Use the spdlog module for C++ logging support
 bazel_dep(name = "spdlog", version = "1.15.2")
 
+# Use a recent development tip of Ghidra for decompiler sources
 git_repository = use_repo_rule("@@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 # Ghidra sources will be cached into something like ~/.cache/bazel/_bazel_thixotropist/*/external/+_repo_rules+ghidra/
@@ -16,5 +17,33 @@ git_repository(
     commit = "6bbffe0e19903682ea1098d246d4c0a9dd33db63",
     build_file = "//:BUILD.ghidra",
     patches = ["ghidra.pat"],
+    patch_strip = 1,
+)
+
+# Extras include a RISC-V crosscompiler and whisper inference engine sources
+bazel_dep(name="gcc_riscv_suite", version="15.2.0.1")
+
+register_toolchains(
+    # an extended gcc riscv compiler suite with march supporting the rva23 profile
+    "//extras/toolchains/riscv:riscv64-rva23",
+)
+
+# whisper voice to text apps make good exemplars of AI and inference engine code.
+http_archive = use_repo_rule("@@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "whisper",
+    build_file = "//extras/whisper:BUILD.whisper",
+    urls = ["https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v1.8.2.tar.gz"],
+    sha256="bcee25589bb8052d9e155369f6759a05729a2022d2a8085c1aa4345108523077",
+    strip_prefix = "whisper.cpp-1.8.2/",
+    patch_strip = 1,
+)
+
+http_archive(
+    name = "dpdk",
+    build_file = "//extras/dpdk:BUILD.dpdk",
+    urls = ["https://fast.dpdk.org/rel/dpdk-25.11.tar.xz"],
+    sha256="52e90d2a531ef3ded0283bd91abc94980698f1f6471fa09658a0217cf6609526",
+    strip_prefix = "dpdk-25.11",
     patch_strip = 1,
 )

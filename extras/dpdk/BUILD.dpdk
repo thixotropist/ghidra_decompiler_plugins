@@ -1,0 +1,27 @@
+package(default_visibility = ["//visibility:public"])
+# This BUILD file isn't functional, just a tiny start on the complex and unjustified path
+# of converting a complex meson/ninja build into a Bazel build.  If someone else wanted to
+# continue this, the next step would be to replace the configuration-time construction of
+# config/rte_build_config.h and collect dependencies.  The default build of dpdk-pipeline
+# includes many more network adapter drivers than would be found in any embedded appliance,
+# so there is more work involved than needed to understand vectorization of network code.
+cc_library(
+    name = "eal",
+    srcs = [],
+    hdrs = [
+        "lib/eal/include/rte_common.h",
+        "lib/eal/include/rte_compat.h",
+        "config/rte_config.h"],
+    includes = ["lib/eal/include", "config"],
+)
+cc_binary(
+    name = "dpdk-pipeline",
+    srcs = [
+        "examples/pipeline/cli.c"
+    ],
+    copts = [
+        "-pthread",
+        "-O3",
+    ],
+    deps = ["eal",]
+)
