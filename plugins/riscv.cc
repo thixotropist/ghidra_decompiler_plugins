@@ -85,6 +85,7 @@ namespace ghidra
 {
 Architecture* arch;        /// The Ghidra architecture object for this program
 AddrSpace* registerAddrSpace; /// The address space holding RISCV registers
+AddrSpace* csRegisterAddrSpace; /// The address space holding RISCV control and status registers
 std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plugin
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -97,7 +98,7 @@ extern "C" int plugin_init(void *context)
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::info);
+    pLogger->set_level(spdlog::level::trace);
     std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
     riscv_vector::reportFile.open(summariesFilename);
     riscv_vector::reportFile << "RISC-V Summary Report" << std::endl;
@@ -107,6 +108,7 @@ extern "C" int plugin_init(void *context)
         riscv_vector::TRANSFORM_LIMIT_LOOPS, riscv_vector::TRANSFORM_LIMIT_NONLOOPS);
     arch = reinterpret_cast<Architecture*>(context);
     registerAddrSpace = arch->getSpaceByName("register");
+    csRegisterAddrSpace = arch->getSpaceByName("csreg");
     pLogger->info("Plugin framework initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=MAX_USER_PCODES; index++) {

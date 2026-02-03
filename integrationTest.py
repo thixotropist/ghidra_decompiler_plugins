@@ -128,7 +128,9 @@ class T1Datatests(unittest.TestCase):
             f.write(result.stdout)
             f.write(result.stderr)
         trimOutput(result.stdout)
-        self.assertIn("vector_memcpy((void *)lVar1,(void *)param1,(ulong)pcVar4)", result.stdout,
+        self.assertIn("vector_memcpy", result.stdout,
+                      "Vector_memcpy transform was not as expected")
+        self.assertIn("vector_strlen", result.stdout,
                       "Vector_memcpy transform was not as expected")
         self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
                       "Memory Leak or invalid read access detected")

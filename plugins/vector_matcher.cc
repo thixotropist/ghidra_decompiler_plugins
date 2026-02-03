@@ -133,32 +133,48 @@ bool VectorMatcher::isStrlen()
         (loopModel.scalarOps.size() == 3) &&        // expected pointer and counter arithmetic
         (loopModel.otherScalarOps.size() == 0) &&   // no other ghidra pcodeops
         (loopModel.otherVectorOps.size() == 0) &&   // no unhandled vector instructions
-        (loopModel.otherUserPcodes.size() == 0);    // no other CALL_OTHER
+        (loopModel.otherUserPcodes.size() == 0) &&  // no other CALL_OTHER
+        (loopModel.vSourceOperands.size() == 1);    // one recognized source operand
     bool match = pre_match;
     return match;
 }
 
-void VectorMatcher::reducePhiNode(ghidra::PcodeOp* op)
+void VectorMatcher::isolateResultsInEpilog(const ghidra::Varnode* resultVarnode, std::list<ghidra::PcodeOp*>& dependentOps)
 {
-    for (int slot = 0; slot < op->numInput(); ++slot)
+    std::list<ghidra::PcodeOp*> deletionItems;
+    if (trace)
     {
-        const ghidra::Varnode* baseVn = op->getIn(slot);
-        for (int otherSlot = slot + 1; otherSlot < op->numInput(); ++otherSlot)
+        std::stringstream ss;
+        resultVarnode->printRaw(ss);
+        ghidra::pLogger->trace("isolateResultsInEpilog: removing references to Varnode {0:s} from list of {1:d} dependent ops",
+            ss.str(), dependentOps.size());
+    }
+    for (auto op: dependentOps)
+    {
+        // check all of the PCodeOp's inputs
+        for (int i=0; i < op->numInput(); i++)
         {
-            if (baseVn == op->getIn(otherSlot))
+            if (op->getIn(i) == resultVarnode)
             {
-                ghidra::pLogger->info("Removing duplicate Phi varnode at 0x{0:x}:{1:x}, slot = {2:d}",
-                    op->getAddr().getOffset(), op->getTime(), otherSlot);
-                data.opRemoveInput(op, otherSlot);
-                if (info)
+                deletionItems.push_back(op);
+                if (trace)
                 {
                     std::stringstream ss;
                     op->printRaw(ss);
-                    ghidra::pLogger->info("\tNew Phi PcodeOp is: {0:s}", ss.str());
+                    ghidra::pLogger->trace("isolateResultsInEpilog: removed PCodeOp {0:s} from list of dependent ops", ss.str());
+                    ss.str("");
                 }
-                --otherSlot;
             }
         }
+    }
+    for (const auto op: deletionItems)
+    {
+        dependentOps.remove(op);
+    }
+    if (trace)
+    {
+        ghidra::pLogger->trace("isolateResultsInEpilog: list of dependent ops now has {0:d} entries",
+            dependentOps.size());
     }
 }
 
@@ -373,7 +389,6 @@ void VectorMatcher::collect_loop_registers()
 
 int VectorMatcher::transformMemcpy()
 {
-    const bool EXPLORE_BLOCKS = false;
     std::stringstream ss;
     ghidra::BlockGraph& graph = data.getStructure();
 
@@ -422,7 +437,7 @@ int VectorMatcher::transformMemcpy()
             ghidra::pLogger->trace("\tReducing the Phi or MULTIEQUAL node at this location");
             // if there are only two varnodes in this Phi node, and one is a loop variable,
             // delete the Phi node and take the non-loop varnode as a parameter
-            reducePhiNode(op);
+            loopModel.reducePhiNode(op);
             // Try the simplest case first
             if ((op->numInput() == 2) && (vOut != nullptr))
             {
@@ -468,7 +483,7 @@ int VectorMatcher::transformMemcpy()
             else if ((op->numInput() >= 3) && (vOut != nullptr))
             {
                 // We need to preserve this Phi node after removing the interior Vnode reference
-                ghidra::pLogger->trace("\tRemoving interior Varnodes from thisPcodeOP");
+                ghidra::pLogger->trace("\tRemoving interior Varnodes from this PcodeOP");
                 for (int slot=0; slot < op->numInput(); ++slot)
                 {
                     if ((op->getIn(slot)->isFree()) || (loopModel.isDefinedInLoop(op->getIn(slot))))
@@ -563,65 +578,209 @@ int VectorMatcher::transformMemcpy()
         inspector.log("basic block after replacement", loopBlock);
     }
 
-    // Optionally explore the BlockGraph around our loop to see if we can
-    // merge the DOWHILE block into its neighbors.  Results so far suggest that
-    // it is possible but complex - replacing the function's BlockGraph entirely rather
-    // than a simple edge edit.  Perhaps we could apply these loop-processing rules
-    // earlier, between the point blocks are identified and the DOWHILE block is created?
-    if (EXPLORE_BLOCKS && trace)
-    {
-        graph.printTree(ss, 1);
-        ghidra::pLogger->trace("Examining full function BlockGraph Tree form after transform:\n{0:s}", ss.str());
-        ss.str("");
-        loopBlock->printRaw(ss);
-        ghidra::pLogger->trace("\tThe loop block identifies as:\n{0:s}", ss.str());
-        ss.str("");
-        ghidra::pLogger->trace("\t\tLoop block ins = {0:d}, outs = {1:d}", loopBlock->sizeIn(), loopBlock->sizeOut());
-        int index = 0;
-        ghidra::FlowBlock* fb = loopBlock->subBlock(index);
-        if (fb == nullptr)
-            ghidra::pLogger->trace("\t\tloop block has no sub blocks");
-        while (fb != nullptr)
-        {
-            fb->printRaw(ss);
-            ghidra::pLogger->trace("\tInterior subblock {0:d} identifies as\n{0:s}", index, ss.str());
-            index++;
-            ghidra::pLogger->trace("\t\tBlock ins = {0:d}, outs = {1:d}", fb->sizeIn(), fb->sizeOut());
-            fb = loopBlock->subBlock(index);
-        }
-        ghidra::FlowBlock* parentBlock = loopBlock->getParent();
-        parentBlock->printRaw(ss);
-        ghidra::pLogger->trace("\tThe parent basic block to our loop block identifies as:\n{0:s}", ss.str());
-        ss.str("");
-        ghidra::pLogger->trace("\t\tParent block ins = {0:d}, outs = {1:d}", parentBlock->sizeIn(), parentBlock->sizeOut());
-        // identify the output edge blocks
-        for (index=0; index < loopBlock->sizeOut(); ++index)
-        {
-            fb = loopBlock->getOut(index);
-            fb->printRaw(ss);
-            ghidra::pLogger->trace("\t\tParent's output block {0:d} identifies as\n{1:s}", index, ss.str());
-            ss.str("");
-        }
-        ghidra::FlowBlock* dominator = loopBlock->getImmedDom();
-        dominator->printRaw(ss);
-        ghidra::pLogger->trace("\tThe immediate dominator block to our loop block identifies as:\n{0:s}", ss.str());
-        ss.str("");
-        ghidra::pLogger->trace("List of FlowBlocks in the function:");
-        int i = 0;
-        while (i < graph.getSize())
-        {
-            graph.subBlock(i)->printRaw(ss);
-            ghidra::pLogger->trace("\t{0:s}", ss.str());
-            ss.str("");
-            i++;
-        }
-    }
     ghidra::pLogger->flush();
     return TRANSFORM_COMPLETED;
 }
+
+
 int VectorMatcher::transformStrlen()
 {
     ghidra::pLogger->info("Entering VectorMatcher::transformStrlen");
-    return TRANSFORM_ROLLED_BACK;
+    std::stringstream ss;
+    ghidra::BlockGraph& graph = data.getStructure();
+    ghidra::FunctionEditor functionEditor(data);
+    if (info)
+    {
+        loopBlock->printRaw(ss);
+        ghidra::pLogger->info("Vector loop block before transforms is\n{0:s}", ss.str());
+        ss.str("");
+    }
+    // step 1: find the scalar result register and the PcodeOp that creates the result Varnode
+    /*
+    Basic Block 2 0x000209ce-0x000209d0
+    0x000209ce:13:	a3(0x000209ce:13) = #0x0
+    0x000209d0:e4:	u0x10000043(0x000209d0:e4) = a3(0x000209ce:13)
+    0x000209d0:e6:	u0x10000053(0x000209d0:e6) = a1(i)
+    Basic Block 3 0x000209d2-0x000209e8
+    0x000209d2:b5:	a5(0x000209d2:b5) = u0x10000053(0x000209d0:e6) ? a5(0x000209d6:16)
+    0x000209d2:ac:	a3(0x000209d2:ac) = u0x10000043(0x000209d0:e4) ? u0x1000004b(0x000209e8:e5)
+    0x000209d2:15:	a2(0x000209d2:15) = vsetvli_e8m1tama(#0x0)
+    0x000209d6:16:	a5(0x000209d6:16) = a5(0x000209d2:b5) + a3(0x000209d2:ac)(*#0x1)
+    0x000209d8:18:	v1(0x000209d8:18) = vle8ff_v(a5(0x000209d6:16))
+    0x000209dc:1a:	v1(0x000209dc:1a) = vmseq_vi(v1(0x000209d8:18),#0x0)
+    0x000209e4:1c:	a6(0x000209e4:1c) = vfirst_m(v1(0x000209dc:1a))
+    0x000209e8:1d:	u0x00002080:1(0x000209e8:1d) = a6(0x000209e4:1c) < #0x0
+    0x000209e8:e3:	u0x10000033(0x000209e8:e3) = c0x0c20(i)
+    0x000209e8:1e:	goto Block_3:0x000209d2 if (u0x00002080:1(0x000209e8:1d) != 0) else Block_4:0x000209ec
+    Basic Block 4 0x000209ec-0x000209f2
+    0x000209ee:e7:	u0x10000053(0x000209ee:e7) = (cast) a1(i)
+    0x000209ee:e0:	u0x10000023(0x000209ee:e0) = a6(0x000209e4:1c) - u0x10000053(0x000209ee:e7)
+    0x000209ee:20:	a5(0x000209ee:20) = a5(0x000209d6:16) + u0x10000023(0x000209ee:e0)(*#0x1)
+    */
+    ghidra::pLogger->trace("tracing strlen result path");
+    ghidra::Varnode* zeroIndexResult;           ///< the relative index of the first zero
+    ghidra::PcodeOp* intermediateOp = nullptr;
+    ghidra::Varnode* intermediate = nullptr;
+    ghidra::PcodeOp* initialResultOp = nullptr;
+    ghidra::Varnode* resultVarnode = nullptr;
+    zeroIndexResult = loopModel.terminationControl->getOut(); // e.g. a6(0x000209e4:1c)
+
+    int index = 0;
+    // we want the second dependency, skipping the 'a6 < 0' loop comparison
+    const int intermediateOpIndex = 1;
+    for(auto iter=zeroIndexResult->beginDescend(); iter != zeroIndexResult->endDescend(); ++iter)
+    {
+        intermediateOp = *iter;
+        if (trace)
+        {
+            intermediateOp->printRaw(ss);
+            ghidra::pLogger->trace("\tdependent PcodeOp: {0:s}", ss.str());
+            ss.str("");
+        }
+        if (index == intermediateOpIndex)
+        {
+            intermediate = intermediateOp->getOut();
+            intermediate->printRaw(ss);
+            ghidra::pLogger->trace("\tintermediate Varnode: {0:s}", ss.str());
+            ss.str("");
+        }
+        index++;
+    }
+    // intermediate Varnode will be u0x10000023 in this example
+    std::list<ghidra::PcodeOp*>::const_iterator intermediateDependencies;
+    if (intermediate == nullptr)
+    {
+        ghidra::pLogger->warn("Unable to find the intermediate result Varnode!");
+        return TRANSFORM_ROLLED_BACK;
+    }
+    else
+    {
+        // the result Varnode is the first dependency of the intermediate Varnode
+        intermediateDependencies = intermediate->beginDescend();
+        initialResultOp = *intermediateDependencies;
+        resultVarnode = initialResultOp->getOut();
+        if (trace)
+        {
+            resultVarnode->printRaw(ss);
+            ghidra::pLogger->info("\tstrlen result Varnode: {0:s}", ss.str());
+            ss.str("");
+        }
+    }
+
+    // remove the results register from the list of external dependent ops
+    // so we don't purge it with the other temporary registers
+    isolateResultsInEpilog(intermediate, externalDependentOps);
+
+    // step 2: removeExteriorDependencies for temporary registers
+    if ((externalDependentOps.size() > 1) && (!removeExteriorDependencies()))
+    {
+        ghidra::pLogger->warn("Unable to safely remove register dependencies at 0x{0:x}:{1:x}",
+            vsetOp->getAddr().getOffset(), vsetOp->getTime());
+        return TRANSFORM_ROLLED_BACK;
+    }
+    // step 3: visit all pcodeops in the loop block
+    //     * Phi nodes are edited to replace loop variable varnodes with duplicates
+    //     * the newVector op is unchanged
+    //     * other loop ops are removed
+    if (!loopModel.absorbOps())
+    {
+        ghidra::pLogger->warn("Rolling back the transform due to absorbOps status");
+        return TRANSFORM_ROLLED_BACK;
+    }
+    if (trace)
+    {
+        loopBlock->printRaw(ss);
+        ghidra::pLogger->trace("Vector loop block after reducing Phi nodes is\n{0:s}", ss.str());
+        ss.str("");
+    }
+    data.getArch()->userops.registerBuiltin(VECTOR_STRLEN);
+
+    // create a new Pcodeop with two varnode input parameters and one output varnode
+    ghidra::PcodeOp *newVectorOp = data.newOp(2, loopBlock->getStop());
+    data.opSetOpcode(newVectorOp, ghidra::CPUI_CALLOTHER);
+    data.opSetInput(newVectorOp, data.newConstant(4, VECTOR_STRLEN), 0);
+    data.opSetInput(newVectorOp, loopModel.vSourceOperands[0]->pExternal, 1);
+    ghidra::Varnode* vectorResultVarnode = data.newVarnodeOut(resultVarnode->getSize(), resultVarnode->getAddr(), newVectorOp);
+    if (trace)
+    {
+        newVectorOp->printRaw(ss);
+        ghidra::pLogger->trace("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
+        ss.str("");
+    }
+    data.opInsertEnd(newVectorOp, loopBlock);
+    if (info)
+    {
+        loopBlock->printRaw(ss);
+        ghidra::pLogger->info("Vector loop block after inserting vector_strlen is\n{0:s}", ss.str());
+        ss.str("");
+    }
+    // replace old result with new result
+    std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVarnode->beginDescend(), resultVarnode->endDescend());
+    for (auto op: resultSet)
+    {
+        ghidra::pLogger->trace("Examining dependency at 0x{0:x}:{1:x}", op->getAddr().getOffset(), op->getTime());
+        for (int i = 0; i < op->numInput(); i++)
+        {
+            if (op->getIn(i) == resultVarnode)
+            {
+                ghidra::pLogger->trace("Replacing result varnode from slot {0:d} of op at 0x{1:x}", i, op->getAddr().getOffset());
+                data.opUnsetInput(op, i);
+                data.opSetInput(op, vectorResultVarnode, i);
+            }
+        }
+    }
+
+    if (trace)
+    {
+        intermediate->printRaw(ss);
+        ghidra::pLogger->trace("Deleting intermediateDependency PcodeOp {0:s}", ss.str());
+        ss.str("");
+        initialResultOp->printRaw(ss);
+        ghidra::pLogger->trace("Deleting initial result PcodeOp {0:s}", ss.str());
+        ghidra::pLogger->flush();
+        ss.str("");
+    }
+    data.opUnlink(intermediateOp);
+    data.opUnlink(initialResultOp);
+
+    if (trace)
+    {
+        ghidra::Datatype* p1Type = newVectorOp->getIn(0)->getType();
+        ghidra::pLogger->trace("\tparam1 datatypeId=0x{0:x}, name={1:s}, displayName={2:s}",
+            p1Type->getId(), p1Type->getName(), p1Type->getDisplayName());
+        if (newVectorOp->getOut() != nullptr)
+        {
+            ghidra::Datatype* resultType = newVectorOp->getOut()->getType();
+            ghidra::pLogger->trace("\tresult datatypeId=0x{0:x}, name={1:s}, displayName={2:s}",
+                resultType->getId(), resultType->getName(), resultType->getDisplayName());
+        }
+    }
+    return TRANSFORM_COMPLETED;
+    ghidra::pLogger->info("Preparing to edit the flow block graph to remove the loop edge");
+    graph.removeEdge(loopBlock, loopBlock);
+    ghidra::pLogger->flush();
+    functionEditor.removeDoWhileWrapperBlock(loopBlock);
+    if (!nextInstructionAddress.isInvalid())
+    {
+        // if there is a following block add a goto to close the block and reach the next block
+        // place the goto at the end of the current block to satisfy BlockBasic constraints
+        ghidra::Address gotoLocation(codeSpace, loopModel.lastAddr);
+        ghidra::PcodeOp* gotoOp = insertBranchOp(data, gotoLocation, nextInstructionAddress);
+        if (trace)
+        {
+            gotoOp->printRaw(ss);
+            ghidra::pLogger->info("\tInserting a goto op to finish this block\n\t\t{0:s}", ss.str());
+            ss.str("");
+        }
+        data.opInsertEnd(gotoOp, loopBlock);
+    }
+    ghidra::pLogger->flush();
+    if (info)
+    {
+        inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
+        inspector.log("basic block after replacement", loopBlock);
+    }
+    ghidra::pLogger->flush();
+    return TRANSFORM_COMPLETED;
 }
 }

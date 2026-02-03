@@ -75,27 +75,18 @@ class VectorMatcher {
      *
      */
     void collect_loop_registers();
-
     /**
-     * @brief Remove dependencies on interior loop Varnodes
-     * @return True if successful, False if no transform is known safe
+     * @brief Trim the list of PcodeOps of any ops referencing the given result Varnode
+     *
+     * @param resultVarnode the result Varnode to be purged
+     * @param dependentOps a list of PcodeOps which might reference the result Varnode
+     */
+    void isolateResultsInEpilog(const ghidra::Varnode* resultVarnode, std::list<ghidra::PcodeOp *>& dependentOps);
+    /**
+     * @brief Remove Phi node dependencies on interior loop Varnodes
+     * @return True if successful, False if non-Phi node dependencies are found
      */
     bool removeExteriorDependencies();
-
-    /**
-     * @brief
-     *
-     * @param vn a Varnode reference
-     * @return true if the pcode defining this VN lies inside our loop
-     * @return false
-     */
-    bool isDefinedInLoop(const ghidra::Varnode* vn);
-
-    /**
-     * @brief Remove duplicate varnodes in a Phi opcode
-     */
-    void reducePhiNode(ghidra::PcodeOp* op);
-
     /**
      * @brief Remove any enclosing DoWhile block
      * @param blk The BlockBasic possibly wrapped with an empty DoWhile

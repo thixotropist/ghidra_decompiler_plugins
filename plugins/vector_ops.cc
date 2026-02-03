@@ -13,27 +13,13 @@
 
 namespace riscv_vector{
 
-VectorOperand::~VectorOperand()
-{
-    for (auto st: stripes) delete st;
-    stripes.clear();
-}
+VectorOperand::~VectorOperand() {}
 
 static std::vector<std::string> opTypeToString;
 
 void VectorOperand::static_init()
 {
-    opTypeToString = { "load", "store", "constant", "indexer", "other"};
-}
-
-void VectorStripe::setVregister(const ghidra::Varnode* const vn)
-{
-    vector_register = vn->getOffset();
-}
-
-void VectorStripe::setBaseAddr(const ghidra::Varnode* const vn)
-{
-    pointer_register = vn->getOffset();
+    opTypeToString = { "load", "store", "read-modify-write", "constant", "indexer", "other"};
 }
 
 static std::vector<std::string> operationTypeToString;
@@ -320,7 +306,7 @@ void VectorLoop::static_init()
             "innerProduct", "unknown", "other"};
     }
 }
-VectorLoop::VectorLoop(const ghidra::Funcdata& dataParam, bool traceParam) :
+VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     terminationConditionFlags(0),
     typ(unknown),
     name("pending"),
@@ -330,16 +316,20 @@ VectorLoop::VectorLoop(const ghidra::Funcdata& dataParam, bool traceParam) :
     vsetOp(nullptr),
     codeSpace(nullptr),
     loopBlock(nullptr),
+    terminationVarnode(nullptr),
+    terminationControl(nullptr),
     comparisonOp(ghidra::CPUI_MAX),
     simpleFlowStructure(false),
     numElements(nullptr),
-    vSliceCount(nullptr),
-    vnSrc(nullptr),
-    vnDst(nullptr),
     multiplier(0),
     elementSize(0),
     vlReg(0),
+    vlAddrReg(0),
+    vlAddrIncrReg(0),
     vsReg(0),
+    vsAddrReg(0),
+    vsAddrIncrReg(0),
+    elementCounterReg(0),
     trace(traceParam)
 {
 }
@@ -391,8 +381,19 @@ bool VectorLoop::invokeVectorOpHandler(ghidra::PcodeOp* op)
 
 bool VectorLoop::isDefinedInLoop(const ghidra::Varnode* vn)
 {
+    if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace))
+    {
+        std::stringstream ss;
+        vn->getAddr().printRaw(ss);
+        ghidra::pLogger->warn("\tVarnode {0:s} references control and status register , definition in loop unknown",
+            ss.str());
+    }
     const ghidra::PcodeOp* definingOp = vn->getDef();
-    if (definingOp == nullptr) return false;
+    if (definingOp == nullptr)
+    {
+        ghidra::pLogger->info("\tVarnode has no defining Opcode");
+        return false;
+    }
     ghidra::intb offset = definingOp->getAddr().getOffset();
     bool addressInLoop = (offset >= firstAddr) && (offset <= lastAddr);
     bool blockIsLoopblock = definingOp->getParent() == loopBlock;
@@ -436,6 +437,13 @@ void VectorLoop::examine_control_flow(ghidra::PcodeOp* vsetOpParam)
     if (isBranch && (lastOp->code() == ghidra::CPUI_CBRANCH))
     {
         ghidra::intb branchTarget = lastOp->getIn(0)->getAddr().getOffset();
+        terminationVarnode = lastOp->getIn(1);
+        if (trace)
+        {
+            std::stringstream ss;
+            terminationVarnode->printRaw(ss);
+            ghidra::pLogger->trace("Termination condition varnode is {0:s}", ss.str());
+        }
         if (branchTarget == firstAddr)
         {
             simpleFlowStructure = true;
@@ -617,7 +625,6 @@ void VectorLoop::collect_common_elements()
                 multiplier = vsetInfo->multiplier;
                 elementSize = vsetInfo->elementSize;
                 numElements = vOp->arg0;
-                vSliceCount = vOp->result;
                 break;
             case OperationType::vectorLoad:
             case OperationType::vectorLoadFF:
@@ -663,17 +670,26 @@ void VectorLoop::collect_common_elements()
                 break;
         }
     }
-    // If we have a single vector load, identify its parameters
-    if (vLoadOps.size() == 1)
+
+    // Collect the loop source contexts for each vector load
+    for (auto vop: vLoadOps)
     {
-        vlReg = vLoadOps[0]->result->getAddr().getOffset();
-        vnSrc = vLoadOps[0]->arg0;
+        VectorOperand* vOperand = new VectorOperand(VectorOperand::load);
+        vOperand->vRegister = vop->result;
+        vOperand->pRegister = vop->arg0;
+        vSourceOperands.push_back(vOperand);
     }
-    // If we have a single vector store, identify its parameters
-    if (vStoreOps.size() == 1)
+    for (auto vop: vStoreOps)
     {
-        vsReg = vStoreOps[0]->arg0->getAddr().getOffset();
-        vnDst = vStoreOps[0]->arg1;
+        VectorOperand* vOperand = new VectorOperand(VectorOperand::store);
+        vOperand->vRegister = vop->arg0;
+        vOperand->pRegister = vop->arg1;
+        vDestinationOperands.push_back(vOperand);
+    }
+    // Determine how the loop terminates if this is a single-condition loop
+    if (sComparisonOps.size() == 1)
+    {
+        terminationControl = sComparisonOps[0]->arg0->getDef();
     }
 }
 
@@ -701,6 +717,7 @@ void VectorLoop::examine_loop_epilog()
 static std::set<ghidra::intb> loopsAnalyzed;
 void VectorLoop::generateReport()
 {
+    std::stringstream ss;
     auto exists = loopsAnalyzed.find(firstAddr);
     if(exists != loopsAnalyzed.end()) return;
     loopsAnalyzed.insert(firstAddr);
@@ -782,6 +799,129 @@ void VectorLoop::generateReport()
         }
     }
     reportFile << std::endl;
+    terminationControl->printRaw(ss);
+    reportFile << "\tLoop control variable: " << ss.str() << std::endl;
+}
+
+void VectorLoop::reducePhiNode(ghidra::PcodeOp* op)
+{
+    for (int slot = 0; slot < op->numInput(); ++slot)
+    {
+        const ghidra::Varnode* baseVn = op->getIn(slot);
+        for (int otherSlot = slot + 1; otherSlot < op->numInput(); ++otherSlot)
+        {
+            if (baseVn == op->getIn(otherSlot))
+            {
+                ghidra::pLogger->info("Removing duplicate Phi varnode at 0x{0:x}:{1:x}, slot = {2:d}",
+                    op->getAddr().getOffset(), op->getTime(), otherSlot);
+                data.opRemoveInput(op, otherSlot);
+                if (trace)
+                {
+                    std::stringstream ss;
+                    op->printRaw(ss);
+                    ghidra::pLogger->info("\tNew Phi PcodeOp is: {0:s}", ss.str());
+                }
+                --otherSlot;
+            }
+        }
+    }
+}
+
+bool VectorLoop::absorbOps()
+{
+    // visit all pcodeops in the loop block
+    // * Phi nodes are edited to replace loop variable varnodes with duplicates
+    // * the newVector op is unchanged
+    // * other loop ops are removed
+    std::list<ghidra::PcodeOp*>::iterator it = loopBlock->beginOp();
+    std::list<ghidra::PcodeOp*>::iterator lastOp = loopBlock->endOp();
+    std::stringstream ss;
+    // handle load operands only at first
+    if (vSourceOperands.size() != 1) return false;
+    VectorOperand* loadOperand = vSourceOperands[0];
+    ghidra::Varnode* vLoad = loadOperand->pRegister;
+    while (it != lastOp)
+    {
+        ghidra::PcodeOp* op = *it;
+        ++it;
+        ghidra::Varnode* vPhi = op->getOut();
+        ghidra::pLogger->info("Transforming PcodeOp at 0x{0:x}:{1:x}",
+            op->getAddr().getOffset(), op->getTime());
+        if (op->code() == ghidra::CPUI_MULTIEQUAL)
+        {
+            ghidra::pLogger->trace("\tReducing the Phi or MULTIEQUAL node at this location");
+            // if there are only two varnodes in this Phi node, and one is a loop variable,
+            // delete the Phi node and take the non-loop varnode as a parameter
+            reducePhiNode(op);
+            // Try the simplest case first
+            if ((op->numInput() == 2) && (vPhi != nullptr))
+            {
+                ghidra::pLogger->trace("\tAbsorbing this PcodeOp");
+                ghidra::Varnode* v0 = op->getIn(0);
+                ghidra::Varnode* v1 = op->getIn(1);
+                ghidra::Varnode* vParam;
+                if (isDefinedInLoop(v0))
+                    vParam = v1;
+                else if (isDefinedInLoop(v1))
+                    vParam = v0;
+                else
+                {
+                    ghidra::pLogger->warn("\tUnable to recognize Phi node parameters");
+                    continue;
+                }
+                if (trace)
+                {
+                    vParam->printRaw(ss);
+                    ghidra::pLogger->trace("\tvParam is {0:s}", ss.str());
+                    ss.str("");
+                    ghidra::pLogger->flush();
+                }
+                if (sameRegister(vPhi, vLoad))
+                {
+                    ghidra::pLogger->trace("\tAcquiring the vector parameter varnode");
+                    loadOperand->pExternal = vParam;
+                }
+                ghidra::pLogger->trace("\tDeleting the PcodeOP (and all of its descendents)");
+                ghidra::pLogger->flush();
+                data.opUnlink(op);
+            }
+            else if ((op->numInput() >= 3) && (vPhi != nullptr))
+            {
+                // We need to preserve this Phi node after removing the interior Vnode reference
+                ghidra::pLogger->trace("\tRemoving interior Varnodes from this PcodeOP");
+                for (int slot=0; slot < op->numInput(); ++slot)
+                {
+                    if ((op->getIn(slot)->isFree()) || (isDefinedInLoop(op->getIn(slot))))
+                    {
+                        ghidra::pLogger->trace("\tRemoved interior varnode in slot {0:d}", slot);
+                        ghidra::pLogger->flush();
+                        data.opRemoveInput(op, slot);
+                        --slot;
+                    }
+                }
+                // Acquire loop parameter varnodes
+                if (sameRegister(vPhi, vLoad))
+                {
+                    ghidra::pLogger->trace("\tAcquiring the vector load address varnode");
+                    loadOperand->pExternal = vPhi;
+                }
+            }
+        }
+        else
+        {
+            ghidra::pLogger->trace("\tDeleting the op at 0x{0:x}:{1:x}",
+                op->getAddr().getOffset(), op->getTime());
+            data.opUnlink(op);
+        }
+    }
+
+    if (trace)
+    {
+        loopBlock->printRaw(ss);
+        ghidra::pLogger->trace("Vector loop block after reducing Phi nodes is\n{0:s}", ss.str());
+        ss.str("");
+    }
+    return true;
 }
 
 VectorLoop::~VectorLoop()
@@ -797,6 +937,14 @@ VectorLoop::~VectorLoop()
     for (auto op:scalarOps)
     {
         delete op;
+    }
+    for (auto operand: vSourceOperands)
+    {
+        delete operand;
+    }
+    for (auto operand: vDestinationOperands)
+    {
+        delete operand;
     }
 }
 }
