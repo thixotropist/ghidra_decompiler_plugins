@@ -29,6 +29,8 @@ void VectorOperation::static_init()
     VectorOperand::static_init();
     if (ghidra::pLogger->should_log(spdlog::level::info)) operationTypeToString = {
         "unknown",
+        "copy",
+        "load",
         "addition",
         "pointer_addition",
         "subtraction",
@@ -582,6 +584,12 @@ void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
           case ghidra::CPUI_MULTIEQUAL:
             // handled separately at the top of the loop
             break;
+          case ghidra::CPUI_COPY:
+            scalarOps.push_back(new ScalarOperation(OperationType::copy, op));
+            break;
+          case ghidra::CPUI_LOAD:
+            scalarOps.push_back(new ScalarOperation(OperationType::load, op));
+            break;
           case ghidra::CPUI_CALLOTHER:
             {
                 const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
@@ -666,7 +674,18 @@ void VectorLoop::collect_common_elements()
             case OperationType::subtraction:
                 sIntegerOps.push_back(op);
                 break;
+            case OperationType::copy:
+                ghidra::pLogger->trace("Found a Copy operation");
+                if(op->arg0->getAddr().getSpace() == ghidra::csRegisterAddrSpace)
+                {
+                    ghidra::pLogger->info("Found a reference to a CSR register");
+                }
+                break;
+            case OperationType::unknown:
+                ghidra::pLogger->trace("Found an unknown scalar operation");
+                break;
             default:
+                ghidra::pLogger->trace("Found a scalar operation without a handler");
                 break;
         }
     }
@@ -706,7 +725,7 @@ void VectorLoop::examine_loop_epilog()
     while ((opCount < EPILOG_SEARCH_DEPTH) && (epiOp != nullptr))
     {
         epiOp->printRaw(ss);
-        ghidra::pLogger->info("Epilog Pcode: {0:s}", ss.str());
+        ghidra::pLogger->info("Possible Epilog Pcode: {0:s}", ss.str());
         ss.str("");
         epilogPcodes.push_back(epiOp);
         epiOp = epiOp->nextOp();

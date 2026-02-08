@@ -66,6 +66,8 @@ class VectorOperand
 enum OperationType      ///< Scalar and Vector operations fall into several categories
 {
   unknown,                 ///< not yet recognized
+  copy,                    ///< copy
+  load,                    ///< load
   addition,                ///< add to register
   pointerAddition,        ///< add to pointer register
   subtraction,             ///< subtract from register
@@ -114,7 +116,7 @@ class ScalarOperation
     ghidra::Varnode* arg1;  ///< the second argument of this operation, or null
     ghidra::Varnode* arg2;  ///< the third argument of this operation, or null
     ghidra::OpCode opcode; ///< the Ghidra operation code
-    std::vector<ghidra::Varnode*> arguments;  ///< increment or decrement value
+    //std::vector<ghidra::Varnode*> arguments;  ///< increment or decrement value
     ScalarOperation(OperationType typeParam, ghidra::PcodeOp* opParam); ///< Constructor
 };
 
@@ -198,6 +200,10 @@ class VectorLoop
     std::vector<ScalarOperation*> scalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
     std::vector<ScalarOperation*> otherScalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
     std::vector<const ghidra::PcodeOp*> epilogPcodes; ///< vector operations found in the loop epilog
+    std::vector<VectorOperation*> vLoadOps;    ///< vector load operations found
+    std::vector<VectorOperation*> vStoreOps;   ///< vector store operations found
+    std::vector<ScalarOperation*> sIntegerOps; ///< scalar integer operations found
+    std::vector<ScalarOperation*> sComparisonOps; ///< scalar comparison operations found
     std::vector<VectorOperand*> vSourceOperands; ///< vector source operands and their loop context
     std::vector<VectorOperand*> vDestinationOperands; ///< vector destination operands and their loop context
     ghidra::Varnode* numElements;  ///< Varnode tracking the number of elements remaining to be processed
@@ -242,10 +248,7 @@ class VectorLoop
      */
     bool absorbOps();
   private:
-    std::vector<VectorOperation*> vLoadOps;    ///< vector load operations found
-    std::vector<VectorOperation*> vStoreOps;   ///< vector store operations found
-    std::vector<ScalarOperation*> sIntegerOps; ///< scalar integer operations found
-    std::vector<ScalarOperation*> sComparisonOps; ///< scalar comparison operations found
+
     int multiplier;                        ///< vset multiplier
     int elementSize;                       ///< vset element size
     ghidra::intb vlReg;                    ///< vector load destination register

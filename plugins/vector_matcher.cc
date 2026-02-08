@@ -391,14 +391,13 @@ int VectorMatcher::transformMemcpy()
 {
     std::stringstream ss;
     ghidra::BlockGraph& graph = data.getStructure();
-
+    ghidra::FunctionEditor functionEditor(data);
     if (info)
     {
         loopBlock->printRaw(ss);
-        ghidra::pLogger->info("Vector loop block before transforms is\n{0:s}", ss.str());
+        ghidra::pLogger->info("Vector loop block before memcpy transform is\n{0:s}", ss.str());
         ss.str("");
     }
-    ghidra::FunctionEditor functionEditor(data);
     // attempt to remove exterior dependencies on the scratch registers employed
     // by the vector code
     if (!removeExteriorDependencies())
@@ -582,17 +581,15 @@ int VectorMatcher::transformMemcpy()
     return TRANSFORM_COMPLETED;
 }
 
-
 int VectorMatcher::transformStrlen()
 {
-    ghidra::pLogger->info("Entering VectorMatcher::transformStrlen");
     std::stringstream ss;
     ghidra::BlockGraph& graph = data.getStructure();
     ghidra::FunctionEditor functionEditor(data);
     if (info)
     {
         loopBlock->printRaw(ss);
-        ghidra::pLogger->info("Vector loop block before transforms is\n{0:s}", ss.str());
+        ghidra::pLogger->info("Vector loop block before strlen transform is\n{0:s}", ss.str());
         ss.str("");
     }
     // step 1: find the scalar result register and the PcodeOp that creates the result Varnode
@@ -678,7 +675,24 @@ int VectorMatcher::transformStrlen()
             vsetOp->getAddr().getOffset(), vsetOp->getTime());
         return TRANSFORM_ROLLED_BACK;
     }
-    // step 3: visit all pcodeops in the loop block
+    // isolate prolog setup pcodeops
+    for (auto op: loopModel.sIntegerOps)
+    {
+        ghidra::pLogger->trace("Examining loop scalar integer op at 0x{0:x}",
+            op->op->getAddr().getOffset());
+        if (op->arg0 != nullptr) op->arg0->printRaw(ss);
+        if (op->arg1 != nullptr)
+        {
+            ss << ", ";op->arg1->printRaw(ss);
+        }
+        if (op->arg2 != nullptr)
+        {
+            ss << ", ";op->arg2->printRaw(ss);
+        }
+        ghidra::pLogger->trace("\tArguments: {0:s}", ss.str());
+        ss.str("");
+    }
+    // step ??: visit all pcodeops in the loop block
     //     * Phi nodes are edited to replace loop variable varnodes with duplicates
     //     * the newVector op is unchanged
     //     * other loop ops are removed
@@ -755,7 +769,35 @@ int VectorMatcher::transformStrlen()
                 resultType->getId(), resultType->getName(), resultType->getDisplayName());
         }
     }
-    return TRANSFORM_COMPLETED;
+    // remove the loop's remaining Phi node
+    std::list<ghidra::PcodeOp*>::const_iterator it = loopBlock->beginOp();
+    std::list<ghidra::PcodeOp*>::const_iterator lastOp = loopBlock->endOp();
+    while (it != lastOp)
+    {
+        ghidra::PcodeOp* op = *it;
+        if (op->code() == ghidra::CPUI_MULTIEQUAL)
+        {
+            ghidra::pLogger->info("Deleting the remaining PHI node at 0x{0:x}",
+                op->getAddr().getOffset());
+            ghidra::pLogger->flush();
+            data.opUnlink(op);
+            break;
+        }
+
+    }
+/*
+Basic Block 2 0x000209ce-0x000209d0
+0x000209ce:13:	a3(0x000209ce:13) = #0x0                                  ///Delete this from prolog
+Basic Block 3 0x000209d2-0x000209e8
+0x000209e8:e5:	u0x1000003b(0x000209e8:e5) = (cast) a1(i)
+0x000209e8:e1:	a5(0x000209e8:e1) = vector_strlen(u0x1000003b(0x000209e8:e5))
+Basic Block 4 0x000209ec-0x000209f2
+0x000209ee:e6:	u0x10000043(0x000209ee:e6) = (cast) a1(i)                 ///Delete this from epilog
+0x000209ee:c1:	u0x10000012(0x000209ee:c1) = - u0x10000043(0x000209ee:e6) ///Delete this from epilog
+0x000209f2:e7:	u0x1000004b(0x000209f2:e7) = (cast) a5(0x000209e8:e1)
+0x000209f2:23:	u0x00004200:1(0x000209f2:23) = u0x1000004b(0x000209f2:e7) < #0x10
+*/
+
     ghidra::pLogger->info("Preparing to edit the flow block graph to remove the loop edge");
     graph.removeEdge(loopBlock, loopBlock);
     ghidra::pLogger->flush();
