@@ -69,9 +69,9 @@ bool sameRegister(const Varnode* a, const Varnode* b);
 class FunctionEditor
 {
   public:
-    const Funcdata& data; ///<@brief Ghidra function data
+    Funcdata& data; ///<@brief Ghidra function data
     ///@brief Editor methods operating on a Ghidra Function data object
-    explicit FunctionEditor(const Funcdata& dataParam) : data(dataParam) {};
+    explicit FunctionEditor(Funcdata& dataParam) : data(dataParam) {};
     /**
      * @brief Given a BlockBasic, remove any enclosing empty do...while wrapper
      *
@@ -86,6 +86,10 @@ class FunctionEditor
      * @param newBlock The replacement block
      */
     static void replaceBlock(const BlockGraph* graph, FlowBlock* oldBlock, FlowBlock* newBlock);
+    /**
+     * @brief Remove any PCodeOps for which the output Varnode has no descendents
+     */
+    void removeUnusedOps(FlowBlock* block);
 };
 
 /**

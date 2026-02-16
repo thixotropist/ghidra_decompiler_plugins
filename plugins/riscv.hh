@@ -35,6 +35,7 @@ static const int RETURN_NO_TRANSFORM = 0;
 static const int RETURN_TRANSFORM_PERFORMED = 1;
 extern Architecture* arch;
 extern AddrSpace* registerAddrSpace;
+extern AddrSpace* csRegisterAddrSpace;
 }
 
 namespace riscv_vector

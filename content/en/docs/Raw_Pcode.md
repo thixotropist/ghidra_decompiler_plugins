@@ -51,6 +51,9 @@ Basic Block 0 0x00000000-0x0000000c             // a basic block has no jumps in
 Note that Varnodes like `v1(0x00000004:3)` include both the register name (`v1`) and the pcode address offset and sequence number (aka `Time`)
 at which the register was set (`0x00000004:3`).
 The `i` field likely means this is an Indirect varnode, in this case provided externally via a function call.
+Occasionally you will see a Varnode like `c0x0c20(i)`, which likely refers to a processor status register.  In this case,
+this is the `vl` or vector length register whose Ghidra Address Space shortcut is 'c' with offset 0x0c20, as defined in
+`riscv.table.sinc`.
 
 ## Initialization blocks
 
@@ -194,7 +197,8 @@ How do we interpret these printRaw descriptions?
     * `#` implies IPTR_CONSTANT
     * `%` implies IPTR_PROCESSOR or maybe `register`
     * `r` indicates a RAM address
-    * `i` appears to indicate a store to RAM operation 
+    * `i` appears to indicate a store to RAM operation
+    * `c` appears to refer to a register, with the offset to name binding set in a file like `riscv.table.sinc`.
 * varnodes like `r0x001d90d4:4(0x00100088:5d) = r0x001d90d4:4(0x00100084:5c) [] i0x00100088:50(free)`
   *appear* to indicate a RAM variable that may hold a pre-existing value or may be rewritten by the `i0x00100088:50` varnode
 * note that some instructions have been deleted from this raw pcode listing - the floating point loads and stores

@@ -1,5 +1,6 @@
 restore test/whisper_sample_1_save.xml
 map function 0x209be string_constructor
+load function func_0x0001f950
 parse line extern void string_constructor(void* this, char* param1, void* allocator);
 load function string_constructor
 decompile string_constructor

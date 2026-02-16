@@ -81,10 +81,10 @@ index 8319d83b..8f3ac5c2 100644
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index f21c0f82..7af8aabb 100644
+index a392076a..29d9f4d4 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5420,7 +5420,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5425,7 +5425,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -93,7 +93,7 @@ index f21c0f82..7af8aabb 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5703,6 +5703,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5708,6 +5708,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleSplitStore("splitpointer") );
      actcleanup->addRule( new RuleStringCopy("constsequence"));
      actcleanup->addRule( new RuleStringStore("constsequence"));

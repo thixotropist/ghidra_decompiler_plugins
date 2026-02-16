@@ -13,6 +13,9 @@
             36957df675b717a50d0013054584efe0
             5fef
         </bytechunk>
+        <bytechunk space="ram" offset="0x1f950" readonly="true">
+            b302b50016858280
+        </bytechunk>
     </binaryimage>
     <coretypes>
         <void />
@@ -54,4 +57,26 @@
         <type name="longdouble" size="16" metatype="float" id="-1267909053971395201" />
         <type name="float" size="4" metatype="float" id="-120139017508053025" />
     </coretypes>
+    <save_state>
+        <typegrp structalign="4"/>
+        <db scopeidbyname="false">
+            <scope name="" id="0x0">
+                <symbollist>
+                    <mapsym>
+                        <function id="0xc" name="func_0x0001f950" size="1" noreturn="true">
+                            <addr space="ram" offset="0x01f950"/>
+                            <prototype extrapop="0" model="__stdcall" modellock="true" noreturn="true">
+                                <returnsym typelock="true">
+                                    <addr space="register" offset="0x2050" size="8"/>
+                                    <type name="long" id="0xc000000000000097" metatype="int" size="8"/>
+                                </returnsym>
+                            </prototype>
+                        </function>
+                        <addr space="ram" offset="0x01f950" size="1"/>
+                        <rangelist/>
+                    </mapsym>
+                </symbollist>
+            </scope>
+        </db>
+    </save_state>
 </xml_savefile>
