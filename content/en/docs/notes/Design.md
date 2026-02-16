@@ -1,9 +1,11 @@
 ---
 title: Design
 weight: 50
+description: A design summary for decompiler plugins and the RISC-V vector plugin example
 ---
 
->Note: this should be considered a living document, subject to many future updates.
+>Note: This should be considered a living document, subject to many future updates.  Many design elements
+>      are likely to change rapidly, and are documented in the source code as Doxygen.
 
 The existing code lacks clear factorization, making it hard to extend to larger transforms.  This page sketches
 design principles that may help with refactoring and overall clarity.
@@ -130,9 +132,19 @@ the descendents of that instruction - instructions referencing as input the vect
 set by that vector load - are collected and transformed into `vector_memset` or `vector_memcpy` calls.  The element size and number of vector elements are used to compute
 the number of bytes to set or copy.
 
+#### VectorLoop
+
+This class handles general feature extraction for vector stanzas including a loop.  It should
+provide enough general features to allow the VectorMatcher code to identify which transform to attempt.
+The general features include:
+
+* identification of vector source and destination operands, if any
+* identification of the loop control structure and the registers or Varnode tested to exit the loop
+* an initial attempt to identify likely temporary registers and possible result registers.
+
 #### VectorMatcher
 
-This class handles general feature extraction and basic matching for vector sequences.
+This class handles specific feature extraction and basic matching for vector sequences.
 The class concentrates on sequences involving loops.  The simplest case is a vector memory
 copy operation with a variable number of elements to transfer:
 

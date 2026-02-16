@@ -98,7 +98,7 @@ extern "C" int plugin_init(void *context)
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::trace);
+    pLogger->set_level(spdlog::level::warn);
     std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
     riscv_vector::reportFile.open(summariesFilename);
     riscv_vector::reportFile << "RISC-V Summary Report" << std::endl;

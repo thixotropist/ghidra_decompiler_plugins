@@ -1,9 +1,11 @@
 ---
 title: BlockGraph transforms
 weight: 40
+description: Changing the default C-like control flow requires BlockGraph transforms
 ---
 
->Summary: We want to understand how to edit BlockGraph objects to remove useless DoWhile blocks.
+>Summary: For this example we want to understand how to edit BlockGraph objects to remove useless DoWhile blocks.
+>         That can mean updating a lot of internal pointers.
 
 ## Example: whisper_sample_1
 

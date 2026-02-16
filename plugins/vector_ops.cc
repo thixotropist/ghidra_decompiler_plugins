@@ -27,7 +27,7 @@ static std::vector<std::string> operationTypeToString;
 void VectorOperation::static_init()
 {
     VectorOperand::static_init();
-    if (ghidra::pLogger->should_log(spdlog::level::info)) operationTypeToString = {
+    operationTypeToString = {
         "unknown",
         "copy",
         "load",
@@ -172,8 +172,7 @@ int VectorSeries::match()
         ghidra::pLogger->info("Exploring dependencies of the vector load op at 0x{0:x}",
             loadOp->getAddr().getOffset());
         ghidra::pLogger->flush();
-        std::list<ghidra::PcodeOp *>::const_iterator enditer = outputVn->endDescend();
-        for (std::list<ghidra::PcodeOp *>::const_iterator it = outputVn->beginDescend(); it != enditer; ++it)
+        for (auto it = outputVn->beginDescend(); it != outputVn->endDescend(); ++it)
         {
             ghidra::PcodeOp* descOp = *it;
             if (currentBlock != descOp->getParent()) continue;
@@ -302,11 +301,10 @@ void VectorLoop::static_init()
                 op);
             loop.vectorOps.push_back(vOp);
         };
-    if (ghidra::pLogger->should_log(spdlog::level::info))
-    {
-        fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
-            "innerProduct", "unknown", "other"};
-    }
+
+    fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
+        "innerProduct", "unknown", "other"};
+
 }
 VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     terminationConditionFlags(0),
@@ -427,8 +425,8 @@ void VectorLoop::log()
 void VectorLoop::examine_control_flow(ghidra::PcodeOp* vsetOpParam)
 {
     vsetOp = vsetOpParam;
-    firstAddr = vsetOp->getAddr().getOffset();
     loopBlock = vsetOp->getParent();
+    firstAddr = loopBlock->firstOp()->getAddr().getOffset();
     lastAddr = loopBlock->getStop().getOffset();
     codeSpace = vsetOp->getAddr().getSpace();
     // Get the Ghidra block containing this loop
@@ -479,8 +477,7 @@ void VectorLoop::collect_phi_nodes()
                 ghidra::pLogger->trace("  Analysis of Phi node: {0:s}",
                     ss.str());
             }
-            int numArgs = op->numInput();
-            for (int slot = 0; slot < numArgs; ++slot)
+            for (int slot = 0; slot < op->numInput(); ++slot)
             {
                 // where does this arg get written?
                 if (trace)
@@ -854,9 +851,9 @@ bool VectorLoop::absorbOps()
     // * other loop ops are removed
     std::list<ghidra::PcodeOp*>::iterator it = loopBlock->beginOp();
     std::list<ghidra::PcodeOp*>::iterator lastOp = loopBlock->endOp();
-    std::stringstream ss;
     // handle load operands only at first
     if (vSourceOperands.size() != 1) return false;
+    std::stringstream ss;
     VectorOperand* loadOperand = vSourceOperands[0];
     ghidra::Varnode* vLoad = loadOperand->pRegister;
     while (it != lastOp)

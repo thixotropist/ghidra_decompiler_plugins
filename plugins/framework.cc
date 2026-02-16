@@ -153,6 +153,45 @@ void FunctionEditor::removeDoWhileWrapperBlock(BlockBasic* blk)
     }
 }
 
+void FunctionEditor::removeUnusedOps(FlowBlock* block)
+{
+    std::set<PcodeOp*> deletionSet;
+    std::set<PcodeOp*> visitSet;
+    bool finished = false;
+    while (!finished)
+    {
+        PcodeOp* op = block->firstOp();
+        while (true)
+        {
+            // why do we need this test? We get a repeated sequence of PcodeOps if we don't.
+            if (visitSet.find(op) != visitSet.end()) {
+                break;
+            }
+            visitSet.insert(op);
+            if (op == nullptr) break;
+            pLogger->trace("Testing PcodeOp at 0x{0:x} for unused outputs",
+                op->getAddr().getOffset());
+            Varnode* outVn = op->getOut();
+            if ((outVn != nullptr) && (outVn->beginDescend() == outVn->endDescend()))
+            {
+                pLogger->info("Queuing for deletion PcodeOp with unused output at 0x{0:x}:{1:x}",
+                    op->getAddr().getOffset(), op->getTime());
+                deletionSet.insert(op);
+            }
+            if (op == block->lastOp()) break;
+            op = op->nextOp();
+        }
+        visitSet.clear();
+        finished = (deletionSet.size() == 0);
+        for (auto op: deletionSet)
+        {
+            pLogger->info("Deleting PcodeOp with unused output at 0x{0:x}:{1:x}",
+                    op->getAddr().getOffset(), op->getTime());
+            data.opUnlink(op);
+        }
+        deletionSet.clear();
+    }
+}
 
 void BlockGraphEditor::collectSubBlocks(std::vector<const FlowBlock*>& list) const
 {

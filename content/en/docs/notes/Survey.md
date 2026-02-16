@@ -1,10 +1,11 @@
 ---
 title: Survey
 weight: 60
+description: Survey an executable for common patterns that *may* be worth transforming.
 ---
 
-Decompiler plugins can be used to survey for patterns and help prioritize new transformation code.  This exercise
-shows how to survey the `whisper-cpp` for vector loop stanzas that *may* be worth transforming.
+>Summary: Decompiler plugins can be used to survey for patterns and help prioritize new transformation code.  This exercise
+>         shows how to survey the `whisper-cpp` for vector loop stanzas that *may* be worth transforming.
 
 # Generating raw survey files
 

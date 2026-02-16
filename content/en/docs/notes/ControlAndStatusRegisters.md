@@ -1,9 +1,11 @@
 ---
 title: Control and Status Registers
-weight: 60
+weight: 70
+description: How do we want to handle vector control and status registers?
 ---
 
-How do we want to handle vector control and status registers?
+>Summary: Ghidra can treat control and status registers as registers or as memory locations, or even
+>         as function calls.  What are the tradeoffs?
 
 The `vector_strlen` instruction pattern usually needs to load the `vl` csr.  This is one of two similar
 patterns found in `whisper_cpp::main`:

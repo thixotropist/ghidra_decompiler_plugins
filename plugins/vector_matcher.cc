@@ -529,7 +529,7 @@ int VectorMatcher::transformMemcpy()
         ss.str("");
     }
 
-    ghidra::pLogger->info("Transforming selection into vector_memcpy, flushing log buffers");
+    ghidra::pLogger->info("Transforming selection into vector_memcpy");
 
     ghidra::PcodeOp* newVectorOp = insertVoidCallOther(data, loopBlock->getStop(), VECTOR_MEMCPY, vStore, vLoad, vNumElem);
     if (trace)
@@ -553,8 +553,6 @@ int VectorMatcher::transformMemcpy()
     }
     ghidra::pLogger->info("Preparing to edit the flow block graph to remove the loop edge");
     graph.removeEdge(loopBlock, loopBlock);
-    ghidra::pLogger->flush();
-
     functionEditor.removeDoWhileWrapperBlock(loopBlock);
     if (!nextInstructionAddress.isInvalid())
     {
@@ -570,14 +568,12 @@ int VectorMatcher::transformMemcpy()
         }
         data.opInsertEnd(gotoOp, loopBlock);
     }
-    ghidra::pLogger->flush();
     if (info)
     {
         inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
         inspector.log("basic block after replacement", loopBlock);
     }
 
-    ghidra::pLogger->flush();
     return TRANSFORM_COMPLETED;
 }
 
@@ -620,6 +616,7 @@ int VectorMatcher::transformStrlen()
     ghidra::Varnode* intermediate = nullptr;
     ghidra::PcodeOp* initialResultOp = nullptr;
     ghidra::Varnode* resultVarnode = nullptr;
+    ghidra::BlockBasic* epilogBlock = nullptr;
     zeroIndexResult = loopModel.terminationControl->getOut(); // e.g. a6(0x000209e4:1c)
 
     int index = 0;
@@ -650,19 +647,19 @@ int VectorMatcher::transformStrlen()
         ghidra::pLogger->warn("Unable to find the intermediate result Varnode!");
         return TRANSFORM_ROLLED_BACK;
     }
-    else
+
+    // the result Varnode is the first dependency of the intermediate Varnode
+    intermediateDependencies = intermediate->beginDescend();
+    initialResultOp = *intermediateDependencies;
+    epilogBlock = initialResultOp->getParent();
+    resultVarnode = initialResultOp->getOut();
+    if (trace)
     {
-        // the result Varnode is the first dependency of the intermediate Varnode
-        intermediateDependencies = intermediate->beginDescend();
-        initialResultOp = *intermediateDependencies;
-        resultVarnode = initialResultOp->getOut();
-        if (trace)
-        {
-            resultVarnode->printRaw(ss);
-            ghidra::pLogger->info("\tstrlen result Varnode: {0:s}", ss.str());
-            ss.str("");
-        }
+        resultVarnode->printRaw(ss);
+        ghidra::pLogger->info("\tstrlen result Varnode: {0:s}", ss.str());
+        ss.str("");
     }
+
 
     // remove the results register from the list of external dependent ops
     // so we don't purge it with the other temporary registers
@@ -783,7 +780,6 @@ int VectorMatcher::transformStrlen()
             data.opUnlink(op);
             break;
         }
-
     }
 /*
 Basic Block 2 0x000209ce-0x000209d0
@@ -800,7 +796,6 @@ Basic Block 4 0x000209ec-0x000209f2
 
     ghidra::pLogger->info("Preparing to edit the flow block graph to remove the loop edge");
     graph.removeEdge(loopBlock, loopBlock);
-    ghidra::pLogger->flush();
     functionEditor.removeDoWhileWrapperBlock(loopBlock);
     if (!nextInstructionAddress.isInvalid())
     {
@@ -811,16 +806,19 @@ Basic Block 4 0x000209ec-0x000209f2
         if (trace)
         {
             gotoOp->printRaw(ss);
-            ghidra::pLogger->info("\tInserting a goto op to finish this block\n\t\t{0:s}", ss.str());
+            ghidra::pLogger->trace("\tInserting a goto op to finish this block\n\t\t{0:s}", ss.str());
             ss.str("");
         }
         data.opInsertEnd(gotoOp, loopBlock);
     }
-    ghidra::pLogger->flush();
+    ghidra::pLogger->info("Checking for unused PCodeOps");
+    functionEditor.removeUnusedOps(epilogBlock);
+    functionEditor.removeUnusedOps(loopBlock);
+    //TODO: locate any incoming edge blocks and invoke removeUnusedOps on these instead of all parent blocks
+    functionEditor.removeUnusedOps(loopBlock->getParent());
     if (info)
     {
         inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
-        inspector.log("basic block after replacement", loopBlock);
     }
     ghidra::pLogger->flush();
     return TRANSFORM_COMPLETED;

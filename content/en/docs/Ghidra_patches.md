@@ -24,7 +24,6 @@ This patch file currently provides:
 
   ## Limitations
 
-  * These patches have only been tested with gcc 15 on a Linux platform.  Other platforms will require dynamic library mods to the `PlatformManager`.
   * There is no current support for unloading a plugin once loaded.  The issue involves deletion of all *copies* of
     plugin rules before the plugin rule destructor code is unlinked. In practice this isn't much of a problem, as
     the Ghidra GUI will restart and reload the decompiler itself.

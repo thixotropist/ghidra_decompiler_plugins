@@ -1,5 +1,6 @@
 ---
 title: Ghidra's Actions and Rules
+description: Ghidra's decompiler iteratively applies Actions and Rules to generate C-like source
 weight: 30
 ---
 

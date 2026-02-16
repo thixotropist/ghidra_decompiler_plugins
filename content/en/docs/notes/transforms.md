@@ -1,9 +1,10 @@
 ---
 title: Transforms
 weight: 10
+description: A very simple loop transform into `vector_memcpy`
 ---
 
-A very simple vector_memcpy loop can look like this:
+A vector_memcpy loop can look like this:
 
 ```text
 Basic Block 1 0x00000048-0x0000005a
