@@ -1,10 +1,11 @@
 ---
-title: Workspace Layout
+title: Workspace Components
+description: This workspace includes a plugin manager and a sample CPU-specific plugin
 weight: 10
 ---
 
 This workspace supports experiments with Ghidra's decompiler, a C++ executable usually invoked from the Ghidra Java User Interface.
-The primary components are:
+Primary components include the plugin manager, a demo plugin supporting RISC-V vector instructions, and test/documentation frameworks.
 
 * A `PluginManager` patched into the source for a released Ghidra distribution.
     * The patches are found in the file `ghidra.pat` and applied to the Ghidra source tarball

@@ -1,10 +1,10 @@
 ---
 title: Integration Test Suite
+description: The integration test suite, driven by `integrationTest.py`, exercises the decompiler with binaries packaged as Ghidra datatests.
 weight: 60
 ---
 
-The integration test suite, driven by `integrationTest.py`, exercises the decompiler with binaries packaged
-as Ghidra datatests.  Datatests are a native capability of the Ghidra decompiler, running independently
+Datatests are a native capability of the Ghidra decompiler, running independently
 of the Ghidra Java system and GUI.  Test cases live in the `./test` directory and generally consist of
 an XML save file and a Ghidra test script.
 

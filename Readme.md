@@ -52,7 +52,7 @@ where that firmware is built on semi-custom RISC-V hardware and open-source soft
 ## A Decompiler Plugin Development Workspace
 
 Plugins are experimental.  We hope to evaluate the feasibility of both user-contributed and processor-specific plugins.
-The initial goal is to extend @caheckman commits transforming pcode sequences into `builtin_memcpy` calls, translating
+The initial goal was to extend @caheckman commits transforming pcode sequences into `builtin_memcpy` calls, then extending to translating
 common RISCV-64 vector instruction sequences into `vector_memcpy`, `vector_strlen`, and other higher level calls.
 
 ## Quickstart
@@ -108,9 +108,9 @@ What works:
 * A simple Ghidra decompiler plugin framework is working on a Linux host.  The plugin activates with both the
   usual Ghidra GUI environment and the standalone Ghidra decompiler datatest framework.
 * The plugin manager adds hooks to add custom actions and new Datatyped builtin functions like `vector_memcpy` and `vector_memset`.
-* The elementary proof-of-concept plugin recognizes *some* RISCV vector sequences and transforms them into `vector_memcpy` and
-  `vector_memset` calls.
-* Applying the new plugin rule to a vectorized RISC-V build of `whisper-cpp` completes without crashing and generates over 1500
+* The proof-of-concept plugin recognizes many RISCV vector sequences and transforms them into `vector_memcpy`, `vector_memset`, and
+  `vector_strlen` calls.
+* Applying the new plugin rule to a vectorized RISC-V build of `whisper-cpp` completes without crashing and generates over 1600
   vector transforms.
 * Varnodes assigned by the decompiler and used exclusively within a vector stanza are deleted, reducing clutter.
 * Vector stanza loops are absorbed into `vector_*` function calls, updating the parent function's `BlockGraph` to show the
@@ -118,11 +118,10 @@ What works:
 
 What's pending:
 
-* Add more builtins, like `vector_strlen`.  Recognizing these sequences is mostly working, generating safe transforms is in the TODO list.
-* General editing for consistency and ease of access.  For example, using namespaces to separate decompiler core and RISC-V plugin
-  methods and types.
+* Refactor to identify common code, adding reusable helper functions to process transforms spanning three or more FlowBlocks.
 * We need a general model for vector instruction stanzas implementing loops over arrays of structures.  This *may* lead
   to `vector_map` transforms similar to `std::transform` where the scalar operation is a lambda expression.
+* Examine the transforms made in the `whisper.cpp` binary to survey for effectiveness of the current plugin.
 
 Current plugin framework lessons-learned  snapshot:
 
@@ -137,16 +136,18 @@ Current RISC-V transforms lessons-learned snapshot:
 
 * A RISC-V plugin can significantly improve decompiler output readability, especially if tuned to patterns often emitted by current
   compilers.  Assembly sequences emitted by GCC builtins like `builtin_memcpy` make a good example of patterns worth transforming.
-  Assembly sequences generated with the GCC loop vectorization test suite would be an excellent training set of new - and much tougher - patterns.  Obfuscated code would fair poorly, since it is so easy to generate patterns that make no sense until runtime.
+  Assembly sequences generated with the GCC loop vectorization test suite would be an excellent training set of new - and much tougher - patterns.
+  Obfuscated code would fair poorly, since it is so easy to generate patterns that make no sense until runtime.
 * The RISC-V vector extensions do not in general allow simple PCode SLEIGH semantic sections. RISC-V vector instruction decoding
   on-chip is intrinsically a run-time action, based not on just the 32 bit instruction but a concatenation of vector and other CSR
   register fields with that instruction.  It is likely - but not proven - that the Ghidra decompiler can partially fixup the base
   SLEIGH PCode decoding after full control flow analysis is complete and the context of relevant vector CSRs is better known.
 * Vector instructions are commonly found in Inference Engine applications, implementing things like floating point dot products and
   reduction sums.  Surprisingly, vector instructions are also found in general device drivers and embedded system code.
-  Simple `memcpy` and `strlen`stanzas are to be expected there and are easy to recognize and transform.
+  Simple `memcpy` and `strlen` stanzas are to be expected there and are easy to recognize and transform.
   Device drivers often include loops over arrays of control structures, polling for status or collecting sensor data.
-  Vectorized `transform`, `reduce`, or `apply` loops will need a lot of attention to be recognizable by Ghidra users.  A simple vectorized loop reversing elements in an array can easily take a user hours to comprehend.
+  Vectorized `transform`, `reduce`, or `apply` loops will need a lot of attention to be recognizable by Ghidra users.
+  A simple vectorized loop reversing elements in an array can easily take a user hours to comprehend.
 * Pay less attention to vector sequences that a compiler is unlikely to generate.  Vector instructions that use Multiplier or
   Grouping semantics to apply to 2, 4, or 8 registers in parallel are less likely to be generated and found in systems for several
   years. Current micro-architectures don't appear to yet show better performance on these vector sequences.

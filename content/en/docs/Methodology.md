@@ -1,9 +1,9 @@
 ---
 title: Methodology
+description: We want a decompiler plugin that provides the Ghidra user a net gain in insight-per-hour
 weight: 80
 ---
 
-We want a decompiler plugin that provides the Ghidra user a net gain in insight-per-hour.
 In one extreme case, the plugin would be able to recognize and transform *any* RISC-V compiler vectorization into recognizable C or C++ source code.
 Any transform completed would be guaranteed to be correct, with no false-positive matches.
 That's infeasible in the face of the variety of RISC-V extensions, compilers, and compiler optimization flags.

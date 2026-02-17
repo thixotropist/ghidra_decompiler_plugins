@@ -1,5 +1,6 @@
 ---
 title: Raw Pcode Tutorial
+description: Decompiler plugins process PCodeOps into higher level operations more easily interpreted in the Decompiler window.
 weight: 30
 ---
 

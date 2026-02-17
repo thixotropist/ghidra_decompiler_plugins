@@ -1,9 +1,8 @@
 ---
 title: Vector Survey
+description: What common vector instruction sequences are worth transforming?  What is a good sequence for developing the Actions implementing those transforms?
 weight: 20
 ---
-
-What common vector instruction sequences are worth transforming?  What is a good sequence for developing the Actions implementing those transforms?
 
 The starting point is very simple:
 

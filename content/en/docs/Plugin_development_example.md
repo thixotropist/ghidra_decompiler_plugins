@@ -1,5 +1,6 @@
 ---
 title: Plugin Development Example
+description: Plugin development is likely driven by a particularly confusing class of executable binaries
 weight: 40
 ---
 
