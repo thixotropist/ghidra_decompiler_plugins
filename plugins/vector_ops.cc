@@ -354,6 +354,8 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     // Identify vector and other instructions found immediately after the loop,
     // perhaps indicative of a reduction operation
     examine_loop_epilog();
+    // Locate any blocks that flow into the loop
+    collect_prolog_blocks();
     // Summarize key features to a report file
     generateReport();
 }
@@ -730,6 +732,16 @@ void VectorLoop::examine_loop_epilog()
     }
 }
 
+void VectorLoop::collect_prolog_blocks()
+{
+    int edgesIn = loopBlock->sizeIn();
+    for (int i = 0; i < edgesIn; i++)
+    {
+        ghidra::FlowBlock* b = loopBlock->getIn(i);
+        if (b != loopBlock) prologBlocks.push_back(b);
+    }
+}
+
 static std::set<ghidra::intb> loopsAnalyzed;
 void VectorLoop::generateReport()
 {
@@ -747,7 +759,8 @@ void VectorLoop::generateReport()
         "\tvector loads: 0x" << vLoadOps.size() << std::endl <<
         "\tvector stores: 0x" << vStoreOps.size() << std::endl <<
         "\tcomparisons: 0x" << sComparisonOps.size() << std::endl <<
-        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl << std::dec;
+        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl << std::dec <<
+        "\tedges in: " << prologBlocks.size() << std::endl;
     reportFile << "\tVector instructions (handled | unhandled | epilog): ";
     for (auto vOp: vectorOps)
     {

@@ -14,6 +14,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 #include "riscv.hh"
+#include "inspector.hh"
 #include "rule_vector_transform.hh"
 #include "vector_ops.hh"
 
@@ -98,7 +99,7 @@ extern "C" int plugin_init(void *context)
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::warn);
+    pLogger->set_level(spdlog::level::info);
     std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
     riscv_vector::reportFile.open(summariesFilename);
     riscv_vector::reportFile << "RISC-V Summary Report" << std::endl;
@@ -135,6 +136,7 @@ extern "C" int plugin_getrules(std::vector<Rule*>& rules)
     return 1;
 }
 
+static bool runSurvey = true;
 /**
  * @brief register any new builtins
  * @details access from UserOpManage::registerBuiltin
@@ -175,6 +177,14 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
     default:
         pLogger->warn("Unrecognized new DatatypeUserOp");
         res = nullptr;
+    }
+    // Optionally run some survey code exactly once, after Ghidra has initialized all of its
+    // internals.
+    if (riscv_vector::SURVEY_ACTION_DATABASE && runSurvey)
+    {
+        Inspector inspector(pLogger);                     /// A utility to inspect Ghidra structures
+        inspector.logActions();
+        runSurvey = false;
     }
     pLogger->flush();
     return res;

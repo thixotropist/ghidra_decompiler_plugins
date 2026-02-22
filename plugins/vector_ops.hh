@@ -189,6 +189,7 @@ class VectorLoop
     ghidra::intb firstAddr; ///< the first RAM address of this loop
     ghidra::intb lastAddr; ///< the last RAM address of this loop
     ghidra::BlockBasic* loopBlock;   ///< the parent block of the loop
+    std::list<ghidra::FlowBlock*> prologBlocks; ///< Blocks which flow into loopBlock
     ghidra::Varnode* terminationVarnode; ///< boolean Varnode - if true, jump to start of the loop
     ghidra::PcodeOp* terminationControl; ///< variable tested to terminate the loop
     std::vector<ghidra::PcodeOp*> phiNodesAffectedByLoop;  ///< Phi or MULTIEQUAL opcodes referencing loop variables
@@ -293,7 +294,10 @@ class VectorLoop
      * as might be needed for reduction algorithms.
      */
     void examine_loop_epilog();
-
+    /**
+     * @brief collect possible prolog blocks
+     */
+    void collect_prolog_blocks();
     /**
      * @brief Generate a summary report for this vector loop
      */

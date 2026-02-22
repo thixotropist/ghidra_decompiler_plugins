@@ -814,8 +814,8 @@ Basic Block 4 0x000209ec-0x000209f2
     ghidra::pLogger->info("Checking for unused PCodeOps");
     functionEditor.removeUnusedOps(epilogBlock);
     functionEditor.removeUnusedOps(loopBlock);
-    //TODO: locate any incoming edge blocks and invoke removeUnusedOps on these instead of all parent blocks
-    functionEditor.removeUnusedOps(loopBlock->getParent());
+    for (auto fb: loopModel.prologBlocks)
+        functionEditor.removeUnusedOps(fb);
     if (info)
     {
         inspector.log("copyBlk after replacement", loopBlock->getCopyMap());

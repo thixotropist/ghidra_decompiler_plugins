@@ -27,6 +27,10 @@ class Inspector
      * @param fb the FlowBlock to be logged
      */
     void log(const string label, const FlowBlock* fb); /// log fb details
+    /**
+     * @brief Log the current ActionDatabase
+     */
+    void logActions();
 };
 }
 #endif /* INSPECTOR_HH_ */

@@ -63,14 +63,14 @@ void getRegisterName(intb offset, std::string* regName);
 bool sameRegister(const Varnode* a, const Varnode* b);
 
 /**
- * @brief Methods to edit a Ghidra function's data
+ * @brief Methods to edit a Ghidra function's data, for instance to remove Do ... While wrappers.
  *
  */
 class FunctionEditor
 {
   public:
     Funcdata& data; ///<@brief Ghidra function data
-    ///@brief Editor methods operating on a Ghidra Function data object
+    ///@brief Constructor
     explicit FunctionEditor(Funcdata& dataParam) : data(dataParam) {};
     /**
      * @brief Given a BlockBasic, remove any enclosing empty do...while wrapper
@@ -94,7 +94,6 @@ class FunctionEditor
 
 /**
  * @brief Collect methods for editing a BlockGraph
- *
  */
 class BlockGraphEditor {
   public:

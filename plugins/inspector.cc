@@ -10,6 +10,15 @@ Inspector::Inspector(std::shared_ptr<spdlog::logger> myLogger) :
     logger(myLogger)
 {
 }
+void Inspector::logActions()
+{
+  ActionDatabase* allacts = &arch->allacts;
+  Action* root = allacts->getCurrent();
+  std::stringstream ss;
+  root->printStatistics(ss);
+  logger->info("Action Database statistics: {0:s}",
+    ss.str());
+}
 void Inspector::log(const string label, const FlowBlock* fb)
 {
     int edgesIn = fb->sizeIn();

@@ -44,6 +44,7 @@ static const int TRANSFORM_LIMIT_LOOPS = INT_MAX; ///<@brief maximum number of l
 static const int TRANSFORM_LIMIT_NONLOOPS = INT_MAX; ///<@brief maximum number of loop transforms to attempt
 //static const int TRANSFORM_LIMIT_NONLOOPS = 0; ///<@brief maximum number of loop transforms to attempt
 //static const int TRANSFORM_LIMIT_LOOPS = 9; ///<@brief maximum number of loop transforms to attempt
+static const bool SURVEY_ACTION_DATABASE = false;
 
 extern int transformCountNonLoop;
 extern int transformCountLoop;
