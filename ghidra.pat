@@ -53,7 +53,7 @@ index bf7103d9..d957a3cb 100644
  
  {
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-index 8319d83b..8f3ac5c2 100644
+index 1a27abbf..1629c6c3 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 @@ -159,6 +159,7 @@ public:
@@ -81,22 +81,42 @@ index 8319d83b..8f3ac5c2 100644
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index a392076a..29d9f4d4 100644
+index f9e147e6..de444e8a 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5425,7 +5425,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -2350,1 +2350,1 @@ int4 ActionDefaultParams::apply(Funcdata &data)
+ void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
+
+ {
+-  if (op->doesSpecialPrinting()) return;
+   Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
+   int4 valsize = vn->getSize();
+   if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
+@@ -3064,8 +3063,3 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
+     return -1;
+   }
+   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
+-  if (def->code() == CPUI_INSERT) {
+-    PcodeOp *storeOp = def->getOut()->loneDescend();
+-    if (storeOp == (PcodeOp *)0 || storeOp->code() != CPUI_STORE)
+-      return -1;		// INSERT output is explicit unless it is immediately used by STORE
+-  }
+
+   if (def->code() == CPUI_PTRSUB) { // A dereference
+     Varnode *basevn = def->getIn(0);
+@@ -5436,7 +5430,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
--			    "fixateglobals", "fixateproto", "constsequence",
-+			    "fixateglobals", "fixateproto", "constsequence", "pluginrules",
+-			    "fixateglobals", "fixateproto", "constsequence", "bitfields",
++			    "fixateglobals", "fixateproto", "constsequence", "bitfields", "pluginrules",
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5708,6 +5708,11 @@ void ActionDatabase::universalAction(Architecture *conf)
-     actcleanup->addRule( new RuleSplitStore("splitpointer") );
-     actcleanup->addRule( new RuleStringCopy("constsequence"));
-     actcleanup->addRule( new RuleStringStore("constsequence"));
+@@ -5725,6 +5719,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+     actcleanup->addRule( new RuleBitFieldIn("bitfields"));
+     actcleanup->addRule( new RulePullAbsorb("bitfields"));
+     actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
 +    if(conf->pm.loaded) {
 +      for (std::vector<Rule*>::iterator it = conf->pm.rules.begin(); it != conf->pm.rules.end(); ++it) {
 +        actcleanup->addRule(*it);
