@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="253.83922mm"
+   height="115.49594mm"
+   viewBox="0 0 253.83922 115.49594"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
+   sodipodi:docname="workspace.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.4615079"
+     inkscape:cx="479.6416"
+     inkscape:cy="358.5338"
+     inkscape:window-width="3440"
+     inkscape:window-height="1371"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-21.502347,-10.106055)">
+    <g
+       id="g1"
+       transform="translate(-100.10948,-79.626724)">
+      <rect
+         style="fill:#ffff00;stroke:#000000;stroke-width:0.264999"
+         id="rect1"
+         width="53.511208"
+         height="13.825862"
+         x="121.7444"
+         y="98.087067"
+         ry="0.071253397" />
+      <text
+         xml:space="preserve"
+         style="font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="148.49011"
+         y="105.73378"
+         id="text1"><tspan
+           sodipodi:role="line"
+           id="tspan1"
+           style="stroke-width:0.264583"
+           x="148.49011"
+           y="105.73378">Ghidra Source Repo</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="21.449505"
+       y="11.714725"
+       id="text2"><tspan
+         sodipodi:role="line"
+         id="tspan29"
+         x="21.449505"
+         y="11.714725">git@github.com:thixotropist/ghidra.git</tspan><tspan
+         sodipodi:role="line"
+         id="tspan30"
+         x="21.449505"
+         y="14.644846">branch: isa_ext</tspan><tspan
+         sodipodi:role="line"
+         id="tspan31"
+         x="21.449505"
+         y="17.574966">commit: 2bcf7c1ba547c2c3460f76b5c1e837409a1f97dc</tspan></text>
+    <g
+       id="g4"
+       transform="translate(-100.10948,-56.874287)"
+       style="fill:#00ff00">
+      <rect
+         style="fill:#00ff00;stroke:#000000;stroke-width:0.264999"
+         id="rect3"
+         width="53.511208"
+         height="13.825862"
+         x="121.7444"
+         y="98.087067"
+         ry="0.071253397" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.264583"
+         x="148.49011"
+         y="105.73378"
+         id="text4"><tspan
+           sodipodi:role="line"
+           id="tspan4"
+           x="148.49011"
+           y="105.73378">Ghidra Build Directory</tspan></text>
+    </g>
+    <rect
+       style="fill:#5fbcd3;stroke:#000000;stroke-width:0.264224"
+       id="rect4"
+       width="53.183308"
+       height="13.829876"
+       x="21.634459"
+       y="63.570038"
+       ry="0.071274079" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.86219px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.268329"
+       x="48.458332"
+       y="72.229774"
+       id="text5"
+       transform="scale(1.0141971,0.98600163)"><tspan
+         sodipodi:role="line"
+         id="tspan5"
+         x="48.458332"
+         y="72.229774"
+         style="stroke-width:0.268329">Ghidra Deploy Directory</tspan></text>
+    <rect
+       style="fill:#ffaaaa;stroke:#000000;stroke-width:0.264999"
+       id="rect6"
+       width="53.511208"
+       height="13.825862"
+       x="115.59957"
+       y="41.036392"
+       ry="0.071253397" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.264583"
+       x="142.34529"
+       y="48.683105"
+       id="text7"><tspan
+         sodipodi:role="line"
+         id="tspan35"
+         x="142.34529"
+         y="48.683105">Build patched decompiler</tspan></text>
+    <g
+       id="g8"
+       transform="translate(2.8378761,-59.499227)"
+       style="fill:#00ff00">
+      <rect
+         style="fill:none;stroke:#000000;stroke-width:0.264999"
+         id="rect7"
+         width="35.849304"
+         height="6.1448274"
+         x="121.6119"
+         y="81.800087"
+         ry="0.071253397" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.264583"
+         x="140.59488"
+         y="85.828247"
+         id="text8"><tspan
+           sodipodi:role="line"
+           id="tspan8"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;stroke-width:0.264583"
+           x="140.59488"
+           y="85.828247">ghidra.pat</tspan></text>
+    </g>
+    <rect
+       style="fill:#ffaaaa;stroke:#000000;stroke-width:0.264999"
+       id="rect35"
+       width="53.511208"
+       height="13.825862"
+       x="120.1205"
+       y="80.320869"
+       ry="0.071253397" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.264583"
+       x="146.86607"
+       y="87.967583"
+       id="text36"><tspan
+         sodipodi:role="line"
+         id="tspan38"
+         x="146.86607"
+         y="87.967583">Build dynamic plugin</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;fill:#000000;stroke-width:0.264583"
+       x="122.02451"
+       y="117.11102"
+       id="text53"><tspan
+         sodipodi:role="line"
+         id="tspan53"
+         x="122.02451"
+         y="117.11102">SLEIGHHOME=/opt/ghidra_12.1_DEV/ \</tspan><tspan
+         sodipodi:role="line"
+         id="tspan54"
+         x="122.02451"
+         y="121.01785">DECOMP_PLUGIN=/tmp/libriscv_vector.so \</tspan><tspan
+         sodipodi:role="line"
+         id="tspan55"
+         x="122.02451"
+         y="124.92466">/opt/ghidra_12.1_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest &lt; test/whisper_main.ghidra</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.264583"
+       x="173.09543"
+       y="106.73897"
+       id="text56"><tspan
+         sodipodi:role="line"
+         id="tspan56"
+         style="fill:#000000;stroke-width:0.264583"
+         x="173.09543"
+         y="106.73897">DECOMP_PLUGIN=/tmp/libriscv_vector.so /opt/ghidra_12.1_DEV/ghidraRun</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';text-align:center;text-anchor:middle;fill:#0000ff;stroke-width:0.264583"
+       x="132.99028"
+       y="103.02086"
+       id="text57"><tspan
+         sodipodi:role="line"
+         id="tspan57"
+         style="fill:#0000ff;stroke-width:0.264583"
+         x="132.99028"
+         y="103.02086">Launch Ghidra with plugin:</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#0000ff;stroke-width:0.264583"
+       x="134.86"
+       y="112.97775"
+       id="text58"><tspan
+         sodipodi:role="line"
+         id="tspan58"
+         x="134.86"
+         y="112.97775">Launch whisper_main datatest</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="142.42128"
+       y="21.345434"
+       id="text17"><tspan
+         sodipodi:role="line"
+         id="tspan17"
+         x="142.42128"
+         y="21.345434">via MODULE.bazel</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="143.24348"
+       y="33.944939"
+       id="text18"><tspan
+         sodipodi:role="line"
+         id="tspan39"
+         x="143.24348"
+         y="33.944939">bazel build -c opt @ghidra//:decompile</tspan><tspan
+         sodipodi:role="line"
+         id="tspan40"
+         x="143.24348"
+         y="36.875061">bazel build -c dbg @ghidra//:decompile_datatest</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="49.379436"
+       y="58.185318"
+       id="text20"><tspan
+         sodipodi:role="line"
+         id="tspan27"
+         x="49.379436"
+         y="58.185318">unzip to </tspan><tspan
+         sodipodi:role="line"
+         id="tspan28"
+         x="49.379436"
+         y="61.11544">/opt/ghidra_12.1_DEV</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="82.716553"
+       y="68.935478"
+       id="text22"><tspan
+         sodipodi:role="line"
+         id="tspan34"
+         x="82.716553"
+         y="68.935478">replacing.../Features/Decompiler/os/linux_x86_64/decompile*</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="49.379436"
+       y="36.107479"
+       id="text25"><tspan
+         sodipodi:role="line"
+         id="tspan25"
+         x="49.379436"
+         y="36.107479">git clone ...</tspan><tspan
+         sodipodi:role="line"
+         id="tspan26"
+         x="49.379436"
+         y="39.037601">gradle buildGhidra</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="94.752304"
+       y="24.22673"
+       id="text33"><tspan
+         sodipodi:role="line"
+         id="tspan3"
+         x="94.752304"
+         y="24.22673">git diff isa_ext..patched &gt; .../ghidra.pat</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="75.647232"
+       y="84.907959"
+       id="text37"><tspan
+         sodipodi:role="line"
+         id="tspan18"
+         x="75.647232"
+         y="84.907959"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan19"
+         x="75.647232"
+         y="87.838081">cp -f bazel-bin/plugins/libriscv_vector.so /tmp</tspan><tspan
+         sodipodi:role="line"
+         id="tspan20"
+         x="75.647232"
+         y="90.483917"></tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 48.390526,32.286202 V 41.21278"
+       id="path1"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 48.390526,55.038638 -0.164414,8.531399"
+       id="path2"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0" />
+    <path
+       id="path3"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.292925px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 124.3976,25.373347 75.146288,25.373201 Z"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 142.2933,28.445687 0.0619,12.590706"
+       id="path4"
+       inkscape:connector-type="polyline"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 142.35517,54.862256 V 70.484978 H 74.817763"
+       id="path12"
+       inkscape:connector-type="orthogonal"
+       inkscape:connector-curvature="0" />
+    <rect
+       style="fill:#5fbcd3;stroke:#000000;stroke-width:0.264224"
+       id="rect12"
+       width="53.183308"
+       height="13.829876"
+       x="21.634459"
+       y="81.730034"
+       ry="0.071274079" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.86219px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;stroke-width:0.268329"
+       x="48.458332"
+       y="90.647591"
+       id="text12"
+       transform="scale(1.0141971,0.98600163)"><tspan
+         sodipodi:role="line"
+         id="tspan12"
+         x="48.458332"
+         y="90.647591">Working Directory (/tmp)</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.274888px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 120.13127,87.229899 v 1.418246 H 74.69419"
+       id="path13"
+       inkscape:connector-type="orthogonal"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccc" />
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;stroke-width:0.264583"
+       x="127.6478"
+       y="78.485695"
+       id="text15"><tspan
+         sodipodi:role="line"
+         id="tspan15"
+         x="127.6478"
+         y="78.485695">bazel build -c dbg plugins:riscv_vector</tspan><tspan
+         sodipodi:role="line"
+         id="tspan16"
+         x="127.6478"
+         y="81.131531"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;fill:#000000;stroke-width:0.264583"
+       x="33.49865"
+       y="107.70251"
+       id="text23"><tspan
+         sodipodi:role="line"
+         id="tspan43"
+         x="33.49865"
+         y="107.70251">/tmp/ghidraRiscvLogger_$PID.log</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#0000ff;stroke-width:0.264583"
+       x="36.28006"
+       y="103.56924"
+       id="text24"><tspan
+         sodipodi:role="line"
+         id="tspan24"
+         x="36.28006"
+         y="103.56924">View Log Files</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82222px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start;fill:#000000;stroke-width:0.264583"
+       x="33.49865"
+       y="115.96906"
+       id="text34"><tspan
+         sodipodi:role="line"
+         id="tspan42"
+         x="33.49865"
+         y="115.96906">/tmp/riscv_summaries_$PID.txt</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.82223px;line-height:1.25;font-family:Sans;-inkscape-font-specification:'Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#0000ff;stroke-width:0.264583"
+       x="38.396713"
+       y="111.83578"
+       id="text38"><tspan
+         sodipodi:role="line"
+         id="tspan41"
+         x="38.396713"
+         y="111.83578">View Survey Files</tspan></text>
+  </g>
+</svg>

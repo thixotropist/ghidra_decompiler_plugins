@@ -33,3 +33,37 @@ Using a new plugin is simple:
 ```console
 $ DECOMP_PLUGIN=/tmp/libriscv_vector.so ghidraRun
 ```
+
+## Patching a specific Ghidra branch
+
+Building a Ghidra plugin starts with selecting a remote Ghidra branch and commit as the baseline.
+This remote is named in the `MODULE.bazel` file:
+
+```python
+git_repository(
+    name = "ghidra",
+    remote = "git@github.com:thixotropist/ghidra.git",
+    # This commit should be within the "isa_ext" branch
+    commit = "2bcf7c1ba547c2c3460f76b5c1e837409a1f97dc",
+    build_file = "//:BUILD.ghidra",
+    patches = ["ghidra.pat"],
+    patch_strip = 1,
+)
+```
+
+For this example, we want a fork of Ghidra 12.0.3 with added RISC-V SLEIGH definitions.
+This remote is used in several ways:
+
+1. Build and deploy the baseline Ghidra.  We want to use the Java GUI unchanged from the Ghidra release
+   with the added RISC-V vector SLEIGH definitions provided in the `isa_ext` branch.  Our deployment directory
+   will be `/opt/ghidra_12.1_DEV/`
+2. We need to develop a patch containing the decompiler plugin manager.  That can be done in a new branch of
+   the `isa_ext` branch commit named `patched`.  From this we can derive the patch file `ghidra.pat`.
+3. The Bazel Module manager then fetches a new copy of the Ghidra source repo, applying the patch file `ghidra.pat`.
+   It builds just `decompile` and `decompile_datatest`, which now have support for dynamic loading of decompiler
+   plugins plus some additional logging and inspection infrastructure.
+
+The user can now replace the baseline versions of `decompile` and `decompile_datatest` with the patched versions,
+then proceed to building and exercising individual plugins.
+
+{{< figure src=/docs/images/workspace.svg align="center" >}}
