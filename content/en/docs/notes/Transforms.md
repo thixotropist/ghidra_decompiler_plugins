@@ -49,8 +49,6 @@ The transform transaction should be:
 * convert number of elements to number of bytes
 * generate the vector_memcpy opcode
 * scan the function for Phi nodes referencing any of the interior pcodes, replacing the
-  Phi node varnodes with references to the new varnodes inserted after the vector_memset 
+  Phi node varnodes with references to the new varnodes inserted after the vector_memset
 * delete all pcodeops in the block
 * merge blocks
-
-

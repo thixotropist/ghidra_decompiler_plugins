@@ -22,7 +22,7 @@ void string_constructor(void *this,char *param1,void *allocator)
   long lVar5;
   undefined auVar6 [256];
   long in_vl;
-  
+
   lVar1 = (long)this + 0x10;
   *(long *)this = lVar1;
   if (param1 == (char *)0x0) {
@@ -173,7 +173,7 @@ void BlockGraph::removeBlockReference(const FlowBlock* bl)
   if (it != list.end())
   {
     list.erase(it);
-  } 
+  }
 }
 ```
 
@@ -1137,7 +1137,7 @@ $ SLEIGHHOME=/opt/ghidra_12.0_DEV/ DECOMP_PLUGIN=/tmp/libriscv_vector.so valgrin
 ==353775== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
 ==353775== Using Valgrind-3.25.1 and LibVEX; rerun with -h for copyright info
 ==353775== Command: /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest
-==353775== 
+==353775==
 ==353775== Invalid read of size 4
 ==353775==    at 0xA0DBA8: ghidra::FlowBlock::getIndex() const (block.hh:160)
 ==353775==    by 0xA0AC52: ghidra::BlockIf::scopeBreak(int, int) (block.cc:3054)
