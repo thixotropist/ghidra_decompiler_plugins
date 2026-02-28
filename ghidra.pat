@@ -84,15 +84,15 @@ diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra
 index f9e147e6..de444e8a 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -2350,1 +2350,1 @@ int4 ActionDefaultParams::apply(Funcdata &data)
+@@ -2350,7 +2350,6 @@ int4 ActionDefaultParams::apply(Funcdata &data)
  void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
-
+ 
  {
 -  if (op->doesSpecialPrinting()) return;
    Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
    int4 valsize = vn->getSize();
    if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
-@@ -3064,8 +3063,3 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
+@@ -3064,11 +3063,6 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
      return -1;
    }
    if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
@@ -101,7 +101,7 @@ index f9e147e6..de444e8a 100644
 -    if (storeOp == (PcodeOp *)0 || storeOp->code() != CPUI_STORE)
 -      return -1;		// INSERT output is explicit unless it is immediately used by STORE
 -  }
-
+ 
    if (def->code() == CPUI_PTRSUB) { // A dereference
      Varnode *basevn = def->getIn(0);
 @@ -5436,7 +5430,7 @@ void ActionDatabase::buildDefaultGroups(void)
