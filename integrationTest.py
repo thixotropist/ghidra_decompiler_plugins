@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 """
 Verify the correctness of the RISC-V Vector transforms Ghidra plugin
+  *  Run all tests with ./integrationTest.py
+  *  Run a single test with something like python integrationTest.py T1Datatests.test_04_exemplar_regression
 """
 import unittest
 import subprocess
@@ -36,6 +38,8 @@ expected = {
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},
     'dpdk_sample_3':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':2},
+    'strlen_exemplars': {'vector_strlen':2},
+    'strcmp_exemplars': {'vector_strcmp':0},
 }
 
 def trim_output(result):
@@ -76,12 +80,29 @@ def assert_expected_transform_count(test_case, name, result_output):
     :param result_output: the process output from the decompilation
     """
     source = extract_c(result_output.stdout)
+    if not name in expected:
+        return
     expected_results = expected[name]
-    for pat in ('vector_memset', 'vector_memcpy', 'vector_strlen'):
+    for pat in expected_results:
         num_found = source.count(pat)
         print(f"found {num_found} instances of {pat} in test case {name}")
         test_case.assertEqual(num_found, expected_results[pat],
                             f"Unexpected number ({num_found}) of {pat} transforms found in {name}")
+
+def run_datatest(test_case, sample):
+            command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/{sample}.ghidra"
+            logger.info(f"Running {command} with output to /tmp/{sample}.testlog")
+            result = subprocess.run(command, check=True, capture_output=True,
+                                    shell=True, encoding="utf8")
+            test_case.assertEqual(0, result.returncode,
+                f"Datatest of {sample} failed")
+            with open(f"/tmp/{sample}.testlog", "w", encoding="utf8") as f:
+                f.write(result.stdout)
+                f.write(result.stderr)
+            test_case.assertNotIn("Low-level ERROR", result.stdout,
+                             "Decompiler completes without a low level error")
+            trim_output(result.stdout)
+            assert_expected_transform_count(test_case, f"{sample}", result)
 
 class T0BuildPlugin(unittest.TestCase):
     """
@@ -197,29 +218,21 @@ class T1Datatests(unittest.TestCase):
         trim_output(result.stdout)
         assert_expected_transform_count(self, 'whisper_main', result)
 
-    def test_03_exemplar_regression(self):
+    def test_03_application_regression(self):
         """
-        Verify processing of several Whisper and dpdk functions
+        Verify processing of tests extracted from application functions
         """
-        sample_set = []
         for i in (1,2,3,4,5,6,7,8,10):
-            sample_set.append(f"whisper_sample_{i}")
+            run_datatest(self, f"whisper_sample_{i}")
         for i in (1,2,3):
-            sample_set.append(f"dpdk_sample_{i}")
-        for sample in sample_set:
-            command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/{sample}.ghidra"
-            logger.info(f"Running {command} with output to /tmp/{sample}.testlog")
-            result = subprocess.run(command, check=True, capture_output=True,
-                                    shell=True, encoding="utf8")
-            self.assertEqual(0, result.returncode,
-                f"Datatest of {sample} failed")
-            with open(f"/tmp/{sample}.testlog", "w", encoding="utf8") as f:
-                f.write(result.stdout)
-                f.write(result.stderr)
-            self.assertNotIn("Low-level ERROR", result.stdout,
-                             "Decompiler completes without a low level error")
-            trim_output(result.stdout)
-            assert_expected_transform_count(self, f"{sample}", result)
+            run_datatest(self, f"dpdk_sample_{i}")
+
+    def test_04_exemplar_regression(self):
+        """
+        Verify processing of several synthetic data tests
+        """
+        for sample in ('strlen_exemplars', 'strcmp_exemplars'):
+            run_datatest(self, sample)
 
 if __name__ == "__main__":
     unittest.main()

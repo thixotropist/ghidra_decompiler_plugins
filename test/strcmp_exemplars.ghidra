@@ -1,0 +1,9 @@
+restore test/strcmp_exemplars_save.xml
+load function strcmp_base
+decompile strcmp_base
+print C
+print raw
+load function strncmp_base
+decompile strncmp_base
+print C
+print raw

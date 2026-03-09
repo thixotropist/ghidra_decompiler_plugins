@@ -55,20 +55,29 @@ class VectorMatcher {
      * @brief is this selection a simple memcpy?
      */
     bool isMemcpy();
-     /**
+    /**
      * @brief is this selection a simple strlen?
      */
     bool isStrlen();
+    /**
+     * @brief is this selection a simple strcmp?
+     */
+    bool isStrcmp();
     /**
      * @brief transform the selection into a vector_memcpy
      * @return int 1 if transform successful, 0 if no transform completed
      */
     int transformMemcpy();
-      /**
+    /**
      * @brief transform the selection into a vector_strlen
      * @return int 1 if transform successful, 0 if no transform completed
      */
     int transformStrlen();
+    /**
+     * @brief transform the selection into a vector_strcmp
+     * @return int 1 if transform successful, 0 if no transform completed
+     */
+    int transformStrcmp();
   private:
     /**
      * @brief Follow Phi nodes into the loop to identify the role of loop registers

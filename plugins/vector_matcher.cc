@@ -82,10 +82,10 @@ VectorMatcher::VectorMatcher(ghidra::Funcdata& fData, ghidra::PcodeOp* initialVs
         numElementsConstant ? "true" : "false",
         numElementsVariable ? "true" : "false",
         (loopModel.otherScalarOps.size() > 0) ? "true" : "false",
-        (loopModel.otherVectorOps.size() > 0) ? "true" : "false",
+        (loopModel.unhandledVectorOps.size() > 0) ? "true" : "false",
         (loopModel.otherUserPcodes.size() > 0) ? "true" : "false"
     );
-    ghidra::pLogger->info("\tFound simple flow structure = {0:s}\n"
+    ghidra::pLogger->info("\n\tFound simple flow structure = {0:s}\n"
         "\tFound vector registers match = {1:s}",
         loopModel.simpleFlowStructure ? "true" : "false",
         vectorRegistersMatch ? "true" : "false");
@@ -116,7 +116,7 @@ bool VectorMatcher::isMemcpy()
         (loopModel.vectorOps.size() == 3) &&         // vset, vload, vstore
         (loopModel.scalarOps.size() >= 5) &&         // expected pointer and counter arithmetic
         (loopModel.otherScalarOps.size() == 0) &&    // no other ghidra pcodeops
-        (loopModel.otherVectorOps.size() == 0) &&    // no unhandled vector instructions
+        (loopModel.unhandledVectorOps.size() == 0) &&    // no unhandled vector instructions
         (loopModel.otherUserPcodes.size() == 0);     // no other CALL_OTHER
     // add more complex tests specific to this pattern
     bool match = pre_match && vectorRegistersMatch;  // vector load and store use the same register
@@ -132,10 +132,27 @@ bool VectorMatcher::isStrlen()
         (loopModel.vectorOps.size() == 4) &&        // vset, vload, vseq, vfirst
         (loopModel.scalarOps.size() == 3) &&        // expected pointer and counter arithmetic
         (loopModel.otherScalarOps.size() == 0) &&   // no other ghidra pcodeops
-        (loopModel.otherVectorOps.size() == 0) &&   // no unhandled vector instructions
+        (loopModel.unhandledVectorOps.size() == 0) &&   // no unhandled vector instructions
         (loopModel.otherUserPcodes.size() == 0) &&  // no other CALL_OTHER
         (loopModel.vSourceOperands.size() == 1);    // one recognized source operand
     bool match = pre_match;
+    return match;
+}
+
+bool VectorMatcher::isStrcmp()
+{
+    // apply generic tests first
+    bool match =
+        (loopModel.loopFlags == RISCV_VEC_INSN_FAULT_ONLY_FIRST) && // vector fault only first load
+        loopModel.simpleFlowStructure &&            // no other  branches or calls
+        (loopModel.vectorOps.size() == 7) &&        // vset, vload, vseq, vfirst
+        (loopModel.otherScalarOps.size() == 0) &&   // no other ghidra pcodeops
+        (loopModel.scalarOps.size() == 4) &&        // expected pointer and counter arithmetic
+        (loopModel.vLogicalOps.size() == 2) &&      // vmor, vfirst
+        (loopModel.vComparisonOps.size() == 2) &&   // vmsne, vmseq
+        (loopModel.unhandledVectorOps.size() == 0) &&   // no unhandled vector instructions
+        (loopModel.otherUserPcodes.size() == 0) &&  // no other CALL_OTHER
+        (loopModel.vSourceOperands.size() == 2);  // two recognized source operands
     return match;
 }
 
@@ -814,7 +831,7 @@ Basic Block 4 0x000209ec-0x000209f2
     ghidra::pLogger->info("Checking for unused PCodeOps");
     functionEditor.removeUnusedOps(epilogBlock);
     functionEditor.removeUnusedOps(loopBlock);
-    for (auto fb: loopModel.prologBlocks)
+    for (auto fb: loopModel.relatedBlocks)
         functionEditor.removeUnusedOps(fb);
     if (info)
     {
@@ -822,5 +839,18 @@ Basic Block 4 0x000209ec-0x000209f2
     }
     ghidra::pLogger->flush();
     return TRANSFORM_COMPLETED;
+}
+int VectorMatcher::transformStrcmp()
+{
+    std::stringstream ss;
+    ghidra::BlockGraph& graph = data.getStructure();
+    ghidra::FunctionEditor functionEditor(data);
+    if (info)
+    {
+        loopBlock->printRaw(ss);
+        ghidra::pLogger->info("Vector loop block before strcmp transform is\n{0:s}", ss.str());
+        ss.str("");
+    }
+    return TRANSFORM_ROLLED_BACK;
 }
 }

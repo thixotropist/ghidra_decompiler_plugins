@@ -39,8 +39,7 @@ ghidra::int4 RuleVectorTransform::applyOp(ghidra::PcodeOp *firstOp, ghidra::Func
     const RiscvUserPcode* vsetInfo =
         RiscvUserPcode::getUserPcode(*firstOp);
     if (vsetInfo == nullptr) return ghidra::RETURN_NO_TRANSFORM;
-    // construct a VectorMatcher to start the analysis.
-    VectorMatcher matcher(data, firstOp);
+
     bool vsetImmediate = vsetInfo->isVseti;
     bool vsetRegister = vsetInfo->isVset;
     if (!(vsetImmediate || vsetRegister)) return ghidra::RETURN_NO_TRANSFORM;
@@ -54,20 +53,31 @@ ghidra::int4 RuleVectorTransform::applyOp(ghidra::PcodeOp *firstOp, ghidra::Func
         return seriesMatcher.match();
     }
     // Otherwise, this must be a vset and is likely a loop requiring much more processing
+    // construct a VectorMatcher to start the loop analysis.
+    VectorMatcher matcher(data, firstOp);
+    if (!matcher.loopModel.loopFound) return ghidra::RETURN_NO_TRANSFORM;
     ghidra::pLogger->trace("Testing the vector stanza for a vector_memcpy match");
     if (matcher.isMemcpy())
     {
-        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return 0;
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return ghidra::RETURN_NO_TRANSFORM;
         ++transformCountLoop;
         return matcher.transformMemcpy();
     }
     ghidra::pLogger->trace("Testing the vector stanza for a vector_strlen match");
     if (matcher.isStrlen())
     {
-        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return 0;
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return ghidra::RETURN_NO_TRANSFORM;
         ++transformCountLoop;
         return matcher.transformStrlen();
     }
+    ghidra::pLogger->trace("Testing the vector stanza for a vector_strcmp match");
+    if (matcher.isStrcmp())
+    {
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return ghidra::RETURN_NO_TRANSFORM;
+        ++transformCountLoop;
+        return matcher.transformStrcmp();
+    }
+    ghidra::pLogger->trace("No matches found, returning");
     return ghidra::RETURN_NO_TRANSFORM;
 }
 }

@@ -160,6 +160,10 @@ finalstructure Tested=0 Applied=0
 prototypewarnings Tested=0 Applied=0
 stop Tested=0 Applied=0
 ```
+## Rule application
+
+`ActionPool::processOp(PcodeOp *op,Funcdata &data)` executes the applyOp method on all rules associated with the PcodeOp op.
+Rules may be triggered multiple times if *any* Rule within the group indicates a change has been made.
 
 ## Action and Rule structure
 

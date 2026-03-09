@@ -82,7 +82,8 @@ enum OperationType      ///< Scalar and Vector operations fall into several cate
   vectorToVector,          ///< vector operand to vector result
   vectorImmediateToVector, ///< vector and scalar immediate operands to vector result
   vectorPairToVector,      ///< two vector operands to a vector result
-  vectorToScalar           ///< vector operand to scalar result
+  vectorToScalar,          ///< vector operand to scalar result
+  vectorComparison,        ///< vector logical comparison
 };
 
 /**
@@ -189,7 +190,7 @@ class VectorLoop
     ghidra::intb firstAddr; ///< the first RAM address of this loop
     ghidra::intb lastAddr; ///< the last RAM address of this loop
     ghidra::BlockBasic* loopBlock;   ///< the parent block of the loop
-    std::list<ghidra::FlowBlock*> prologBlocks; ///< Blocks which flow into loopBlock
+    std::list<ghidra::FlowBlock*> relatedBlocks; ///< Blocks which flow into loopBlock
     ghidra::Varnode* terminationVarnode; ///< boolean Varnode - if true, jump to start of the loop
     ghidra::PcodeOp* terminationControl; ///< variable tested to terminate the loop
     std::vector<ghidra::PcodeOp*> phiNodesAffectedByLoop;  ///< Phi or MULTIEQUAL opcodes referencing loop variables
@@ -197,7 +198,7 @@ class VectorLoop
     bool simpleFlowStructure; ///< is this a simple loop?
     std::vector<ghidra::PcodeOp*> otherUserPcodes; ///< Other user pcodes found within the loop
     std::vector<VectorOperation*> vectorOps; ///< ordered vector operations with handlers assigned found within this loop
-    std::vector<VectorOperation*> otherVectorOps; ///< ordered vector operations without handlers assigned found within this loop
+    std::vector<VectorOperation*> unhandledVectorOps; ///< ordered vector operations without handlers assigned found within this loop
     std::vector<ScalarOperation*> scalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
     std::vector<ScalarOperation*> otherScalarOps; ///< ordered non-vector operations with handlers assigned collected within this loop
     std::vector<const ghidra::PcodeOp*> epilogPcodes; ///< vector operations found in the loop epilog
@@ -205,6 +206,9 @@ class VectorLoop
     std::vector<VectorOperation*> vStoreOps;   ///< vector store operations found
     std::vector<ScalarOperation*> sIntegerOps; ///< scalar integer operations found
     std::vector<ScalarOperation*> sComparisonOps; ///< scalar comparison operations found
+    std::vector<VectorOperation*> vLogicalOps; ///< vector logical operations found
+    std::vector<VectorOperation*> vIntegerOps; ///< vector integer operations found
+    std::vector<VectorOperation*> vComparisonOps; ///< vector comparison operations found
     std::vector<VectorOperand*> vSourceOperands; ///< vector source operands and their loop context
     std::vector<VectorOperand*> vDestinationOperands; ///< vector destination operands and their loop context
     ghidra::Varnode* numElements;  ///< Varnode tracking the number of elements remaining to be processed
@@ -295,9 +299,9 @@ class VectorLoop
      */
     void examine_loop_epilog();
     /**
-     * @brief collect possible prolog blocks
+     * @brief collect possible related blocks
      */
-    void collect_prolog_blocks();
+    void collect_related_blocks();
     /**
      * @brief Generate a summary report for this vector loop
      */

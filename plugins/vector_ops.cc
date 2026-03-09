@@ -45,7 +45,8 @@ void VectorOperation::static_init()
         "vector to vector operation",
         "vector and immediate scalar to vector",
         "vector and vector to vector",
-        "vector to scalar"
+        "vector to scalar",
+        "vector comparison"
     };
 }
 
@@ -290,21 +291,46 @@ void VectorLoop::static_init()
             ghidra::pLogger->trace("Invoked vmseq_vi instruction handler");
             // First operand is a vector register, second operand is an integer immediate.
             // Result is a vector register
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorImmediateToVector,
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison,
                 op);
             loop.vectorOps.push_back(vOp);
+            loop.vComparisonOps.push_back(vOp);
         };
     opHandlers[riscvNameToGhidraId["vfirst_m"]] =
         [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
             ghidra::pLogger->trace("Invoked vfirst_m instruction handler");
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorToScalar,
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison,
                 op);
             loop.vectorOps.push_back(vOp);
+            loop.vLogicalOps.push_back(vOp);
         };
-
+    // instructions found in vector_strcmp stanzas
+    opHandlers[riscvNameToGhidraId["vmsne_vv"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+                ghidra::pLogger->trace("Invoked vmsne_vv instruction handler");
+                VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison,
+                    op);
+                loop.vectorOps.push_back(vOp);
+                loop.vComparisonOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vmseq_vi"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+                ghidra::pLogger->trace("Invoked vmseq_vi instruction handler");
+                VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison,
+                    op);
+                loop.vectorOps.push_back(vOp);
+                loop.vComparisonOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vmor_mm"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+                ghidra::pLogger->trace("Invoked vmor_mm instruction handler");
+                VectorOperation* vOp = new VectorOperation(OperationType::vectorPairToVector,
+                    op);
+                loop.vectorOps.push_back(vOp);
+                loop.vLogicalOps.push_back(vOp);
+        };
     fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
         "innerProduct", "unknown", "other"};
-
 }
 VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     terminationConditionFlags(0),
@@ -337,10 +363,14 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
 void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
 {
     examine_control_flow(vsetOp);
-    // terminate construction if this vset op doesn't start a loop
-    if (!loopFound) return;
-    ghidra::pLogger->info("Analyzing potential vector loop stanza at 0x{0:x}",
-        firstAddr);
+    // warn if this vset op doesn't start a loop
+    if (!loopFound)
+    {
+        ghidra::pLogger->warn("Unable to fully analyze potential complex vector loop stanza at 0x{0:x}",
+            firstAddr);
+    }
+    ghidra::pLogger->info("Analyzing potential vector loop stanza at 0x{0:x} in pid:tid {1:d}:{2:d}",
+        firstAddr, getpid(), gettid());
     // Phi (or Multiequal nodes) provide the locations at which
     // registers and memory locations are set. They are found at the top of a block
     // and are essential in determining heritages and dependencies
@@ -354,8 +384,6 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     // Identify vector and other instructions found immediately after the loop,
     // perhaps indicative of a reduction operation
     examine_loop_epilog();
-    // Locate any blocks that flow into the loop
-    collect_prolog_blocks();
     // Summarize key features to a report file
     generateReport();
 }
@@ -375,8 +403,8 @@ bool VectorLoop::invokeVectorOpHandler(ghidra::PcodeOp* op)
     }
     else
     {
-        ghidra::pLogger->trace("Found no instruction handler, sending to otherVectorOps:");
-        otherVectorOps.push_back(new VectorOperation(OperationType::unknown, op));
+        ghidra::pLogger->trace("Found no instruction handler, sending to unhandledVectorOps:");
+        unhandledVectorOps.push_back(new VectorOperation(OperationType::unknown, op));
     }
     return false;
 }
@@ -431,11 +459,15 @@ void VectorLoop::examine_control_flow(ghidra::PcodeOp* vsetOpParam)
     firstAddr = loopBlock->firstOp()->getAddr().getOffset();
     lastAddr = loopBlock->getStop().getOffset();
     codeSpace = vsetOp->getAddr().getSpace();
+     // Locate any blocks that flow into the loop
+    collect_related_blocks();
     // Get the Ghidra block containing this loop
     ghidra::PcodeOp* lastOp = loopBlock->lastOp();
     bool isBranch = lastOp->isBranch();
     // this block forms a loop if it starts with a vset and ends
     // with a conditional branch back to the start
+    // TODO: some vector loops (like strncmp) include an additional
+    // branch instruction.  The current code fails to match on such loops.
     if (isBranch && (lastOp->code() == ghidra::CPUI_CBRANCH))
     {
         ghidra::intb branchTarget = lastOp->getIn(0)->getAddr().getOffset();
@@ -444,7 +476,6 @@ void VectorLoop::examine_control_flow(ghidra::PcodeOp* vsetOpParam)
         {
             std::stringstream ss;
             terminationVarnode->printRaw(ss);
-            ghidra::pLogger->trace("Termination condition varnode is {0:s}", ss.str());
         }
         if (branchTarget == firstAddr)
         {
@@ -455,6 +486,7 @@ void VectorLoop::examine_control_flow(ghidra::PcodeOp* vsetOpParam)
         {
             simpleFlowStructure = false;
             loopFound = false;
+            //TODO: test the next block to see if it ends in a return to this block
         }
     }
 }
@@ -621,7 +653,6 @@ void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
 }
 void VectorLoop::collect_common_elements()
 {
-
     for (auto vOp: vectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
@@ -653,6 +684,7 @@ void VectorLoop::collect_common_elements()
                 sComparisonOps.push_back(op);
                 // where is the comparison register set?
                 ghidra::PcodeOp* testedOp = op->arg0->getDef();
+                if (testedOp == nullptr) break;
                 const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*testedOp);
                 // very crude determination!
                 if (vsetInfo == nullptr)
@@ -732,13 +764,13 @@ void VectorLoop::examine_loop_epilog()
     }
 }
 
-void VectorLoop::collect_prolog_blocks()
+void VectorLoop::collect_related_blocks()
 {
     int edgesIn = loopBlock->sizeIn();
     for (int i = 0; i < edgesIn; i++)
     {
         ghidra::FlowBlock* b = loopBlock->getIn(i);
-        if (b != loopBlock) prologBlocks.push_back(b);
+        if (b != loopBlock) relatedBlocks.push_back(b);
     }
 }
 
@@ -749,18 +781,29 @@ void VectorLoop::generateReport()
     auto exists = loopsAnalyzed.find(firstAddr);
     if(exists != loopsAnalyzed.end()) return;
     loopsAnalyzed.insert(firstAddr);
+    std::string loopControlStructure;
+    if (simpleFlowStructure)
+        loopControlStructure = "simple";
+    else
+        loopControlStructure = "complex";
     reportFile <<
-        "Vector Loop:" << std::endl <<
-        "\tLoop start address: 0x" << std::hex << firstAddr << std::endl <<
+        "Vector Loop (" << loopControlStructure << "):" << std::endl <<
+        "\tcontrol structure is " << loopControlStructure << std::endl <<
+        std::hex <<
+        "\tLoop start address: 0x"<< firstAddr << std::endl <<
         "\tLoop length: 0x" << lastAddr - firstAddr << std::endl <<
-        "\tsetvli mode: element size=0x" << elementSize << ", multiplier=" << multiplier <<
-        ", vector load register: 0x" << vlReg <<
-        ", vector store register: 0x" << vsReg << std::endl <<
-        "\tvector loads: 0x" << vLoadOps.size() << std::endl <<
-        "\tvector stores: 0x" << vStoreOps.size() << std::endl <<
-        "\tcomparisons: 0x" << sComparisonOps.size() << std::endl <<
-        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl << std::dec <<
-        "\tedges in: " << prologBlocks.size() << std::endl;
+        std::dec <<
+        "\tsetvli mode: element size=" << elementSize << ", multiplier=" << multiplier << std::endl <<
+        "\tvector loads: " << vLoadOps.size() << std::endl <<
+        "\tvector stores: " << vStoreOps.size() << std::endl <<
+        "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl <<
+        "\tscalar comparisons: " << sComparisonOps.size() << std::endl <<
+        "\tvector logical ops: " << vLogicalOps.size() << std::endl <<
+        "\tvector integer ops: " << vIntegerOps.size() << std::endl <<
+        "\tvector comparisons: " << vComparisonOps.size() << std::endl <<
+        "\tvector source operands: " << vSourceOperands.size() << std::endl <<
+        "\tvector destination operands: " << vDestinationOperands.size() << std::endl <<
+        "\tedges in: " << relatedBlocks.size() << std::endl;
     reportFile << "\tVector instructions (handled | unhandled | epilog): ";
     for (auto vOp: vectorOps)
     {
@@ -769,7 +812,7 @@ void VectorLoop::generateReport()
         reportFile << vsetInfo->asmOpcode << ", ";
     }
     reportFile << "| ";
-    for (auto vOp: otherVectorOps)
+    for (auto vOp: unhandledVectorOps)
     {
         ghidra::PcodeOp* op = vOp->op;
         const RiscvUserPcode *vsetInfo = RiscvUserPcode::getUserPcode(*op);
@@ -828,8 +871,11 @@ void VectorLoop::generateReport()
         }
     }
     reportFile << std::endl;
-    terminationControl->printRaw(ss);
-    reportFile << "\tLoop control variable: " << ss.str() << std::endl;
+    if (terminationControl != nullptr)
+    {
+        terminationControl->printRaw(ss);
+        reportFile << "\tLoop control variable: " << ss.str() << std::endl;
+    }
 }
 
 void VectorLoop::reducePhiNode(ghidra::PcodeOp* op)
@@ -959,7 +1005,7 @@ VectorLoop::~VectorLoop()
     {
         delete op;
     }
-    for (auto op:otherVectorOps)
+    for (auto op:unhandledVectorOps)
     {
         delete op;
     }
