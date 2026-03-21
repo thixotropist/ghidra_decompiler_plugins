@@ -1,9 +1,25 @@
 restore test/strcmp_exemplars_save.xml
-load function strcmp_base
-decompile strcmp_base
+map function 0x100000 strcmp
+parse line extern int strcmp(char* s1, char* s2);
+load function strcmp
+decompile strcmp
 print C
 print raw
-load function strncmp_base
-decompile strncmp_base
+map function 0x100070 strcmpeq
+parse line extern bool strcmpeq(char* s1, char* s2);
+load function strcmpeq
+decompile strcmpeq
+print C
+print raw
+map function 0x100036 strncmp
+parse line extern int strncmp(char* s1, char* s2, int n);
+load function strncmp
+decompile strncmp
+print C
+print raw
+map function 0x1000ae strncmpeq
+parse line extern bool strncmpeq(char* s1, char* s2, int n);
+load function strncmpeq
+decompile strncmpeq
 print C
 print raw

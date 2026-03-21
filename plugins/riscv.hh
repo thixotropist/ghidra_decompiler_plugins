@@ -36,6 +36,7 @@ static const int RETURN_TRANSFORM_PERFORMED = 1;
 extern Architecture* arch;
 extern AddrSpace* registerAddrSpace;
 extern AddrSpace* csRegisterAddrSpace;
+extern AddrSpace* uniqueAddrSpace;
 }
 
 namespace riscv_vector
@@ -59,6 +60,10 @@ static const ghidra::uint4 RISCV_VEC_INSN_MASK_SET = 0x00000020;      ///< condi
 static const ghidra::uint4 VECTOR_MEMSET = 0x11000000;
 static const ghidra::uint4 VECTOR_MEMCPY = 0x11000001;
 static const ghidra::uint4 VECTOR_STRLEN = 0x11000002;
+static const ghidra::uint4 VECTOR_STRCMPNEQ = 0x11000003;
+static const ghidra::uint4 VECTOR_STRCMP = 0x11000004;
+static const ghidra::uint4 VECTOR_STRNCMPNEQ = 0x11000005;
+static const ghidra::uint4 VECTOR_STRNCMP = 0x11000006;
 
 extern std::ofstream reportFile;
 

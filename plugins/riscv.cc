@@ -87,6 +87,7 @@ namespace ghidra
 Architecture* arch;        /// The Ghidra architecture object for this program
 AddrSpace* registerAddrSpace; /// The address space holding RISCV registers
 AddrSpace* csRegisterAddrSpace; /// The address space holding RISCV control and status registers
+AddrSpace* uniqueAddrSpace; /// The address space holding internal temporaries
 std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plugin
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -110,6 +111,7 @@ extern "C" int plugin_init(void *context)
     arch = reinterpret_cast<Architecture*>(context);
     registerAddrSpace = arch->getSpaceByName("register");
     csRegisterAddrSpace = arch->getSpaceByName("csreg");
+    uniqueAddrSpace = arch->getSpaceByName("unique");;
     pLogger->info("Plugin framework initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=MAX_USER_PCODES; index++) {
@@ -147,12 +149,13 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
     pLogger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
     pLogger->trace("Creating a new DatatypeUserOp");
     int4 ptrSize = glb->types->getSizeOfPointer();
-    int4 wordSize = glb->getDefaultDataSpace()->getAddrSize();
+    int4 wordSize = ptrSize;
     // define some common parameter types
     Datatype *vType = glb->types->getTypeVoid();
     Datatype *charType = glb->types->getTypeChar(1);
     Datatype *ptrType = glb->types->getTypePointer(ptrSize, vType, wordSize);
     Datatype *uintType = glb->types->getBase(wordSize, TYPE_UINT);
+    Datatype *intType = glb->types->getBase(wordSize, TYPE_INT);
     Datatype *charPtrType = glb->types->getTypePointer(ptrSize, charType, wordSize);
     switch(id)
     {
@@ -171,6 +174,18 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
     case riscv_vector::VECTOR_STRLEN:
     {
         res = new DatatypeUserOp("vector_strlen", glb, riscv_vector::VECTOR_STRLEN, uintType, charPtrType);
+        pLogger->trace("Creation complete");
+        break;
+    }
+    case riscv_vector::VECTOR_STRCMP:
+    {
+        res = new DatatypeUserOp("vector_strcmp", glb, riscv_vector::VECTOR_STRCMP, intType, charPtrType, charPtrType);
+        pLogger->trace("Creation complete");
+        break;
+    }
+    case riscv_vector::VECTOR_STRNCMP:
+    {
+        res = new DatatypeUserOp("vector_strncmp", glb, riscv_vector::VECTOR_STRNCMP, intType, charPtrType, charPtrType, uintType);
         pLogger->trace("Creation complete");
         break;
     }

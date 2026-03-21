@@ -35,11 +35,13 @@ expected = {
     'whisper_sample_7':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_8':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_10':  {'vector_memset':0, 'vector_memcpy':3, 'vector_strlen':0},
+    'whisper_sample_11':  {'vector_strcmp':1},
+    'whisper_sample_12':  {'vector_memset':2, 'vector_memcpy':7, 'vector_strlen':0},
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},
     'dpdk_sample_3':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':2},
     'strlen_exemplars': {'vector_strlen':2},
-    'strcmp_exemplars': {'vector_strcmp':0},
+    'strcmp_exemplars': {'vector_strcmp':2},
 }
 
 def trim_output(result):
@@ -222,7 +224,7 @@ class T1Datatests(unittest.TestCase):
         """
         Verify processing of tests extracted from application functions
         """
-        for i in (1,2,3,4,5,6,7,8,10):
+        for i in (1,2,3,4,5,6,7,8,10,11,12):
             run_datatest(self, f"whisper_sample_{i}")
         for i in (1,2,3):
             run_datatest(self, f"dpdk_sample_{i}")

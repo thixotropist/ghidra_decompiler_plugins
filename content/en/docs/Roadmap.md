@@ -59,3 +59,31 @@ This Roadmap is complicated by the multiple, overlapping goals implicit in this 
   Qemu RISC-V vector emulation code exceeds 20K lines of code that don't need to be replicated within Ghidra.
 * Don't try to solve the general problem of decompiling vectorized code.  Instead, concentrate on the most common loop
   vectorizations of a single Gnu compiler building for a single (but generic) microarchitecture).
+
+## Current initiatives
+
+### refactoring and inspection
+
+The current code recognizes and transforms common `memset`, `memcpy`, `strlen`, and `strcmp` vector instruction sequences.
+The implementation is poor, with duplicate code and ad hoc methods for identifying and transforming instruction sequences.
+
+* Refactor and normalize the code and test cases, perhaps starting with the more complex `strcmp` transform and restructuring
+  the other transforms to look like subsets of the `strcmp` steps.
+* Find ways to move common code out of VectorMatcher into the `framework` files.
+* Normalize the test case code, moving `savestate` elements from the `*_save.xml` files into the corresponding `*.ghidra` files.
+  This should include function definitions and signatures.
+* Review the stdlog messages emitted at `warn` level, so see if these indicate a problem or potential refinements.
+* Make small steps towards recognition of multi-block vector loops, such as those found in `vector_strncmp` sequences.  The place
+  to start is with VectorLoop features, postponing things like block graph editing.
+
+### survey
+
+Examine the `dpdk-pipeline` binary to suggest the next set of transforms.
+* Are there more stdlib functions showing common vector sequences?
+* What are the relative priorities of reduction loops, arrays of structures loops, and loops involving complex width conversions?
+
+### workspace rebasing
+
+* track Ghidra releases as they come
+* bump Bazel to version 9
+* compare GCC toolchain version 16 vectorization with that of our current GCC version 15.

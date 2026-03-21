@@ -134,7 +134,7 @@ LAB_ram_000fc874:
 0fc8ac    beq      a2,a5,LAB_ram_000fc8fe
 ```
 
-The decompiler shows:
+The decompiler renders this vector sequence as:
 
 ```c
   lVar3 = 9;
@@ -192,9 +192,6 @@ The files are:
 * `test/strcmp_exemplars.so` - assemble and link the file with `MARCH=rv64gcvzcb`.
 * `test/strcmp_exemplars_save.xml` - export the decompiler debug file, edited to include both function definitions
 * `test/strcmp_exemplars.ghidra` - the decompiler test script to load both functions, print their PCodeOps and C decompilation.
-
-The `test/strcmp_exemplars_save.xml` save file is a little different than other save files, as it includes function signatures
-and some variable renaming.
 
 ## Extending the plugin survey and feature extraction.
 
@@ -263,3 +260,278 @@ The next steps on multiblock loop handling are:
 
 We may want two `vector_strcmp` variants, with one returning a boolean `true` on equality and the other a signed integer to indicate ordering.
 The first may be named `vector_strcmpeq` while the second remains `vector_strcmp`.
+
+## Implementing the transform
+
+The assembly language `strcmp` exemplar presents as this Pcode after all transforms are taken:
+
+```text
+Basic Block 1 0x00100002-0x00100026
+0x00100002:21:	a1(0x00100002:21) = a1(i) ? a1(0x0010000c:6)
+0x00100002:20:	a0(0x00100002:20) = a0(i) ? a0(0x00100006:3)
+0x00100002:2:	a2(0x00100002:2) = vsetvli_e8m1tama(#0x0)
+0x00100006:3:	a0(0x00100006:3) = a0(0x00100002:20) + a2(0x00100002:2)(*#0x1)
+0x00100008:5:	v1(0x00100008:5) = vle8ff_v(a0(0x00100006:3))
+0x0010000c:6:	a1(0x0010000c:6) = a1(0x00100002:21) + a2(0x00100002:2)(*#0x1)
+0x0010000e:8:	v2(0x0010000e:8) = vle8ff_v(a1(0x0010000c:6))
+0x00100012:9:	v2(0x00100012:9) = vmsne_vv(v1(0x00100008:5),v2(0x0010000e:8))
+0x00100016:b:	v1(0x00100016:b) = vmseq_vi(v1(0x00100008:5),#0x0)
+0x0010001e:d:	v1(0x0010001e:d) = vmor_mm(v1(0x00100016:b),v2(0x00100012:9))
+0x00100022:e:	t0(0x00100022:e) = vfirst_m(v1(0x0010001e:d))
+0x00100026:f:	u0x00004100:1(0x00100026:f) = t0(0x00100022:e) < #0x0
+0x00100026:10:	goto Block_1:0x00100002 if (u0x00004100:1(0x00100026:f) != 0) else Block_2:0x0010002a
+Basic Block 2 0x0010002a-0x00100034
+0x0010002a:11:	a0(0x0010002a:11) = a0(0x00100006:3) + t0(0x00100022:e)(*#0x1)
+0x0010002c:12:	a1(0x0010002c:12) = a1(0x0010000c:6) + t0(0x00100022:e)(*#0x1)
+0x0010002e:15:	u0x0008ac00:1(0x0010002e:15) = *(ram,a0(0x0010002a:11))
+0x0010002e:26:	u0x10000008:1(0x0010002e:26) = (cast) u0x0008ac00:1(0x0010002e:15)
+0x0010002e:16:	a0(0x0010002e:16) = ZEXT18(u0x10000008:1(0x0010002e:26))
+0x00100030:19:	u0x0008ac00:1(0x00100030:19) = *(ram,a1(0x0010002c:12))
+0x00100030:27:	u0x10000009:1(0x00100030:27) = (cast) u0x0008ac00:1(0x00100030:19)
+0x00100030:1a:	a2(0x00100030:1a) = ZEXT18(u0x10000009:1(0x00100030:27))
+0x00100032:1b:	a0(0x00100032:1b) = a0(0x0010002e:16) - a2(0x00100030:1a)
+```
+
+>Warning: This is the *final* pcode representation.  The transform code will see this
+> as well as various intermediate representations which may not exactly match the expected pattern.
+> If the code is traced, the log file may show one or more aborted transforms before the final
+> successful transform.
+
+We want it to transform into something like `a0(0x00100032:1b) = vector_strcmp(a0(i), a1(i))`.
+The challenge is to do this in a way that is easily generalized to variant forms of `strcmp`.
+
+The analysis methods have identified the two vector load operands and their loop register varnodes
+as `v1(0x00100008:5)` and `v2(0x0010000e:8)`.  We want to:
+* use the Phi node analysis to generate their external base Varnodes as `a0(i)` and `a1(i)` respectively.
+* trace descendents of the operands to find common Varnodes:
+    * `v1(0x00100008:5)`⇒(`v2(0x00100012:9)`, `v1(0x00100016:b)`)
+    * `v2(0x0010000e:8)`⇒`v2(0x00100012:9)`⇒`v1(0x0010001e:d)`
+    * `v1(0x00100016:b)`⇒`v1(0x0010001e:d)`
+    * `v1(0x0010001e:d)`⇒`t0(0x00100022:e)`⇒(`u0x00004100:1(0x00100026:f)`, `a0(0x0010002a:11)`, `a1(0x0010002c:12)`)
+    * `u0x00004100:1(0x00100026:f)`⇒`goto Block_1:0x00100002`
+    * `a0(0x0010002a:11)`⇒`u0x0008ac00:1(0x0010002e:15)`⇒`u0x10000008:1(0x0010002e:26)`⇒`a0(0x0010002e:16)`⇒`a0(0x00100032:1b)`
+    * `a1(0x0010002c:12)`⇒`u0x0008ac00:1(0x00100030:19)`⇒`u0x10000009:1(0x00100030:27)`⇒`a2(0x00100030:1a)`⇒`a0(0x00100032:1b)`
+
+We want transform logic that identifies the Varnode `a0(0x00100032:1b)` without getting confused by ordering or casting.
+We also need to know the relative ordering of `a0(0x0010002e:16)` and `a2(0x00100030:1a)` in the subtraction PcodeOp in order
+to get the ordering of `a0(i)` and `a1(i)` correct.
+
+`t0(0x00100022:e)` is already identified as the loop control Varnode, so the result PcodeOp we want is found by following the descendents
+of the *register* dependencies of `t0(0x00100022:e)`, skipping internal or intermediate non-register dependencies, to find the common
+descendent `a0(0x00100032:1b) = a0(0x0010002e:16) - a2(0x00100030:1a)`.
+
+After some experimenting, we have a method for identifying the common descendent `a0(0x00100032:1b) = a0(0x0010002e:16) - a2(0x00100030:1a)`.
+
+1. Trace the descendents of the pRegister varnodes of both source operands, excluding descendents of `t0(0x00100022:e)`
+    1. a0(0x00100006:3) ⇒ v1(0x00100008:5), a0(0x00100002:20), a0(0x0010002a:11), a0(0x0010002e:16), \
+                           a0(0x00100032:1b), a0(0x00100006:3), v2(0x00100012:9), v1(0x00100016:b), v1(0x0010001e:d)
+    2. a1(0x0010000c:6) ⇒ v2(0x0010000e:8), a1(0x00100002:21), a1(0x0010002c:12), a2(0x00100030:1a), \
+                           a0(0x00100032:1b), a1(0x0010000c:6), v2(0x00100012:9)
+2. Find the intersection of these two sets: `[a0(0x00100032:1b), v2(0x00100012:9)]`
+    1. Ignore the varnode resulting from the `vmsne_vv` instruction found within the loop block
+    2. The result varnode is the one whose PcodeOp is a subtraction found within the epilog block
+
+Add code to perform a minimal transform, not yet removing old code or fully integrating the result.
+
+Now the pcode dumps as:
+
+```text
+Basic Block 0 0x00100000-0x00100000
+0x00100000:27:	u0x10000008(0x00100000:27) = a0(i)
+0x00100000:28:	u0x10000010(0x00100000:28) = a1(i)
+Basic Block 1 0x00100002-0x00100026
+0x00100002:21:	a1(0x00100002:21) = u0x10000010(0x00100000:28) ? a1(0x0010000c:6)
+0x00100002:20:	a0(0x00100002:20) = u0x10000008(0x00100000:27) ? a0(0x00100006:3)
+0x00100002:2:	a2(0x00100002:2) = vsetvli_e8m1tama(#0x0)
+0x00100006:3:	a0(0x00100006:3) = a0(0x00100002:20) + a2(0x00100002:2)(*#0x1)
+0x00100008:5:	v1(0x00100008:5) = vle8ff_v(a0(0x00100006:3))
+0x0010000c:6:	a1(0x0010000c:6) = a1(0x00100002:21) + a2(0x00100002:2)(*#0x1)
+0x0010000e:8:	v2(0x0010000e:8) = vle8ff_v(a1(0x0010000c:6))
+0x00100012:9:	v2(0x00100012:9) = vmsne_vv(v1(0x00100008:5),v2(0x0010000e:8))
+0x00100016:b:	v1(0x00100016:b) = vmseq_vi(v1(0x00100008:5),#0x0)
+0x0010001e:d:	v1(0x0010001e:d) = vmor_mm(v1(0x00100016:b),v2(0x00100012:9))
+0x00100022:e:	t0(0x00100022:e) = vfirst_m(v1(0x0010001e:d))
+0x00100026:f:	u0x00004100:1(0x00100026:f) = t0(0x00100022:e) < #0x0
+0x00100026:29:	u0x10000018(0x00100026:29) = (cast) a0(i)
+0x00100026:2a:	u0x10000020(0x00100026:2a) = (cast) a1(i)
+0x00100026:26:	a0(0x00100026:26) = vector_strcmp(u0x10000018(0x00100026:29),u0x10000020(0x00100026:2a))
+0x00100026:10:	goto Block_1:0x00100002 if (u0x00004100:1(0x00100026:f) != 0) else Block_2:0x0010002a
+Basic Block 2 0x0010002a-0x00100034
+0x0010002a:11:	a0(0x0010002a:11) = a0(0x00100006:3) + t0(0x00100022:e)(*#0x1)
+0x0010002c:12:	a1(0x0010002c:12) = a1(0x0010000c:6) + t0(0x00100022:e)(*#0x1)
+0x0010002e:15:	u0x0008ac00:1(0x0010002e:15) = *(ram,a0(0x0010002a:11))
+0x0010002e:2b:	u0x10000028:1(0x0010002e:2b) = (cast) u0x0008ac00:1(0x0010002e:15)
+0x0010002e:16:	a0(0x0010002e:16) = ZEXT18(u0x10000028:1(0x0010002e:2b))
+0x00100030:19:	u0x0008ac00:1(0x00100030:19) = *(ram,a1(0x0010002c:12))
+0x00100030:2c:	u0x10000029:1(0x00100030:2c) = (cast) u0x0008ac00:1(0x00100030:19)
+0x00100030:1a:	a2(0x00100030:1a) = ZEXT18(u0x10000029:1(0x00100030:2c))
+0x00100032:1b:	a0(0x00100032:1b) = a0(0x0010002e:16) - a2(0x00100030:1a)
+0x00100034:1c:	return(#0x0) a0(0x00100032:1b)
+```
+
+The next step is to search for uses of the result `a0(0x00100032:1b)` and replace with `a0(0x00100026:26)`,
+then delete unused Varnode results.
+
+After some wholesale code duplication from the `strlen` transform, we now get:
+
+```c
+long strcmp_base(char *s1,char *s2)
+
+{
+  undefined8 uVar1;
+  uVar1 = vector_strcmp((char *)s1,(char *)s2);
+  return uVar1;
+}
+```
+
+```text
+[decomp]> print raw
+0
+Basic Block 0 0x00100000-0x00100000
+Basic Block 1 0x00100002-0x00100026
+0x00100026:27:	u0x10000008(0x00100026:27) = (cast) a0(i)
+0x00100026:28:	u0x10000010(0x00100026:28) = (cast) a1(i)
+0x00100026:26:	a0(0x00100026:26) = vector_strcmp(u0x10000008(0x00100026:27),u0x10000010(0x00100026:28))
+Basic Block 2 0x0010002a-0x00100034
+0x00100034:1c:	return(#0x0) a0(0x00100026:26)
+```
+
+Now we have several next steps:
+
+1. [x] build `strcmpeq` and `strncmpeq` assembly exemplars to test transforms of the more common case of testing for equality
+   rather than ordering
+2. [x] extend the existing transform code to handle `vector_strcmpeq`, probably in the same transform function as we use for `vector_strcmp`.
+   We will still defer the transform of `vector_strncmpeq` until we get multiblock loops in hand.
+3. [ ] find a way to refactor and reduce duplicate code
+
+The minimalist `strcmpeq` assembly exemplar now decompiles as:
+
+```c
+bool strcmpeq(char *s1,char *s2)
+{
+  undefined1 uVar1;
+  uVar1 = (undefined1)vector_strcmpeq((char *)s1,(char *)s2);
+  if ((bool)uVar1) {
+    return false;
+  }
+  return true;
+}
+```
+
+That's good enough for now.
+
+## Testing the transform
+
+Next we need to apply this draft transform code to the `whisper.cpp` binary
+1. Are most of the candidate strcmp transforms completed?
+2. Are there exceptions thrown when attempting those transforms?
+3. Is the logic correct, or have we more adjustments to make in handling strcmp results?
+4. Should we accumulate more test cases abstracted from the `whisper.cpp` binary?
+
+### Full decompilation
+
+On the first attempt, we get 23 completed transforms and one exceptions.  The survey code suggests
+that there are 24 potential `vector_strcmp` transforms present.
+
+```text
+Cause: Exception while decompiling ram:000c2dc2: Decompiler process died     //whisper_process_logits
+```
+
+Let's start by turning `gguf_find_key` into a test case `whisper_sample_11`.
+
+The original source code is
+
+```c
+int64_t gguf_find_key(const struct gguf_context * ctx, const char * key) {
+    // return -1 if key not found
+    int64_t keyfound = -1;
+    const int64_t n_kv = gguf_get_n_kv(ctx);
+    for (int64_t i = 0; i < n_kv; ++i) {
+        if (strcmp(key, gguf_get_key(ctx, i)) == 0) {
+            keyfound = i;
+            break;
+        }
+    }
+    return keyfound;
+}
+```
+
+The decompiler plugin currently gives us:
+
+```c
+long gguf_find_key(astruct *param_1,long param_2)
+
+{
+  undefined1 uVar1;
+  long lVar2;
+  long lVar3;
+  char *lVar4;
+  gp = &__global_pointer$;
+  lVar3 = gguf_get_n_kv(param_1);
+  if (0 < lVar3) {
+    lVar2 = 0;
+    do {
+      lVar4 = gguf_get_key(param_1,lVar2);
+      uVar1 = (undefined1)vector_strcmp((char *)param_2,(char *)lVar4);
+      if ((bool)uVar1) {
+        return lVar2;
+      }
+      lVar2 = (long)((int)lVar2 + 1);
+    } while (lVar3 != lVar2);
+  }
+  return -1;
+}
+```
+
+That's not correct:
+* `uVar1` should be a long int, not undefined
+* the test should read more like `if (uVar1 != 0) return lVar2;`
+
+The solution depends on the context in which return value of `vector_strcmp` is generated and then used.
+
+If the context is boolean, as in `std::string::operator==`, the `vector_strcmp` result is encapsulated in
+a test:
+* if the test looks like `s1[i] != s2[i]` then the vector result should be complemented as `!(s1[i] != s2[i])`, thus `true` if the strings
+are equal.
+* if the test looks like `s1[i] == s2[i]` then the vector result should remain `s1[i] == s2[i]`
+
+Add this adjustment and repeat the `gguf_find_key` test:
+
+```c
+long gguf_find_key(void *s1,char *s2)
+{
+undefined1 uVar1;
+long i;
+long lVar2;
+char *pcVar3;
+lVar2 = gguf_get_n_kv(s1);
+if (0 < lVar2) {
+  i = 0;
+  do {
+    pcVar3 = gguf_get_key(s1,i);
+    uVar1 = (undefined1)vector_strcmp((char *)s2,(char *)pcVar3);
+    if (!(bool)uVar1) {
+      return i;
+    }
+    i = (long)((int)i + 1);
+  } while (lVar2 != i);
+}
+return -1;
+}
+```
+
+At this point we find 23 strcmp transforms in whisper.cpp and one decompiler exception.  The decompiler exception occurs in function
+`whisper_process_logits` at 0x000c2dc2, which we should turn into a new test case `whisper_sample_12`.
+
+Running this new test case through valgrind exposes two problems, now fixed:
+* result dependency calculations can get confused when those results are merged with other code in the epilog.  Add a test for a null `resultVarnode`
+  and abandon that transform with a warning
+* a memory leak occured when unexpected Ghidra ops were encountered.  Add supporting code to `VectorLoop::~VectorLoop`.
+
+Finish by adding `whisper_sample_11` and `whisper_sample_12` to the integration test suite.
+
+## Refactoring the transforms
+
+The `vector_strcmp` transform is the most complex so far - does that mean we can consider the other loop transforms
+simpler cases of `vector_strcmp`?  That would offer some refactoring opportunities and reduction in duplicated code - especially
+duplicated tracing code.

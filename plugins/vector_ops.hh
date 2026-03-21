@@ -22,6 +22,9 @@ namespace riscv_vector{
  * @brief VectorOperand collects Ghidra PcodeOps that might be generated during
  * loop vectorization.  They are similar to `std::vector<>` operands that might be found
  * in `std::transform(...)`, `std::reduce(...)`, or `std::inner_product(...)` operations.
+ * @details Intermediate vector terms are not generally processed into VectorOperand
+ * objects.
+ * @todo Add dependent PcodeOps, pExternal, and other context member objects.
  */
 class VectorOperand
 {
@@ -39,7 +42,6 @@ class VectorOperand
     /// @brief initialize static objects once
     static void static_init();
     OperandType opType;              ///< The role for this operand
-    ghidra::Varnode* base;           ///< Base address for this stripe
     ghidra::Varnode* vRegister;      ///< identify the vector result Varnode
     ghidra::Varnode* pRegister;      ///< identify the pointer Varnode within the loop
     ghidra::Varnode* pExternal;      ///< the vector address Varnode given to the loop
@@ -47,13 +49,13 @@ class VectorOperand
     ghidra::intb pointer_register;   ///< scalar register holding the current pointer
     std::vector<ghidra::PcodeOp*> incrementOps;  ///< sequence of PcodeOps incrementing the pointer register
     int elementLength;               ///< element size in bytes
+    std::set<ghidra::Varnode*> dependencies; ///< Register Varnodes dependent on this operand
     /**
      * @brief Constructor
      * @param t The identified type of this new operand
      */
     explicit VectorOperand(OperandType t) :
       opType(t),
-      base(nullptr),
       vRegister(nullptr),
       pRegister(nullptr),
       pExternal(nullptr),
@@ -61,6 +63,11 @@ class VectorOperand
       pointer_register(0),
       elementLength(0) {}
     ~VectorOperand();                    ///< destructor
+    /**
+     * @brief describe this VectorOperand
+     * @param ss A stringstream to receive the description
+     */
+    void printRaw(std::stringstream& ss);
 };
 
 enum OperationType      ///< Scalar and Vector operations fall into several categories
@@ -192,7 +199,9 @@ class VectorLoop
     ghidra::BlockBasic* loopBlock;   ///< the parent block of the loop
     std::list<ghidra::FlowBlock*> relatedBlocks; ///< Blocks which flow into loopBlock
     ghidra::Varnode* terminationVarnode; ///< boolean Varnode - if true, jump to start of the loop
+    ghidra::Varnode* comparisonVarnode; ///< boolean Varnode - the varnode tested for termination
     ghidra::PcodeOp* terminationControl; ///< variable tested to terminate the loop
+    ghidra::PcodeOp* terminationBranchOp; ///< the conditional branch ending this loop
     std::vector<ghidra::PcodeOp*> phiNodesAffectedByLoop;  ///< Phi or MULTIEQUAL opcodes referencing loop variables
     ghidra::OpCode comparisonOp; ///< Ghidra opcode for an integer comparison test
     bool simpleFlowStructure; ///< is this a simple loop?

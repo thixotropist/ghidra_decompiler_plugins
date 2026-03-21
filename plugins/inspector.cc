@@ -1,4 +1,6 @@
 #include <string>
+#include <set>
+#include <stack>
 #include "spdlog/spdlog.h"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 #include "framework.hh"
@@ -125,6 +127,42 @@ void Inspector::log(const string label, const FlowBlock* fb)
         copyMap->printRaw(ss);
         logger->trace("\tcopyMap is:\n{0:s}", ss.str());
         ss.str("");
+    }
+}
+void Inspector::collectDependencies(std::set<Varnode*>& result, const Varnode* root,
+      const std::set<Varnode*>& stopSet, int maxDepth)
+{
+    logger->trace("Collecting Varnode dependencies");
+
+    std::stack<ghidra::Varnode*> candidateVns;
+    std::set<ghidra::Varnode*> visitedVns = stopSet;
+    std::set<ghidra::PcodeOp*> visitedOps;
+
+    const ghidra::Varnode* vn = root;
+    int count = 0;
+    while ((vn != nullptr) && (count++ < maxDepth))
+    {
+        for (auto iter=vn->beginDescend(); iter != vn->endDescend(); ++iter)
+        {
+            ghidra::PcodeOp* op = (*iter);
+            if (visitedOps.count(op) > 0)
+                continue;
+            visitedOps.insert(op);
+            ghidra::Varnode* vnext = op->getOut();
+            if ((vnext == nullptr) || visitedVns.count(vnext) != 0)
+                continue;
+            result.insert(vnext);
+            candidateVns.push(vnext);
+        }
+        if (candidateVns.empty())
+        {
+            vn = nullptr;
+        }
+        else
+        {
+            vn = candidateVns.top();
+            candidateVns.pop();
+        }
     }
 }
 }

@@ -1,6 +1,8 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <algorithm>
+#include <iterator>
 
 #include "spdlog/spdlog.h"
 
@@ -670,13 +672,17 @@ int VectorMatcher::transformStrlen()
     initialResultOp = *intermediateDependencies;
     epilogBlock = initialResultOp->getParent();
     resultVarnode = initialResultOp->getOut();
+    if (resultVarnode == nullptr)
+    {
+        ghidra::pLogger->warn("resultVarnode is null - abandon transform");
+        return TRANSFORM_ROLLED_BACK;
+    }
     if (trace)
     {
         resultVarnode->printRaw(ss);
         ghidra::pLogger->info("\tstrlen result Varnode: {0:s}", ss.str());
         ss.str("");
     }
-
 
     // remove the results register from the list of external dependent ops
     // so we don't purge it with the other temporary registers
@@ -843,6 +849,8 @@ Basic Block 4 0x000209ec-0x000209f2
 int VectorMatcher::transformStrcmp()
 {
     std::stringstream ss;
+    ghidra::Varnode* firstArg = nullptr;  // the first argument to the vector_strcmp call
+    ghidra::Varnode* secondArg = nullptr; // the second argument to the vector_strcmp call
     ghidra::BlockGraph& graph = data.getStructure();
     ghidra::FunctionEditor functionEditor(data);
     if (info)
@@ -851,6 +859,231 @@ int VectorMatcher::transformStrcmp()
         ghidra::pLogger->info("Vector loop block before strcmp transform is\n{0:s}", ss.str());
         ss.str("");
     }
-    return TRANSFORM_ROLLED_BACK;
+
+    if (loopModel.vSourceOperands.size() != 2)
+        return TRANSFORM_ROLLED_BACK;
+    // Step 1: find the intersection of the two source operands pointer dependency set.
+    // They should intersect twice - once in the loop termination's comparison condition, which we want to ignore,
+    // and once again in the final result
+    std::set<ghidra::Varnode*> stopSet;
+    stopSet.insert(loopModel.comparisonVarnode);
+    std::set<ghidra::Varnode*> s1DepSet;
+    std::set<ghidra::Varnode*> s2DepSet;
+
+    const int MAX_DEPTH = 12;
+
+    inspector.collectDependencies(s1DepSet, loopModel.vSourceOperands[0]->pRegister, stopSet,
+        MAX_DEPTH);
+    for (auto vn: s1DepSet)
+    {
+        vn->printRaw(ss);
+        ss << ", ";
+    }
+    ghidra::pLogger->trace("\tSource 1 dependencies: {0:s}", ss.str());
+    ss.str("");
+    /*
+    inspector.collectDependencies(s2DepSet, loopModel.vSourceOperands[1]->pRegister, stopSet,
+        MAX_DEPTH, ghidra::registerAddrSpace->getIndex());
+    */
+   inspector.collectDependencies(s2DepSet, loopModel.vSourceOperands[1]->pRegister, stopSet,
+        MAX_DEPTH);
+    for (auto vn: s2DepSet)
+    {
+        vn->printRaw(ss);
+        ss << ", ";
+    }
+    ghidra::pLogger->trace("\tSource 2 dependencies: {0:s}", ss.str());
+    ss.str("");
+    // Now compute the intersection, finding common dependencies of our two sources
+    std::vector<ghidra::Varnode*> intersection_vector;
+
+    std::set_intersection(
+        s1DepSet.begin(), s1DepSet.end(),         // Range 1
+        s2DepSet.begin(), s2DepSet.end(),         // Range 2
+        std::back_inserter(intersection_vector) // Output iterator
+    );
+    for (auto vn: intersection_vector)
+    {
+        vn->printRaw(ss);
+        ss << ", ";
+    }
+    ghidra::pLogger->trace("\tIntersection of Sources 1 and 2: {0:s}", ss.str());
+    ss.str("");
+
+    // select only intersections that were defined within the loop
+    auto resultVnIter = std::find_if(intersection_vector.begin(),
+        intersection_vector.end(),
+        [this](const ghidra::Varnode* vn){return !loopModel.isDefinedInLoop(vn);});
+    if (resultVnIter == intersection_vector.end())
+    {
+        ghidra::pLogger->info("Unable to locate result Varnode, abandon transform");
+        return TRANSFORM_ROLLED_BACK;
+    }
+    ghidra::Varnode* resultVn = *resultVnIter;
+    ghidra::PcodeOp* result = resultVn->getDef();
+    bool comparisonInverted = false;
+    result->printRaw(ss);
+    ghidra::pLogger->info("strcmp result operation located: {0:s}", ss.str());
+    ss.str("");
+    // The result opcode tells us whether this is an ordering comparison or an equality
+    // comparison.
+    switch(result->code())
+    {
+        case ghidra::CPUI_INT_ADD:
+            // An addition op may be part of a negate-add sequence, which should
+            // be fixed by another Rule in another pass
+            ghidra::pLogger->info("strcmp result is addition, try in another pass");
+            return TRANSFORM_ROLLED_BACK;
+        case ghidra::CPUI_INT_SUB:
+            // This is an ordering comparison, for instance string::operator<
+            firstArg = result->getIn(0);  // this will lead to the true first argument
+            secondArg = result->getIn(1); // this will lead to the true second argument
+            break;
+        case ghidra::CPUI_CBRANCH:
+            // This is a comparison already embedded in an unrelated branch
+            ghidra::pLogger->warn("strcmp result is embedded in a branch statement - not implemented");
+            return TRANSFORM_ROLLED_BACK;
+        case ghidra::CPUI_INT_EQUAL:
+            firstArg = result->getIn(0);  // this will lead to the true first argument
+            secondArg = result->getIn(1); // this will lead to the true second argument
+            comparisonInverted = false;
+            break;
+        case ghidra::CPUI_INT_NOTEQUAL:
+            firstArg = result->getIn(0);  // this will lead to the true first argument
+            secondArg = result->getIn(1); // this will lead to the true second argument
+            comparisonInverted = true;
+            break;
+        default:
+            ghidra::pLogger->info("strcmp result is unrecognized, abandon transform");
+            return TRANSFORM_ROLLED_BACK;
+    }
+    // use the dependency sets to find the true arguments
+    if ((s1DepSet.find(firstArg) != s1DepSet.end()) && (s2DepSet.find(secondArg) != s2DepSet.end()))
+    {
+        firstArg = loopModel.vSourceOperands[0]->pExternal;
+        secondArg = loopModel.vSourceOperands[1]->pExternal;
+    }
+    else if ((s2DepSet.find(firstArg) != s2DepSet.end()) && (s1DepSet.find(secondArg) != s1DepSet.end()))
+    {
+        firstArg = loopModel.vSourceOperands[1]->pExternal;
+        secondArg = loopModel.vSourceOperands[0]->pExternal;
+    }
+    else
+    {
+         ghidra::pLogger->warn("Can't match parameters, abandon transform");
+         return TRANSFORM_ROLLED_BACK;
+    }
+    // log the pending transform
+    resultVn->printRaw(ss);
+    ss << " = ";
+    ss << "vector_strcmp(";
+    if (firstArg != nullptr)
+        firstArg->printRaw(ss);
+    else
+        ss << "???";
+    ss << ", ";
+    if (secondArg != nullptr)
+        secondArg->printRaw(ss);
+    else
+        ss << "???";
+    ss << ")";
+    // create a new Pcodeop with three varnode input parameters and one output varnode
+    ghidra::PcodeOp *newVectorOp = data.newOp(3, loopBlock->getStop());
+    data.opSetOpcode(newVectorOp, ghidra::CPUI_CALLOTHER);
+    data.getArch()->userops.registerBuiltin(VECTOR_STRCMP);
+    data.opSetInput(newVectorOp, data.newConstant(4, VECTOR_STRCMP), 0);
+    data.opSetInput(newVectorOp, firstArg, 1);
+    data.opSetInput(newVectorOp, secondArg, 2);
+    ghidra::Varnode* vectorResultVarnode = data.newVarnodeOut(resultVn->getSize(), resultVn->getAddr(), newVectorOp);
+    // generate the inverse result varnode
+    ghidra::PcodeOp* invertResultOp = data.newOp(1, vectorResultVarnode->getAddr());
+    data.opSetOpcode(invertResultOp, ghidra::CPUI_BOOL_NEGATE);
+    data.opSetInput(invertResultOp, vectorResultVarnode, 0);
+    ghidra::Varnode* invertResultVn = data.newVarnodeOut(vectorResultVarnode->getSize(), vectorResultVarnode->getAddr(), invertResultOp);
+
+    ghidra::pLogger->trace("Preparing transform: {0:s}", ss.str());
+    ss.str("");
+    if (trace)
+    {
+        newVectorOp->printRaw(ss);
+        ghidra::pLogger->trace("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
+        ss.str("");
+    }
+    data.opInsertEnd(newVectorOp, loopBlock);
+    data.opInsertAfter(invertResultOp, newVectorOp);
+    if (info)
+    {
+        loopBlock->printRaw(ss);
+        ghidra::pLogger->info("Vector loop block after inserting vector_strcmp is\n{0:s}", ss.str());
+        ss.str("");
+    }
+    // replace old result with new result
+    std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVn->beginDescend(), resultVn->endDescend());
+    for (auto op: resultSet)
+    {
+        ghidra::pLogger->trace("Examining dependency at 0x{0:x}:{1:x}", op->getAddr().getOffset(), op->getTime());
+        for (int i = 0; i < op->numInput(); i++)
+        {
+            if (op->getIn(i) == resultVn)
+            {
+                ghidra::pLogger->trace("Replacing result varnode from slot {0:d} of op at 0x{1:x}", i, op->getAddr().getOffset());
+                op->printRaw(ss);
+                ghidra::pLogger->trace("\tOp was {0:s}", ss.str());
+                ss.str("");
+                if ((op->code() == ghidra::CPUI_CBRANCH) && (!comparisonInverted))
+                {
+                    ghidra::pLogger->trace("\tResult evaluated in boolean context;  varnodes:");
+                    for (int j = 0; j < op->numInput(); j++)
+                    {
+                        op->getIn(j)->printRaw(ss);
+                        ghidra::pLogger->trace("\t\tSlot {0:d} is {1:s}", j, ss.str());
+                        ss.str("");
+                    }
+                    data.opUnsetInput(op, i);
+                    data.opSetInput(op, invertResultVn, i);
+                    op->printRaw(ss);
+                    ghidra::pLogger->trace("\tOp is now {0:s}", ss.str());
+                    ss.str("");
+                }
+                else
+                {
+                    ghidra::pLogger->trace("\tResult evaluated in integer context; varnodes:");
+                    for (int j = 0; j < op->numInput(); j++)
+                    {
+                        op->getIn(j)->printRaw(ss);
+                        ghidra::pLogger->trace("\t\tSlot {0:d} is {1:s}", j, ss.str());
+                        ss.str("");
+                    }
+                    data.opUnsetInput(op, i);
+                    data.opSetInput(op, vectorResultVarnode, i);
+                    op->printRaw(ss);
+                    ghidra::pLogger->trace("\tOp is now {0:s}", ss.str());
+                    ss.str("");
+                }
+            }
+        }
+    }
+    // Delete enough common dependencies to make others unused
+    data.opUnlink(loopModel.terminationControl);
+    data.opUnlink(loopModel.terminationBranchOp);
+    for (auto op: loopModel.phiNodesAffectedByLoop)
+        data.opUnlink(op);
+    data.opUnlink(loopModel.vsetOp);
+    // remove unused ops
+    ghidra::BlockBasic* epilogBlock = result->getParent();
+    ghidra::pLogger->info("Checking for unused PCodeOps");
+    functionEditor.removeUnusedOps(epilogBlock);
+    functionEditor.removeUnusedOps(loopBlock);
+    for (auto fb: loopModel.relatedBlocks)
+        functionEditor.removeUnusedOps(fb);
+    if (info)
+    {
+        inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
+    }
+    ghidra::pLogger->info("Preparing to edit the flow block graph to remove the loop edge");
+    graph.removeEdge(loopBlock, loopBlock);
+    functionEditor.removeDoWhileWrapperBlock(loopBlock);
+    ghidra::pLogger->flush();
+    return TRANSFORM_COMPLETED;
 }
 }

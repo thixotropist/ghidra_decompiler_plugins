@@ -12,6 +12,19 @@
       d730106291cad720116a158e57a71842
       e34c07fc3a95ba9508819081118d8280
     </bytechunk>
+    <bytechunk space="ram" offset="0x100070" readonly="true">
+      01465776000c329587000503b2950781
+      050357011166d7301062732600c2d720
+      116ad7a21842e3ce02fc169596950881
+      90816304c5000145828005458280
+    </bytechunk>
+    <bytechunk space="ram" offset="0x1000ae" readonly="true">
+      8146
+      5770060c369587000503b69507810503
+      f32600c257011166d730106291cad720
+      116a158e57a71842e34c07fc3a95ba95
+      088190816304c5000145828005458280
+    </bytechunk>
   </binaryimage>
   <coretypes>
     <type name="uint3" size="3" metatype="uint" id="0xc0000000000000c0" />
@@ -52,128 +65,4 @@
     <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b" />
     <type name="uint16" size="16" metatype="uint" id="0xc0000000000000bf" />
   </coretypes>
-  <save_state>
-    <typegrp structalign="4">
-      <type name="" metatype="ptr" size="8">
-        <type name="char" id="0xc00000000000007b" metatype="int" size="1" char="true" />
-      </type>
-    </typegrp>
-    <db scopeidbyname="false">
-      <scope name="" id="0x0">
-        <symbollist>
-          <mapsym>
-            <function id="0xc" name="strcmp_base" size="1">
-              <addr space="ram" offset="0x100000" />
-              <localdb lock="false" main="stack">
-                <scope name="strcmp_base">
-                  <parent id="0x0" />
-                  <rangelist />
-                  <symbollist>
-                    <mapsym>
-                      <symbol id="0x158" name="s1" typelock="true" namelock="true" merge="false"
-                        cat="0" index="0x0">
-                        <type name="" metatype="ptr" size="8">
-                          <type name="char" id="0xc00000000000007b" metatype="int" size="1"
-                            char="true" />
-                        </type>
-                      </symbol>
-                      <addr space="register" offset="0x2050" size="8" />
-                      <rangelist>
-                        <range space="ram" first="0xfffff" last="0xfffff" />
-                      </rangelist>
-                    </mapsym>
-                    <mapsym>
-                      <symbol id="0x159" name="s2" typelock="true" namelock="true" merge="false"
-                        cat="0" index="0x1">
-                        <type name="" metatype="ptr" size="8">
-                          <type name="char" id="0xc00000000000007b" metatype="int" size="1"
-                            char="true" />
-                        </type>
-                      </symbol>
-                      <addr space="register" offset="0x2058" size="8" />
-                      <rangelist>
-                        <range space="ram" first="0xfffff" last="0xfffff" />
-                      </rangelist>
-                    </mapsym>
-                  </symbollist>
-                </scope>
-              </localdb>
-              <prototype extrapop="0" model="__stdcall" modellock="true">
-                <returnsym typelock="true">
-                  <addr space="register" offset="0x2050" size="8" />
-                  <type name="long" id="0xc000000000000097" metatype="int" size="8" />
-                </returnsym>
-              </prototype>
-            </function>
-            <addr space="ram" offset="0x100000" size="1" />
-            <rangelist />
-          </mapsym>
-          <mapsym>
-            <symbol id="0x130" name="vl" typelock="true" namelock="true" merge="false" cat="-1">
-              <typeref name="undefined8" id="0xc0000000000000bb" />
-            </symbol>
-            <addr space="csreg" offset="0x6100" size="8" />
-            <rangelist />
-          </mapsym>
-          <mapsym>
-            <function id="0xe" name="strncmp_base" size="1">
-              <addr space="ram" offset="0x100036" />
-              <localdb lock="false" main="stack">
-                <scope name="strncmp_base">
-                  <parent id="0x0" />
-                  <rangelist />
-                  <symbollist>
-                    <mapsym>
-                      <symbol id="0x15a" name="s1" typelock="true" namelock="true" merge="false"
-                        cat="0" index="0x0">
-                        <type name="" metatype="ptr" size="8">
-                          <type name="char" id="0xc00000000000007b" metatype="int" size="1"
-                            char="true" />
-                        </type>
-                      </symbol>
-                      <addr space="register" offset="0x2050" size="8" />
-                      <rangelist>
-                        <range space="ram" first="0x100035" last="0x100035" />
-                      </rangelist>
-                    </mapsym>
-                    <mapsym>
-                      <symbol id="0x15b" name="s2" typelock="true" namelock="true" merge="false"
-                        cat="0" index="0x1">
-                        <type name="" metatype="ptr" size="8">
-                          <type name="char" id="0xc00000000000007b" metatype="int" size="1"
-                            char="true" />
-                        </type>
-                      </symbol>
-                      <addr space="register" offset="0x2058" size="8" />
-                      <rangelist>
-                        <range space="ram" first="0x100035" last="0x100035" />
-                      </rangelist>
-                    </mapsym>
-                    <mapsym>
-                      <symbol id="0x15c" name="n" typelock="true" namelock="true" merge="false"
-                        cat="0" index="0x2">
-                        <type name="long" id="0xc000000000000097" metatype="int" size="8" />
-                      </symbol>
-                      <addr space="register" offset="0x2060" size="8" />
-                      <rangelist>
-                        <range space="ram" first="0x100035" last="0x100035" />
-                      </rangelist>
-                    </mapsym>
-                  </symbollist>
-                </scope>
-              </localdb>
-              <prototype extrapop="0" model="__stdcall" modellock="true">
-                <returnsym typelock="true">
-                  <addr space="register" offset="0x2050" size="8" />
-                  <type name="long" id="0xc000000000000097" metatype="int" size="8" />
-                </returnsym>
-              </prototype>
-            </function>
-            <addr space="ram" offset="0x100036" size="1" />
-            <rangelist />
-          </mapsym>
-        </symbollist>
-      </scope>
-    </db>
-  </save_state>
 </xml_savefile>

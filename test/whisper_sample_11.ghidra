@@ -1,0 +1,17 @@
+// decompiler commands are defined in IfaceDecompCapability::registerCommands
+restore test/whisper_sample_11_save.xml
+// define signatures of called functions
+map function 0x75232 gguf_get_key
+parse line extern char* gguf_get_key(void* s, long i);
+map function 0x75220 gguf_get_n_kv
+parse line extern long gguf_get_n_kv(void* s);
+// define the function we are decompiling
+map function 0x7528a gguf_find_key
+parse line extern long gguf_find_key(void* s1, char* s2);
+// perform the decompilation
+load function gguf_find_key
+decompile gguf_find_key
+print C
+print raw
+// uncomment the following to trace action statistics
+// print actionstats

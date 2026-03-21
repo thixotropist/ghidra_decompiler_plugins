@@ -1,0 +1,8 @@
+// decompiler commands are defined in IfaceDecompCapability::registerCommands
+restore test/whisper_sample_12_save.xml
+map function 0xc2dc2 whisper_process_logits
+parse line extern void whisper_process_logits(float param_1_00,long param_1,long param_2,long *param_3,long param_5);
+load function whisper_process_logits
+decompile whisper_process_logits
+print C
+print raw

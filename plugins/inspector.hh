@@ -28,6 +28,16 @@ class Inspector
      */
     void log(const string label, const FlowBlock* fb); /// log fb details
     /**
+     * @brief Collect dependency set of a given Varnode
+     * @details Collect dependent varnodes found within a given space
+     * @param result The set of dependent Varnodes found
+     * @param root The Varnode to start the dependent search
+     * @param stopSet Varnodes we don't want to descend from
+     * @param maxDepth The maximum length of any dependency chain
+     */
+    void collectDependencies(std::set<Varnode*>& result, const Varnode* root,
+      const std::set<Varnode*>& stopSet, int maxDepth);
+    /**
      * @brief Log the current ActionDatabase
      */
     void logActions();

@@ -7,9 +7,9 @@
 .type no_return, %function
 
 # simplest example
-.global strlen_base
-.type strlen_base, %function
-strlen_base:
+.global strlen
+.type strlen, %function
+strlen:
     c.li        a3,0x0
     c.mv        a5,a0
 LAB_ram_000209d2:
@@ -51,7 +51,7 @@ LAB_ram_00023054:
 
 .global strlen_var2
 .type strlen_var2, %function
-# strlen_base plus possible dependency conflict
+# strlen plus possible dependency conflict
 strlen_var2:
     c.addi16sp  sp,-0x20
     c.sdsp      ra,0x18(sp)

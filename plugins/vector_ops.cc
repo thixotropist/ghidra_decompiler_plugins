@@ -7,6 +7,7 @@
  * @copyright Copyright (c) 2025
  *
  */
+#include <stack>
 #include "framework.hh"
 #include "vector_ops.hh"
 #include "riscv.hh"
@@ -20,6 +21,34 @@ static std::vector<std::string> opTypeToString;
 void VectorOperand::static_init()
 {
     opTypeToString = { "load", "store", "read-modify-write", "constant", "indexer", "other"};
+}
+void VectorOperand::printRaw(std::stringstream& ss)
+{
+    ss << "\tOperand Type: " << opTypeToString[opType] << std::endl;
+    if (vRegister != nullptr)
+    {
+        ss << "\tVRegister: ";
+        vRegister->printRaw(ss);
+        ss << std::endl;
+    }
+    if (pRegister != nullptr)
+    {
+        ss << "\tpRegister: ";
+        pRegister->printRaw(ss);
+        ss << std::endl;
+    }
+     if (pExternal != nullptr)
+     {
+        ss << "\tpExternal: ";
+        pExternal->printRaw(ss);
+        ss << std::endl;
+     }
+    std::string vector_register_name;
+    ghidra::getRegisterName(vector_register, &vector_register_name);
+    ss << "\tVector Register: " << vector_register_name << std::endl;
+    std::string pointer_register_name;
+    ghidra::getRegisterName(pointer_register, &pointer_register_name);
+    ss << "\tpointer Register: " << pointer_register_name << std::endl;
 }
 
 static std::vector<std::string> operationTypeToString;
@@ -343,7 +372,9 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     codeSpace(nullptr),
     loopBlock(nullptr),
     terminationVarnode(nullptr),
+    comparisonVarnode(nullptr),
     terminationControl(nullptr),
+    terminationBranchOp(nullptr),
     comparisonOp(ghidra::CPUI_MAX),
     simpleFlowStructure(false),
     numElements(nullptr),
@@ -693,11 +724,13 @@ void VectorLoop::collect_common_elements()
                     terminationConditionFlags |= TERMINATES_ON_DATA_TEST;
                 std::stringstream ss;
                 testedOp->printRaw(ss);
+                comparisonVarnode = testedOp->getOut();
                 ghidra::pLogger->trace("Comparison target = {0:s}\n\tTermination flags = 0x{1:x}",
                     ss.str(), terminationConditionFlags);
                 break;
             }
             case OperationType::conditionalBranch:
+                terminationBranchOp = op->op;
                 break;
             case OperationType::multiplication:
             case OperationType::addition:
@@ -726,7 +759,20 @@ void VectorLoop::collect_common_elements()
     {
         VectorOperand* vOperand = new VectorOperand(VectorOperand::load);
         vOperand->vRegister = vop->result;
+        vOperand->vector_register = vOperand->vRegister->getOffset();
         vOperand->pRegister = vop->arg0;
+        vOperand->pointer_register = vOperand->pRegister->getOffset();
+        // search for a Phi node referencing this register
+        for (auto op: phiNodesAffectedByLoop)
+        {
+            if (op->numInput() == 2)
+            {
+                if (op->getIn(1) == vOperand->pRegister)
+                    vOperand->pExternal = op->getIn(0);
+                else if (op->getIn(0) == vOperand->pRegister)
+                    vOperand->pExternal = op->getIn(1);
+            }
+        }
         vSourceOperands.push_back(vOperand);
     }
     for (auto vop: vStoreOps)
@@ -742,7 +788,6 @@ void VectorLoop::collect_common_elements()
         terminationControl = sComparisonOps[0]->arg0->getDef();
     }
 }
-
 void VectorLoop::examine_loop_epilog()
 {
     static const int EPILOG_SEARCH_DEPTH = 6; ///< How far to look after the loop
@@ -1010,6 +1055,10 @@ VectorLoop::~VectorLoop()
         delete op;
     }
     for (auto op:scalarOps)
+    {
+        delete op;
+    }
+    for (auto op: otherScalarOps)
     {
         delete op;
     }
