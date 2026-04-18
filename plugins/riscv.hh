@@ -22,6 +22,7 @@
 #include <fstream>
 
 #include "spdlog/spdlog.h"
+#include "riscv_csr.hh"
 #include "framework.hh"
 
 /**
@@ -35,8 +36,12 @@ static const int RETURN_NO_TRANSFORM = 0;
 static const int RETURN_TRANSFORM_PERFORMED = 1;
 extern Architecture* arch;
 extern AddrSpace* registerAddrSpace;
-extern AddrSpace* csRegisterAddrSpace;
 extern AddrSpace* uniqueAddrSpace;
+extern AddrSpace* ramAddrSpace;
+extern AddrSpace* stackAddrSpace;
+
+// utility functions
+extern ghidra::Inspector inspector;
 }
 
 namespace riscv_vector

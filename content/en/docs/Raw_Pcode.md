@@ -201,7 +201,8 @@ How do we interpret these printRaw descriptions?
     * `i` appears to indicate a store to RAM operation
     * `c` appears to refer to a register, with the offset to name binding set in a file like `riscv.table.sinc`.
 * varnodes like `r0x001d90d4:4(0x00100088:5d) = r0x001d90d4:4(0x00100084:5c) [] i0x00100088:50(free)`
-  *appear* to indicate a RAM variable that may hold a pre-existing value or may be rewritten by the `i0x00100088:50` varnode
+  *appear* to indicate a RAM variable that may hold a pre-existing value or may be rewritten by the `i0x00100088:50` varnode.
+  This may be an example of a `CPUI_INDIRECT` opcode, described as a "Copy with indirect effect".
 * note that some instructions have been deleted from this raw pcode listing - the floating point loads and stores
   for instance are gone.  Perhaps they were identified as dead code?
 

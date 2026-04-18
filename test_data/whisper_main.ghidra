@@ -1,0 +1,20 @@
+restore test_data/whisper_main_save.xml
+map function 0xbfb30 whisper_init_from_file_with_params
+parse line extern long whisper_init_from_file_with_params(void* params);
+map function 0x11ff20 noreturn_1
+option noreturn noreturn_1
+map function 0x11ffc0 noreturn_2
+option noreturn noreturn_2
+map function 0x11f810 noreturn_3
+option noreturn noreturn_3
+map function 0x11fc50 noreturn_4
+option noreturn noreturn_4
+map function 0x20fd0 main
+map function 0xb006e whisper_full_default_params
+map function 0x1fcf0 memset
+parse line extern void* memset(void* s, long c, ulong n);
+parse line extern int main(int argc, char** argv);
+load function main
+decompile main
+print C
+print raw

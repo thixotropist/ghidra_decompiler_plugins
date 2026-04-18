@@ -1,0 +1,13 @@
+<xml_savefile name="main" target="default" adjustvma="0">
+    <binaryimage arch="x86:LE:64:default:gcc">
+        <bytechunk space="ram" offset="0x100000" readonly="true">
+            f30f1efa48ba4d6573736167653a488b
+            07488910c6400820c3
+    </bytechunk>
+    </binaryimage>
+    <coretypes>
+        <void />
+        <type name="int" size="4" metatype="int" id="-9223370945157383201" />
+        <type name="char" size="1" metatype="int" char="true" id="-9223091865880322087" />
+    </coretypes>
+</xml_savefile>

@@ -7,6 +7,9 @@
 # decompiler source file location in the imported Ghidra release tar file
 SRCDIR = "Ghidra/Features/Decompiler/src/decompile/cpp/"
 
+# The decompiler usually builds with c++-11, but we want something with a bit more utility
+CPP_STANDARD = "c++20"
+
 # Common source files, each with a .cc extension
 DECOMP_CPP_FILES = [
     "action",
@@ -176,12 +179,12 @@ cc_library(
         "-Wno-sign-compare",
     ],
     deps = [
-        "@spdlog//:spdlog",
+        "@spdlog",
     ],
 )
 
 # The decompiler process invoked by ghidra and fed via a socket,
-# usually installed in a directory like /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64
+# usually installed in a directory like /opt/ghidra_12.1_DEV/Ghidra/Features/Decompiler/os/linux_x86_64
 cc_binary(
     name = "decompile",
     srcs = [
@@ -218,6 +221,7 @@ cc_binary(
         "-O2",
         "-Wall",
         "-Wno-sign-compare",
+        "-std=" + CPP_STANDARD,
     ],
     linkopts = [
         "-Wl,-export-dynamic",
@@ -225,7 +229,7 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
-        "@spdlog//:spdlog",
+        "@spdlog",
     ],
 )
 
@@ -280,6 +284,7 @@ cc_binary(
     copts = [
         "-Wall",
         "-Wno-sign-compare",
+        "-std=" + CPP_STANDARD,
     ],
     defines = [
         "__TERMINAL__",
@@ -290,7 +295,7 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
-        "@spdlog//:spdlog",
+        "@spdlog",
     ],
 )
 
@@ -348,6 +353,7 @@ cc_binary(
     copts = [
         "-Wall",
         "-Wno-sign-compare",
+        "-std=" + CPP_STANDARD,
     ],
     defines = [
         "__TERMINAL__",
@@ -358,6 +364,6 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
-        "@spdlog//:spdlog",
+        "@spdlog",
     ],
 )

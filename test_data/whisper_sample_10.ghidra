@@ -1,0 +1,7 @@
+restore test_data/whisper_sample_10_save.xml
+map function 0x2a606 drwav__on_write_memory
+parse line extern long drwav__on_write_memory(void *,void *,ulong);
+load function drwav__on_write_memory
+decompile drwav__on_write_memory
+print C
+print raw

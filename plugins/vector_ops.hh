@@ -14,6 +14,8 @@
 #include "spdlog/spdlog.h"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "inspector.hh"
+#include "framework.hh"
 #include "riscv.hh"
 
 namespace riscv_vector{
@@ -192,14 +194,17 @@ class VectorLoop
     uint loopFlags;        ///< aggregated instruction flags found within the loop
     bool loopFound;        ///< was a simple loop found?
     ghidra::Funcdata& data;  ///< The ghidra function data top level information
+    ghidra::FunctionEditor functionEditor; ///< A set of ghidra function editor utilities
     ghidra::PcodeOp* vsetOp; ///< The vsetvli or vsetivli pcode op found at the beginning of the loop
     ghidra::AddrSpace* codeSpace;   ///< The code address space containing the loop
-    ghidra::intb firstAddr; ///< the first RAM address of this loop
-    ghidra::intb lastAddr; ///< the last RAM address of this loop
+    ghidra::uintb firstAddr; ///< the first RAM address of this loop
+    ghidra::uintb lastAddr; ///< the last RAM address of this loop
     ghidra::BlockBasic* loopBlock;   ///< the parent block of the loop
-    std::list<ghidra::FlowBlock*> relatedBlocks; ///< Blocks which flow into loopBlock
+    std::vector<ghidra::FlowBlock*> relatedBlocks; ///< Blocks which flow into loopBlock
     ghidra::Varnode* terminationVarnode; ///< boolean Varnode - if true, jump to start of the loop
     ghidra::Varnode* comparisonVarnode; ///< boolean Varnode - the varnode tested for termination
+    std::vector<ghidra::Varnode*> loopLocalVns; ///< Varnodes which should never be referenced outside the loop or epilog
+    std::vector<ghidra::PcodeOp*> loopOps; ///< loop pcode ops other than Phi or MULTIEQUAL ops
     ghidra::PcodeOp* terminationControl; ///< variable tested to terminate the loop
     ghidra::PcodeOp* terminationBranchOp; ///< the conditional branch ending this loop
     std::vector<ghidra::PcodeOp*> phiNodesAffectedByLoop;  ///< Phi or MULTIEQUAL opcodes referencing loop variables
@@ -221,6 +226,8 @@ class VectorLoop
     std::vector<VectorOperand*> vSourceOperands; ///< vector source operands and their loop context
     std::vector<VectorOperand*> vDestinationOperands; ///< vector destination operands and their loop context
     ghidra::Varnode* numElements;  ///< Varnode tracking the number of elements remaining to be processed
+    std::map<ghidra::uintb, std::vector<ghidra::Varnode*>*> registerPhiMapping;  ///< map loop registers to their heritage Varnodes
+    std::map<ghidra::uintb, std::vector<ghidra::Varnode*>*> csRegisterPhiMapping;  ///< map loop control and status registers to their heritage Varnodes
     /**
      * @brief Construct a new Vector Function object to hold model parameters
      * @param dataParam The Ghidra function data top level object
@@ -251,16 +258,11 @@ class VectorLoop
      */
     void log();
     /**
-     * @brief Remove duplicate varnodes in a Phi opcode
+     * @brief Check a vector result for unresolved dependencies
+     * @param result The result to check
+     * @return true if the transform has free Varnodes and must be aborted
      */
-    void reducePhiNode(ghidra::PcodeOp* op);
-    /**
-     * @brief remove all PCodeOps from the loop, identifying external operand Varnodes
-     * in the process.
-     * @details Updates registered operands and condenses Phi nodes.
-     * @returns True if successful, False if the transform should be aborted
-     */
-    bool absorbOps();
+    bool unresolvedDependencies(const ghidra::PcodeOp* result);
   private:
 
     int multiplier;                        ///< vset multiplier
@@ -294,6 +296,11 @@ class VectorLoop
      */
     void collect_phi_nodes();
     /**
+     * @brief Phi nodes referencing vector control and status registers need
+     * a lot of cleanup.  Do it here, regardless of whether a transform is completed.
+     */
+    void clean_csr_phi_nodes();
+    /**
      * @brief Examine pcode ops within a loop to locate key vector operations.
      * @param loopBlock The Ghidra block containing the trigger vset instruction
      */
@@ -311,10 +318,104 @@ class VectorLoop
      * @brief collect possible related blocks
      */
     void collect_related_blocks();
+
     /**
      * @brief Generate a summary report for this vector loop
      */
     void generateReport();
+};
+/**
+ * @brief The VectorEpilogProcessor provides methods to extract results from
+ * the epilog to a vector loop.
+ * @details Results are typically output Varnodes in the `register` address space.
+ * Epilog processing can be complicated as unrelated PcodeOps may be present
+ * in the block before the results are calculated.
+ */
+class VectorEpilogProcessor
+{
+  public:
+    ghidra::Funcdata& data;                  ///< The ghidra Funcdata context for this analysis
+    ghidra::Inspector& inspector;            ///< The Ghidra inspector to use
+    std::shared_ptr<spdlog::logger> logger;  ///< The spdlogger to use
+    VectorLoop& loopModel;                   ///< The VectorLoop model to use
+    /**
+     *  @brief Construct the processor context
+     *  @param dataParam The ghidra Funcdata context to use
+     *  @param inspectorParam The Ghidra inspector to use
+     *  @param loggerParam  The spdlogger to use
+     *  @param loopModelParam The VectorLoop model to use
+     */
+    VectorEpilogProcessor(ghidra::Funcdata& dataParam, ghidra::Inspector& inspectorParam,
+                          std::shared_ptr<spdlog::logger> loggerParam, VectorLoop& loopModelParam) :
+      data(dataParam),
+      inspector(inspectorParam),
+      logger(loggerParam),
+      loopModel(loopModelParam),
+      resultFilter(REGISTER_VARNODE_ONLY),
+      trace(logger->should_log(spdlog::level::trace))
+    {}
+    /// @brief Filter to use when generating result candidates
+    enum ResultFilter {
+      REGISTER_VARNODE_ONLY,   ///< The result Varnode must reference a real register
+      ANY_VARNODE              ///< The result may be any Varnode
+    };
+    /**
+     * @brief set varnodes to halt further descent down the dependency tree
+     * @param stopSetParam The set of Varnodes which halt dependency searches, typically loop termination tests
+     */
+    void setStopSet(const std::set<ghidra::Varnode*>& stopSetParam);
+    /**
+     * @brief set the result filter
+     */
+    inline void setResultFilter(ResultFilter filterType)
+    {
+      resultFilter = filterType;
+    }
+    /**
+     * @brief Get the Intersection of the dependency trees of two Varnodes
+     * @param results A vector of possible results, output Varnodes dependent on both root Varnodes
+     * @param root1 The first varnode
+     * @param root2 The second varnode
+     */
+    void getIntersectionVector(std::vector<ghidra::Varnode*>& results, const ghidra::Varnode* root1, const ghidra::Varnode* root2);
+  private:
+    std::set<ghidra::Varnode*> stopSet;
+    ResultFilter resultFilter;
+    bool trace;
+    std::stringstream ss; ///< buffer for log messages
+    const int MAX_DEPENDENCY_DEPTH = 12; ///< maximum number of links in a Varnode dependency chain
+    const int EPILOG_SEARCH_DEPTH = 16; ///< maximum distance, in bytes, from the of loop to result PcodeOP
+    ///@brief lambda implementing REGISTER_VARNODE_ONLY result filter
+    std::function<bool(const ghidra::Varnode *vn)> selectRegisterVnOnly =
+        [this](const ghidra::Varnode *vn)
+    {
+      ghidra::uintb vnOffset = vn->getDef()->getAddr().getOffset();
+      return (!loopModel.isDefinedInLoop(vn)) &&
+             (vn->getAddr().getSpace() == ghidra::registerAddrSpace) &&
+             (vnOffset >= loopModel.lastAddr) &&
+             (vnOffset <= (loopModel.lastAddr + EPILOG_SEARCH_DEPTH));
+    };
+    ///@brief lambda implementing ANY_VARNODE result filter
+    std::function<bool(const ghidra::Varnode *vn)> selectAny =
+        [this](const ghidra::Varnode *vn)
+    {
+      ghidra::uintb vnOffset = vn->getDef()->getAddr().getOffset();
+      return (!loopModel.isDefinedInLoop(vn)) &&
+             (vnOffset >= loopModel.lastAddr) &&
+             (vnOffset <= (loopModel.lastAddr + EPILOG_SEARCH_DEPTH));
+    };
+    /**
+     * @brief log a vector of Varnodes with a descriptive label
+     * @param results
+     * @param label
+     */
+    void traceResultCandidates(const std::vector<ghidra::Varnode*>& results, const std::string& label);
+    /**
+     * @brief log a set of Varnodes with a descriptive label
+     * @param depSet The set to log
+     * @param label A label to describe this set
+     */
+    void traceDependencies(const std::set<ghidra::Varnode*>& depSet, const std::string& label);
 };
 }
 #endif /* VECTOR_OPS_HH */

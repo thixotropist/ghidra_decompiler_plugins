@@ -27,6 +27,41 @@ namespace riscv_vector
 /**
  * @file rule_vector_transform.hh
  */
+/**
+ * @brief Remove confusing and unnecessary heritage tracking of Control and Status Registers.
+ * @details This should apply just once in any function referencing vector operations.  It would
+ * be better as an Action than as a Rule.  It should run before the vector transform rule.
+ */
+class RuleCsrRemoveHeritage : public ghidra::Rule
+{
+    public:
+    /**
+     * @brief Construct a new Rule CSR Remove Heritage object
+     *
+     * @param g the name of an existing Ghidra rule group
+     */
+    explicit RuleCsrRemoveHeritage(const std::string &g); ///< Constructor
+    /**
+     * @brief Allow the ActionDatabase to clone this rule
+     *
+     * @param grouplist
+     * @return Rule*
+     */
+    virtual ghidra::Rule *clone(const ghidra::ActionGroupList &grouplist) const override;
+    /**
+     * @brief Register the Ghidra ops for which we want callbacks
+     *
+     * @param oplist
+     */
+    virtual void getOpList(std::vector<ghidra::uint4> &oplist) const override;
+    /**
+     * @brief the callback function telling us of a relevant Ghidra op
+     * @param op the PcodeOp triggering this callback
+     * @param data the Funcdata object of the enclosing function
+     * @return 0 if no changes made, 1 if changes made
+     */
+    virtual ghidra::int4 applyOp(ghidra::PcodeOp *op, ghidra::Funcdata &data) override;
+};
 
  /**
  * @brief A Rule collecting individual vector instructions into vector_* function invocations

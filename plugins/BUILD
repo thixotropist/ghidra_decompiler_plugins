@@ -5,6 +5,10 @@ cc_library(
         "inspector.cc",
         "riscv.hh",
         "riscv.cc",
+        "riscv_sleigh.hh",
+        "riscv_sleigh.cc",
+        "riscv_csr.hh",
+        "riscv_csr.cc",
         "rule_vector_transform.hh",
         "rule_vector_transform.cc",
         "vector_matcher.hh",
@@ -13,9 +17,11 @@ cc_library(
         "framework.cc",
         "vector_ops.hh",
         "vector_ops.cc",
+        "vector_stdlib.cc",
     ],
     copts = [
         "-Wno-sign-compare",
+        "-std=c++20"
     ],
     deps = [
         "@ghidra//:decomp_lib",

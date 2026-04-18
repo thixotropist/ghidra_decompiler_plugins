@@ -1,0 +1,6 @@
+restore test_data/whisper_sample_8_save.xml
+map function 0xe9ef2 ggml_compute_forward_out_prod
+load function ggml_compute_forward_out_prod
+decompile ggml_compute_forward_out_prod
+print C
+print raw

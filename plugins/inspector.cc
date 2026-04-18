@@ -110,7 +110,7 @@ void Inspector::log(const string label, const FlowBlock* fb)
     logger->trace("\tEdgesIn = {0:d}; EdgesOut = {1:d}; List Elements = {2:d}; Flags = 0x{3:x};",
         edgesIn, edgesOut, list.size(), flags);
     std::stringstream ss;
-    if (parent != nullptr)
+    if (logBlockStructure && (parent != nullptr))
     {
         parent->printRaw(ss);
         logger->trace("\tparent Flowblock is:\n{0:s}", ss.str());
@@ -122,18 +122,53 @@ void Inspector::log(const string label, const FlowBlock* fb)
         logger->trace("\timmediateDominator is:\n{0:s}", ss.str());
         ss.str("");
     }
-    if (copyMap != nullptr)
+    if (logBlockStructure && (copyMap != nullptr))
     {
         copyMap->printRaw(ss);
         logger->trace("\tcopyMap is:\n{0:s}", ss.str());
         ss.str("");
     }
 }
+void Inspector::log(const string label, const PcodeOp* op)
+{
+  std::stringstream ss;
+  if (op == nullptr)
+    logger->warn("{0:s}: PCodeOp* is null!", label);
+  else
+  {
+    op->printRaw(ss);
+    logger->trace("{0:s}: {1:s} at at 0x{2:x}", label, ss.str(), op->getAddr().getOffset());
+    ss.str("");
+  }
+}
+void Inspector::log(const string label, const Varnode* vn)
+{
+  std::stringstream ss;
+  if (vn == nullptr)
+    logger->warn("{0:s}: Varnode* is null!", label);
+  else
+  {
+    vn->printRaw(ss);
+    logger->trace("{0:s}: {1:s}", label, ss.str());
+    ss.str("");
+  }
+}
+void Inspector::log(const string label, const Varnode* vn, int slot)
+{
+  std::stringstream ss;
+  if (vn == nullptr)
+    logger->warn("{0:s}: Varnode* is null!", label);
+  else
+  {
+    vn->printRaw(ss);
+    logger->trace("{0:s}, slot {1:d}: {2:s}", label, slot, ss.str());
+    ss.str("");
+  }
+}
+
 void Inspector::collectDependencies(std::set<Varnode*>& result, const Varnode* root,
       const std::set<Varnode*>& stopSet, int maxDepth)
 {
-    logger->trace("Collecting Varnode dependencies");
-
     std::stack<ghidra::Varnode*> candidateVns;
     std::set<ghidra::Varnode*> visitedVns = stopSet;
     std::set<ghidra::PcodeOp*> visitedOps;

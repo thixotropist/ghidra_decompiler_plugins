@@ -1,0 +1,9 @@
+restore test_data/heapstring_save.xml
+map function 0x100000 fillin
+option readonly on
+parse line struct mystring { char *val; int len; };
+parse line extern void fillin(mystring *ptr);
+load function fillin
+decompile
+print raw
+print C

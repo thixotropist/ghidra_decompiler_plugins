@@ -1,9 +1,0 @@
-restore test/strlen_exemplars_save.xml
-load function strlen_base
-decompile strlen_base
-print C
-print raw
-load function strlen_var1
-decompile strlen_var1
-print C
-print raw

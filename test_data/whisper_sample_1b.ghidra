@@ -1,0 +1,13 @@
+restore test_data/whisper_sample_1_save.xml
+map function 0x209be string_constructor
+parse line extern void string_constructor(void* this, char* param1, void* allocator);
+map function 0x1f950 __throw_logic_error
+// Decompile string_constructor with knowing the signature called functions
+parse line extern void __throw_logic_error(char* message);
+option noreturn __throw_logic_error
+map function 0x1fad0 operator_new
+parse line extern ulong operator_new(ulong size);
+load function string_constructor
+decompile string_constructor
+print C
+print raw
