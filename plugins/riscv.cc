@@ -93,7 +93,7 @@ AddrSpace* uniqueAddrSpace; /// The address space holding internal temporaries
 AddrSpace* ramAddrSpace; /// The address space for static RAM variables
 AddrSpace* stackAddrSpace; /// The address space for stack variables
 std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plugin
-Inspector inspector(pLogger);
+std::shared_ptr<Inspector> inspector;
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -108,9 +108,10 @@ extern "C" int plugin_init(void *context)
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
     pLogger->set_level(spdlog::level::trace);
-    bool trace = pLogger->should_log(spdlog::level::trace);
+    pLogger->info("Logging system initialized");
+    inspector = std::make_shared<Inspector>(pLogger);
     // log levels are trace, debug, info, warn, error and critical.
-    inspector = Inspector(pLogger);
+    pLogger->info("Ghidra inspector initialized");
     std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
     riscv_vector::reportFile.open(summariesFilename);
     riscv_vector::reportFile << "RISC-V Summary Report" << std::endl;
@@ -123,16 +124,7 @@ extern "C" int plugin_init(void *context)
     uniqueAddrSpace = arch->getSpaceByName("unique");
     ramAddrSpace = arch->getSpaceByName("ram");
     stackAddrSpace = arch->getSpaceByName("stack");
-    // load definitions specific to a given SLEIGH definition file
-    ghidra::riscv_sleigh_init(arch);
-    if (trace)
-    {
-        std::stringstream ss;
-        ghidra::riscv_sleigh_inspect(arch, ss);
-        pLogger->trace("{0:s}", ss.str());
-    }
     pLogger->info("Plugin framework initialized");
-    pLogger->flush();
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=MAX_USER_PCODES; index++) {
         const UserPcodeOp* op = arch->userops.getOp(index);
@@ -153,6 +145,17 @@ extern "C" int plugin_init(void *context)
  */
 extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 {
+    bool trace = pLogger->should_log(spdlog::level::trace);
+    pLogger->info("Inspecting sleigh-dependencies");
+    pLogger->flush();
+    // load definitions specific to a given SLEIGH definition file
+    ghidra::riscv_sleigh_init(arch);
+    if (trace)
+    {
+        std::stringstream ss;
+        ghidra::riscv_sleigh_inspect(arch, ss);
+        pLogger->trace("{0:s}", ss.str());
+    }
     pLogger->trace("Adding a new Rules to pluginrules");
     rules.push_back(new riscv_vector::RuleCsrRemoveHeritage("pluginrules"));
     rules.push_back(new riscv_vector::RuleVectorTransform("pluginrules"));
@@ -214,7 +217,7 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
     // internals.
     if (riscv_vector::SURVEY_ACTION_DATABASE && runSurvey)
     {
-        inspector.logActions();
+        inspector->logActions();
         runSurvey = false;
     }
     pLogger->flush();

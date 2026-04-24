@@ -79,13 +79,14 @@ class FunctionEditor
 {
   public:
     ///@brief Constructor
-    explicit FunctionEditor(Funcdata& dataParam, Inspector& inspectorParam, std::shared_ptr<spdlog::logger> loggerParam) :
+    explicit FunctionEditor(Funcdata& dataParam) :
       data(dataParam),
-      inspector(inspectorParam),
-      logger(loggerParam),
-      trace(logger->should_log(spdlog::level::trace)),
-      info(logger->should_log(spdlog::level::info))
-      {};
+      trace(false),
+      info(false)
+      {
+        trace = ghidra::pLogger->should_log(spdlog::level::trace);
+        info = ghidra::pLogger->should_log(spdlog::level::info);
+      };
     /**
      * @brief remove a single PcodeOp with optional logging
      * @param op PcodeOp to remove from the function
@@ -120,8 +121,6 @@ class FunctionEditor
     void simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock, std::vector<FlowBlock*>* relatedBlocks);
   private:
     Funcdata& data;       ///<@ Ghidra function data
-    Inspector inspector;  ///<@ Ghidra object inspector
-    std::shared_ptr<spdlog::logger> logger; ///<@ spdlog logger
     std::stringstream ss; ///<@ string buffer to collect printRaw output
     std::set<PcodeOp*> descendentsToReview; ///<@ descendents of deleted ops, possibly containing free varnode references
     bool trace;           ///<@ true if we are logging at trace level

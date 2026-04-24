@@ -1,3 +1,4 @@
+#include "inspector.hh"
 #include "riscv_csr.hh"
 #include "riscv_sleigh.hh"
 
@@ -9,13 +10,35 @@ ActionPluginPrepare::ActionPluginPrepare(std::shared_ptr<spdlog::logger> myLogge
     logger->info("Initializing ActionPluginPrepare");
 }
 
-void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
+static void dumpPcodes(const ghidra::Funcdata& data, std::shared_ptr<spdlog::logger> logger)
 {
-    logger->info("Calling ActionPluginPrepare::purgeCsrHeritage, dumping PcodeOps");
-    ghidra::PcodeOpTree::const_iterator firstOp =	data.beginOpAll();
+    std::stringstream ss;
+    ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
     for (auto iter = firstOp; iter != data.endOpAll(); iter++)
     {
-        std::stringstream ss;
+        const ghidra::PcodeOp* op = iter->second;
+        if (op->isDead()) continue;
+        op->printRaw(ss);
+        ss << std::endl;
+    }
+    logger->trace("Function Pcodes:\n{0:s}", ss.str());
+}
+
+void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
+{
+    std::stringstream ss;
+    //logger->info("Calling ActionPluginPrepare::purgeCsrHeritage, dumping PcodeOps");
+    //dumpPcodes(data, logger);
+
+    if (ghidra::inspector->audit_varnodes)
+    {
+        std::ofstream outFile("/tmp/preAudit.txt");
+        ghidra::inspector->auditVarnodes(data, outFile);
+        outFile.close();
+    }
+    ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
+    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+    {
         const ghidra::PcodeOp* op = iter->second;
         ghidra::OpCode opcode = op->code();
         if ((opcode == ghidra::CPUI_COPY) ||
@@ -36,12 +59,50 @@ void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
             ss.str("");
             if (addrSpace == ghidra::csRegisterAddrSpace)
             {
-                logger->info("\tRemoving this opcode");
+                logger->info("\t\t ↑↑↑ Removing this opcode");
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                 data.opUninsert(modifiableOp);
                 data.opUnlink(modifiableOp);
             }
         }
     }
+
+    // Now clean up any 'free' varnode inputs and replace them with indirect equivalents.
+    //logger->trace("Revised PcodeOps in function:");
+    //dumpPcodes(data, logger);
+    firstOp = data.beginOpAll();
+    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+    {
+        const ghidra::PcodeOp* op = iter->second;
+        if (op->isDead()) continue;
+        for (int slot = 0; slot < op->numInput(); slot++)
+        {
+            const ghidra::Varnode* vn = op->getIn(slot);
+            const ghidra::AddrSpace* addrSpace = vn->getAddr().getSpace();
+            if (addrSpace == ghidra::csRegisterAddrSpace)
+            {
+                op->printRaw(ss);
+                logger->info("\t\t  Examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
+                ss.str("");
+                logger->info("\t\t\tFlags are 0x{0:x}", vn->getFlags());
+                ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
+                ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
+                ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
+                data.opUnsetInput(modifiableOp, slot);
+                data.opSetInput(modifiableOp, newVn, slot);
+                op->printRaw(ss);
+                logger->info("\t\t  Re-examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
+                ss.str("");
+                logger->info("\t\t\tFlags are 0x{0:x}", vn->getFlags());
+            }
+        }
+    }
+    if (ghidra::inspector->audit_varnodes)
+    {
+        std::ofstream outFile("/tmp/postAudit.txt");
+        ghidra::inspector->auditVarnodes(data, outFile);
+        outFile.close();
+    }
+    logger->flush();
 }
 }

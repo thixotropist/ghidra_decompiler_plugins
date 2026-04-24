@@ -12,8 +12,17 @@ AddrSpace* csRegisterAddrSpace; ///< The non-standard Address space built to con
 
 void riscv_sleigh_init(ghidra::Architecture* arch)
 {
+    pLogger->info("Attempting arch->getSpaceByName(\"csreg\")");
+    pLogger->flush();
     csRegisterAddrSpace = arch->getSpaceByName("csreg");
+    if (csRegisterAddrSpace == nullptr)
+    {
+        pLogger->error("Unable to find csreg address space");
+        pLogger->flush();
+    }
     pLogger->trace("Identified vl register offset as 0x{0:x}", vlRegisterIndex);
+    pLogger->trace("csRegisterAddrSpace index is {0:d}", csRegisterAddrSpace->getIndex());
+    pLogger->flush();
 }
 void riscv_sleigh_inspect(ghidra::Architecture* arch, std::stringstream& ss)
 {
@@ -23,19 +32,6 @@ void riscv_sleigh_inspect(ghidra::Architecture* arch, std::stringstream& ss)
     for (int i = 0; i < arch->numSpaces(); i++)
     {
         ss << "\t" << std::dec << i << " : " << arch->getSpace(i)->getName() << std::endl;
-    }
-    // The csreg space is specific to our SLEIGH definitions, and is technically a part of the OtherSpace
-    ss << "Control and Status Register space is of type "
-        << static_cast<int>(csRegisterAddrSpace->getType()) << std::endl;
-    const Translate* trans = csRegisterAddrSpace->getTrans();
-    ss << "Note that Control and Status Registers have no name."
-        "They do have symbol names pointing into the csreg address space" << std::endl;
-    std::map< ghidra::VarnodeData, std::string > reglist;
-    trans->getAllRegisters(reglist);
-    ss << "Registers by index:" << std::endl;
-    for (auto const& [vndata, name] : reglist)
-    {
-        ss << "\t" << std::hex << vndata.offset << ":" << name << std::dec << std::endl;
     }
 }
 }

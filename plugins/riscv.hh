@@ -41,15 +41,15 @@ extern AddrSpace* ramAddrSpace;
 extern AddrSpace* stackAddrSpace;
 
 // utility functions
-extern ghidra::Inspector inspector;
+extern std::shared_ptr<ghidra::Inspector> inspector;
 }
 
 namespace riscv_vector
 {
+//static const int TRANSFORM_LIMIT_LOOPS = 8; ///<@brief maximum number of loop transforms to attempt
+static const int TRANSFORM_LIMIT_NONLOOPS = INT_MAX; ///<@brief maximum number of non-loop transforms to attempt
+//static const int TRANSFORM_LIMIT_NONLOOPS = 0; ///<@brief maximum number of non-loop transforms to attempt
 static const int TRANSFORM_LIMIT_LOOPS = INT_MAX; ///<@brief maximum number of loop transforms to attempt
-static const int TRANSFORM_LIMIT_NONLOOPS = INT_MAX; ///<@brief maximum number of loop transforms to attempt
-//static const int TRANSFORM_LIMIT_NONLOOPS = 0; ///<@brief maximum number of loop transforms to attempt
-//static const int TRANSFORM_LIMIT_LOOPS = 9; ///<@brief maximum number of loop transforms to attempt
 static const bool SURVEY_ACTION_DATABASE = false;
 
 extern int transformCountNonLoop;

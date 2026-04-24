@@ -1,0 +1,7 @@
+restore test_data/whisper_sample_16_save.xml
+map function 0xcbaca to_string
+parse line extern ulong* to_string(int param_1);
+load function to_string
+decompile to_string
+print C
+print raw

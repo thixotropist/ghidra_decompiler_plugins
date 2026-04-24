@@ -335,25 +335,20 @@ class VectorEpilogProcessor
 {
   public:
     ghidra::Funcdata& data;                  ///< The ghidra Funcdata context for this analysis
-    ghidra::Inspector& inspector;            ///< The Ghidra inspector to use
-    std::shared_ptr<spdlog::logger> logger;  ///< The spdlogger to use
     VectorLoop& loopModel;                   ///< The VectorLoop model to use
     /**
      *  @brief Construct the processor context
      *  @param dataParam The ghidra Funcdata context to use
-     *  @param inspectorParam The Ghidra inspector to use
-     *  @param loggerParam  The spdlogger to use
      *  @param loopModelParam The VectorLoop model to use
      */
-    VectorEpilogProcessor(ghidra::Funcdata& dataParam, ghidra::Inspector& inspectorParam,
-                          std::shared_ptr<spdlog::logger> loggerParam, VectorLoop& loopModelParam) :
+    VectorEpilogProcessor(ghidra::Funcdata& dataParam, VectorLoop& loopModelParam) :
       data(dataParam),
-      inspector(inspectorParam),
-      logger(loggerParam),
       loopModel(loopModelParam),
       resultFilter(REGISTER_VARNODE_ONLY),
-      trace(logger->should_log(spdlog::level::trace))
-    {}
+      trace(false)
+    {
+      trace = ghidra::pLogger->should_log(spdlog::level::trace);
+    }
     /// @brief Filter to use when generating result candidates
     enum ResultFilter {
       REGISTER_VARNODE_ONLY,   ///< The result Varnode must reference a real register

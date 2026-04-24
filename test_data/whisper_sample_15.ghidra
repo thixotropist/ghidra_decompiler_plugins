@@ -1,0 +1,7 @@
+restore test_data/whisper_sample_15_save.xml
+map function 0x37e30 get_next_arg
+parse line extern ulong* get_next_arg(void *param_1,void* param_2,void *param_3,char *param_4,void *param_5);
+load function get_next_arg
+decompile get_next_arg
+print C
+print raw

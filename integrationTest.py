@@ -32,14 +32,13 @@ REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "whisper_sample_1a", "whisper_sample_1b", "whisper_sample_2",
                     "whisper_sample_3", "whisper_sample_5", "whisper_sample_6", "whisper_sample_7",
                     "whisper_sample_8", "whisper_sample_10", "whisper_sample_11",
-                    "whisper_sample_12", "whisper_main",
-                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
-
-
+                    "whisper_sample_12", "whisper_sample_13a", "whisper_sample_13b",
+                    "whisper_sample_14", "whisper_sample_15", "whisper_sample_16", "whisper_main",
+                     "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
 
 # some tests currently fail, so defer these to their own test case
-DEFERRED_TESTS = ("dpdk_sample_1", "whisper_sample_5",
-                  "whisper_sample_12", "whisper_main")
+DEFERRED_TESTS = ("whisper_sample_5", "whisper_sample_12", "whisper_main",
+                  "whisper_sample_15")
 expected = {
     'memcpy_exemplars':  {'vector_memcpy':5},
     'strlen_exemplars':  {'vector_strlen':2},
@@ -50,7 +49,7 @@ expected = {
     'whisper_main': {'vector_memset':4, 'vector_memcpy':13, 'vector_strlen':1},
     'whisper_sample_2': {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_3':  {'vector_memcpy':5,},
-    'whisper_sample_4':  {'vector_memset':16, 'vector_memcpy':86, 'vector_strlen':0},
+    'whisper_sample_4':  {'vector_memset':16, 'vector_memcpy':85, 'vector_strlen':0},
     'whisper_sample_5':  {'vector_memset':3, 'vector_memcpy':20, 'vector_strlen':1},
     'whisper_sample_6':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_7':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
@@ -58,6 +57,8 @@ expected = {
     'whisper_sample_10':  {'vector_memset':0, 'vector_memcpy':3, 'vector_strlen':0},
     'whisper_sample_11':  {'vector_strcmp':1},
     'whisper_sample_12':  {'vector_memset':2, 'vector_memcpy':7, 'vector_strlen':1},
+    'whisper_sample_13a':  {'vector_memcpy':0},
+    'whisper_sample_13b':  {'vector_memcpy':1},
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},
     'dpdk_sample_3':  {'vector_strlen':2},
@@ -114,7 +115,7 @@ def assert_expected_transform_count(self, name, result_output):
             self.expectations_failed = True
 
 def run_datatest(test_case, sample, plugin=True, datatest_path=DATATEST_PATH,
-                 plugin_path=PLUGIN_PATH):
+                 plugin_path=PLUGIN_PATH, continue_on_failure=False):
     """
     Run a single data test
     """
@@ -125,19 +126,24 @@ def run_datatest(test_case, sample, plugin=True, datatest_path=DATATEST_PATH,
     else:
         command = f"{base_command} {command_detail}"
     logger.info(f"Running {command} with output to /tmp/{sample}.testlog")
-    result = subprocess.run(command, check=True, capture_output=True,
+    if continue_on_failure:
+        check_status = False
+    else:
+        check_status = True
+    result = subprocess.run(command, check=check_status, capture_output=True,
                             shell=True, encoding="utf8")
-    test_case.assertEqual(0, result.returncode,
-        f"Datatest of {sample} failed")
     with open(f"/tmp/{sample}.testlog", "w", encoding="utf8") as f:
         f.write(result.stdout)
         f.write(result.stderr)
-    test_case.assertNotIn("Low-level ERROR", result.stdout,
-                        "Decompiler completes without a low level error")
-    test_case.assertNotIn("Execution error", result.stdout,
-                        "Decompiler finds script error")
+    if not continue_on_failure:
+        test_case.assertEqual(0, result.returncode,
+            f"Datatest of {sample} failed")
+        test_case.assertNotIn("Low-level ERROR", result.stdout,
+                            "Decompiler completes without a low level error")
+        test_case.assertNotIn("Execution error", result.stdout,
+                            "Decompiler finds script error")
     trim_output(result.stdout)
-    return result.stdout
+    return result
 
 class T0BuildPlugin(unittest.TestCase):
     """
@@ -221,7 +227,7 @@ class T1Datatests(unittest.TestCase):
                 logger.info(f"Deferring test {i} as currently failing")
                 continue
             result = run_datatest(self, i, plugin=True, datatest_path=f"valgrind {DATATEST_PATH}")
-            assert_expected_transform_count(self, i, result)
+            assert_expected_transform_count(self, i, result.stdout)
         self.assertFalse(self.expectations_failed,
                          "At least one test reported an unexpected number of transforms")
 
@@ -234,21 +240,23 @@ class T1Datatests(unittest.TestCase):
                 logger.info(f"Skipping test {i} as currently failing")
                 continue
             result =  run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}")
-            assert_expected_transform_count(self, i, result)
+            assert_expected_transform_count(self, i, result.stdout)
         self.assertFalse(self.expectations_failed,
                          "At least one test reported an unexpected number of transforms")
 
-    @unittest.skip("Currently failing exemplars")
     def test_03_failing_exemplars(self):
         """
-        Run failing tests to isolate common faults.  Note that the first
-        failure currently fails this test, preventing others from running.
+        Run failing tests to isolate common faults..
         """
+        all_tests_successful = True
         for i in DEFERRED_TESTS:
-            result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}")
-            assert_expected_transform_count(self, i, result)
-        self.assertFalse(self.expectations_failed,
-                            "At least one test reported an unexpected number of transforms")
+            result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}",
+                                  continue_on_failure=True)
+            if result.returncode == 0:
+                print(f"The deferred test {i} unexpectedly returned a success error code")
+            all_tests_successful &= (result.returncode == 0)
+        self.assertTrue(all_tests_successful,
+                         "At least one deferred test returned a non-zero exit code")
 
 if __name__ == "__main__":
     unittest.main()

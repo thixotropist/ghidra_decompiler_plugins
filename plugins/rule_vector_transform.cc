@@ -96,29 +96,69 @@ ghidra::int4 RuleVectorTransform::applyOp(ghidra::PcodeOp *firstOp, ghidra::Func
     // Otherwise, this must be a vset and is likely a loop requiring much more processing
     // construct a VectorMatcher to start the loop analysis.
     VectorMatcher matcher(data, firstOp);
-    if (!matcher.loopModel.loopFound) return ghidra::RETURN_NO_TRANSFORM;
+    ghidra::pLogger->flush();
+    if (!matcher.loopModel.loopFound)
+    {
+        return ghidra::RETURN_NO_TRANSFORM;
+    }
     ghidra::pLogger->trace("Testing the vector stanza for a vector_memcpy match");
     if (matcher.isMemcpy())
     {
-        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return ghidra::RETURN_NO_TRANSFORM;
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS)
+        {
+            ghidra::pLogger->info("Ceasing transforms - loop limit of {0:d} reached",
+                TRANSFORM_LIMIT_LOOPS);
+            ghidra::pLogger->flush();
+            if (ghidra::inspector->audit_block_graph)
+            {
+                std::ofstream outFile("/tmp/memcpy_blockgraph_audit.log");
+                ghidra::inspector->auditBlockGraph(data, outFile);
+                outFile.close();
+            }
+            return ghidra::RETURN_NO_TRANSFORM;
+        }
         ++transformCountLoop;
+        ghidra::pLogger->flush();
+        if (ghidra::inspector->audit_varnodes)
+        {
+            std::ofstream outFile("/tmp/memcpy_varnode_audit.log");
+            ghidra::inspector->auditVarnodes(data, outFile);
+            outFile.close();
+        }
+        if (ghidra::inspector->audit_block_graph)
+        {
+            std::ofstream outFile("/tmp/memcpy_blockgraph_audit.log");
+            ghidra::inspector->auditBlockGraph(data, outFile);
+            outFile.close();
+        }
         return matcher.transformMemcpy();
     }
     ghidra::pLogger->trace("Testing the vector stanza for a vector_strlen match");
     if (matcher.isStrlen())
     {
-        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return ghidra::RETURN_NO_TRANSFORM;
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS)
+        {
+            ghidra::pLogger->flush();
+            return ghidra::RETURN_NO_TRANSFORM;
+        }
         ++transformCountLoop;
+        ghidra::pLogger->flush();
         return matcher.transformStrlen();
     }
     ghidra::pLogger->trace("Testing the vector stanza for a vector_strcmp match");
     if (matcher.isStrcmp())
     {
-        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS) return ghidra::RETURN_NO_TRANSFORM;
+        if (transformCountLoop >= TRANSFORM_LIMIT_LOOPS)
+        {
+            ghidra::pLogger->flush();
+            return ghidra::RETURN_NO_TRANSFORM;
+        }
         ++transformCountLoop;
+        ghidra::pLogger->flush();
         return matcher.transformStrcmp();
     }
     ghidra::pLogger->trace("No matches found, returning");
+    ghidra::pLogger->flush();
     return ghidra::RETURN_NO_TRANSFORM;
 }
 }

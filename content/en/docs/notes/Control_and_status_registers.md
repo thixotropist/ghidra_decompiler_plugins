@@ -63,3 +63,81 @@ The csrr instruction is defined in `riscv.csr.sinc` as:
 
 Checking the dpdk-pipeline exemplar shows 4259 instances of the csrr instruction, mostly loading the `vl`, `vlenb`,
 or `time` CSR.
+
+## Survey CSR Pcode
+
+How do CSR references appear in native Pcode?  What forms are legal, and what forms might trigger low level errors?
+
+The `dpdk_sample_1` exemplar tells us a few things.  This test case wraps the function `rte_member_create`, which includes
+this line of C
+
+```c
+strncmp(params->name, setsum->name, RTE_MEMBER_NAMESIZE)
+```
+
+The instruction expansion of strncmp leads to this instruction, reading the value of a CSR register `vl`:
+
+```as
+ram:002ce69a csrr   a5,vl
+```
+
+Dumping the Pcode for this function - with no implant present - shows that this one instruction generates 35
+Pcode references:
+
+```text
+0x002ab72a:51c:	c0x0c20(0x002ab72a:51c) = c0x0c20(i) [] i0x002ab72a:249(free)
+0x002ab570:609:	c0x0c20(0x002ab570:609) = c0x0c20(0x002ab72a:51c)
+0x002ab740:51d:	c0x0c20(0x002ab740:51d) = c0x0c20(i) [] i0x002ab740:215(free)
+0x002ab770:51e:	c0x0c20(0x002ab770:51e) = c0x0c20(0x002ab740:51d) [] i0x002ab770:239(free)
+0x002ab570:610:	c0x0c20(0x002ab570:610) = c0x0c20(0x002ab770:51e)
+0x002ab690:51f:	c0x0c20(0x002ab690:51f) = c0x0c20(i) [] i0x002ab690:1b2(free)
+0x002ab6c0:520:	c0x0c20(0x002ab6c0:520) = c0x0c20(0x002ab690:51f) [] i0x002ab6c0:1e0(free)
+0x002ab6f2:521:	c0x0c20(0x002ab6f2:521) = c0x0c20(0x002ab6c0:520) [] i0x002ab6f2:202(free)
+0x002ab570:617:	c0x0c20(0x002ab570:617) = c0x0c20(0x002ab6f2:521)
+0x002ab4ea:538:	c0x0c20(0x002ab4ea:538) = c0x0c20(i) ? c0x0c20(0x002ab6c0:520)
+0x002ab4f6:522:	c0x0c20(0x002ab4f6:522) = c0x0c20(0x002ab4ea:538) [] i0x002ab4f6:37(free)
+0x002ab52e:56:	u0x0002f700:1(0x002ab52e:56) = c0x0c20(0x002ab4f6:522) == #0x0
+0x002ab576:91:	a3(0x002ab576:91) = a3(0x002ab512:3b9) - c0x0c20(0x002ab4f6:522)
+0x002ab57c:623:	u0x10000195(0x002ab57c:623) = c0x0c20(0x002ab4f6:522)
+0x002ab53c:52d:	c0x0c20(0x002ab53c:52d) = c0x0c20(0x002ab4f6:522) [] i0x002ab53c:63(free)
+0x002ab5a0:523:	c0x0c20(0x002ab5a0:523) = c0x0c20(0x002ab4f6:522) [] i0x002ab5a0:af(free)
+0x002ab7a0:524:	c0x0c20(0x002ab7a0:524) = c0x0c20(0x002ab5a0:523) [] i0x002ab7a0:19f(free)
+0x002ab544:535:	c0x0c20(0x002ab544:535) = c0x0c20(0x002ab53c:52d) ? c0x0c20(0x002ab7a0:524)
+0x002ab5b6:525:	c0x0c20(0x002ab5b6:525) = c0x0c20(0x002ab5a0:523) [] i0x002ab5b6:bf(free)
+0x002ab7ce:526:	c0x0c20(0x002ab7ce:526) = c0x0c20(0x002ab5b6:525) [] i0x002ab7ce:17f(free)
+0x002ab5d6:527:	c0x0c20(0x002ab5d6:527) = c0x0c20(0x002ab5b6:525) [] i0x002ab5d6:d5(free)
+0x002ab714:528:	c0x0c20(0x002ab714:528) = c0x0c20(0x002ab5d6:527) [] i0x002ab714:15d(free)
+0x002ab622:52a:	c0x0c20(0x002ab622:52a) = c0x0c20(0x002ab5d6:527) [] i0x002ab622:105(free)
+0x002ab706:529:	c0x0c20(0x002ab706:529) = c0x0c20(0x002ab5d6:527) [] i0x002ab706:156(free)
+0x002ab70a:600:	u0x10000173(0x002ab70a:600) = c0x0c20(0x002ab706:529) ? c0x0c20(0x002ab714:528) ? c0x0c20(0x002ab622:52a)
+0x002ab654:52b:	c0x0c20(0x002ab654:52b) = u0x10000173(0x002ab70a:600) [] i0x002ab654:12a(free)
+0x002ab670:52c:	c0x0c20(0x002ab670:52c) = c0x0c20(0x002ab654:52b) [] i0x002ab670:13e(free)
+0x002ab570:61e:	c0x0c20(0x002ab570:61e) = c0x0c20(0x002ab670:52c)
+0x002ab548:533:	c0x0c20(0x002ab548:533) = c0x0c20(0x002ab544:535) ? c0x0c20(0x002ab5d6:527) ? u0x10000173(0x002ab70a:600) ? c0x0c20(0x002ab7ce:526)
+0x002ab54a:52e:	c0x0c20(0x002ab54a:52e) = c0x0c20(0x002ab548:533) [] i0x002ab54a:6f(free)
+0x002ab550:52f:	c0x0c20(0x002ab550:52f) = c0x0c20(0x002ab54a:52e) [] i0x002ab550:72(free)
+0x002ab556:530:	c0x0c20(0x002ab556:530) = c0x0c20(0x002ab550:52f) [] i0x002ab556:75(free)
+0x002ab55a:531:	c0x0c20(0x002ab55a:531) = c0x0c20(0x002ab556:530) [] i0x002ab55a:77(free)
+0x002ab568:536:	c0x0c20(0x002ab568:536) = c0x0c20(0x002ab55a:531)
+0x002ab570:532:	c0x0c20(0x002ab570:532) = c0x0c20(0x002ab568:536)
+```
+
+Notes:
+
+* `c0x0c20(i)` is valid, but `c0x0c20(free)` does not appear
+* `[] i0x...(free)` is valid, and does not generate a `free varnode` error.
+
+The Pcode instructions that need special handling in this are likely:
+
+```text
+0x002ab52e:56:	u0x0002f700:1(0x002ab52e:56) = c0x0c20(0x002ab4f6:522) == #0x0
+0x002ab576:91:	a3(0x002ab576:91) = a3(0x002ab512:3b9) - c0x0c20(0x002ab4f6:522)
+0x002ab57c:623:	u0x10000195(0x002ab57c:623) = c0x0c20(0x002ab4f6:522)
+...
+0x002ab70a:600:	u0x10000173(0x002ab70a:600) = c0x0c20(0x002ab706:529) ? c0x0c20(0x002ab714:528) ? c0x0c20(0x002ab622:52a)
+```
+
+Inspect the source code to learn:
+* a Varnode is considered 'free' if its flags show that it is never written and never an input
+* The VarnodeBank defines a setInput(Varnode*) method that modifies an existing Varnode into an input varnode
+* It is not clear how one creates a new Varnode with the input flag set.

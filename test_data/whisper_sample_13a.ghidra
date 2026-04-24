@@ -1,0 +1,7 @@
+// Load the save file with no defined signature
+restore test_data/whisper_sample_13_save.xml
+map function 0x2a5be drwav__on_read_memory
+load function drwav__on_read_memory
+decompile drwav__on_read_memory
+print C
+print raw

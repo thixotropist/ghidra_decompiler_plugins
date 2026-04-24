@@ -178,7 +178,7 @@ int VectorSeries::match()
     std::vector<std::pair<ghidra::PcodeOp *, ghidra::PcodeOp *> *> pcodesToBeBuilt;
     std::vector<ghidra::PcodeOp *> deleteSet; ///< collect PcodeOps to delete if we get at least one successful transform
     bool trace = ghidra::pLogger->should_log(spdlog::level::trace);
-    ghidra::FunctionEditor functionEditor(data, ghidra::inspector, ghidra::pLogger);
+    ghidra::FunctionEditor functionEditor(data);
     int numTransformedStores = 0;
     // for each vector load instruction, locate matching vector store instructions
     // within the same block
@@ -203,7 +203,6 @@ int VectorSeries::match()
         }
         ghidra::pLogger->info("Exploring dependencies of the vector load op at 0x{0:x}",
             loadOp->getAddr().getOffset());
-        ghidra::pLogger->flush();
         for (auto it = outputVn->beginDescend(); it != outputVn->endDescend(); ++it)
         {
             ghidra::PcodeOp* descOp = *it;
@@ -230,7 +229,7 @@ int VectorSeries::match()
             ghidra::Varnode *destVn = (*it)->getIn(2);
             // we have destination, source, and size so construct the vector_mem* op
             ghidra::PcodeOp *newOp = insertVoidCallOther(data, (*it)->getAddr(), builtinOp, destVn, sourceVn, new_size_varnode);
-            if (trace) ghidra::inspector.log("  queued for insertion vector opcode", newOp);
+            if (trace) ghidra::inspector->log("  queued for insertion vector opcode", newOp);
             // accumulate pcode additions and deletions as a pending transaction
             pcodesToBeBuilt.push_back(new std::pair<ghidra::PcodeOp *, ghidra::PcodeOp *>(newOp, *it));
             deleteSet.push_back(*it);
@@ -254,7 +253,7 @@ int VectorSeries::match()
     {
         ghidra::Varnode *outVn = iter->getOut();
         if (outVn == nullptr)
-            functionEditor.deleteOp(iter, "");
+            functionEditor.deleteOp(iter, "VectorSeries::match");
         else
         {
             std::list<ghidra::PcodeOp *>::const_iterator endIter = outVn->endDescend();
@@ -263,7 +262,17 @@ int VectorSeries::match()
                functionEditor.deleteOp(iter, "singleton descendent");
         }
     }
-    if (numTransformedStores == 0) return ghidra::RETURN_NO_TRANSFORM;
+    if (numTransformedStores == 0)
+    {
+        ghidra::pLogger->flush();
+        return ghidra::RETURN_NO_TRANSFORM;
+    }
+    if (ghidra::inspector->audit_block_graph)
+        {
+            std::ofstream outFile("/tmp/memcpy_blockgraph_audit.log");
+            ghidra::inspector->auditBlockGraph(data, outFile);
+            outFile.close();
+        }
     ghidra::pLogger->flush();
     return ghidra::RETURN_TRANSFORM_PERFORMED;
 }
@@ -341,7 +350,7 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     loopFlags(0x0),
     loopFound(false),
     data(dataParam),
-    functionEditor(data, ghidra::inspector, ghidra::pLogger),
+    functionEditor(data),
     vsetOp(nullptr),
     codeSpace(nullptr),
     loopBlock(nullptr),
@@ -380,9 +389,6 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     // registers and memory locations are set. They are found at the top of a block
     // and are essential in determining heritages and dependencies
     collect_phi_nodes();
-    // Phi nodes referencing control and status registers need to be cleaned up,
-    // whether or not a transform is effected.
-    clean_csr_phi_nodes();
     // Identify key registers and vector operations within a loop,
     // checking for unexpected elements that may veto a match.
     // Begin modeling this as a potential vector function.
@@ -416,16 +422,16 @@ bool VectorLoop::invokeVectorOpHandler(ghidra::PcodeOp* op)
 
 bool VectorLoop::isDefinedInLoop(const ghidra::Varnode* vn)
 {
-    ghidra::inspector.log("\tChecking for in-loop definition", vn);
+    ghidra::inspector->log("\tChecking for in-loop definition", vn);
     if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace))
     {
         ghidra::uintb offset = vn->getAddr().getOffset();
         ghidra::pLogger->trace("\tCSR offset is 0x{0:x}", offset);
-        ghidra::inspector.log("\tExamining Varnode", vn);
+        ghidra::inspector->log("\tExamining Varnode", vn);
         // TODO: figure out how to look this index up
         if (offset == 0x6100)
         {
-            ghidra::inspector.log("\tVarnode references vector register vl and is likely modified in loop", vn);
+            ghidra::inspector->log("\tVarnode references vector register vl and is likely modified in loop", vn);
             return true;
         }
         else
@@ -440,7 +446,7 @@ bool VectorLoop::isDefinedInLoop(const ghidra::Varnode* vn)
     const ghidra::PcodeOp* definingOp = vn->getDef();
     if (definingOp == nullptr)
     {
-        ghidra::inspector.log("\tVarnode has no defining Opcode", vn);
+        ghidra::inspector->log("\tVarnode has no defining Opcode", vn);
         return false;
     }
     ghidra::intb offset = definingOp->getAddr().getOffset();
@@ -534,12 +540,18 @@ void VectorLoop::collect_phi_nodes()
             }
             for (int slot = 0; slot < op->numInput(); ++slot)
             {
-                ghidra::Varnode* vn = op->getIn(slot);
+                const ghidra::Varnode* vn = op->getIn(slot);
                 // where does this arg get written?
-                ghidra::inspector.log("\tAnalysis of Varnode", op->getIn(slot), slot);
+                ghidra::inspector->log("\tAnalysis of Varnode", op->getIn(slot), slot);
+                // ignore any self-references
+                if (op->getIn(slot) == op->getOut())
+                {
+                    ghidra::inspector->log("\t\tVarnode is both input and output", op->getIn(slot), slot);
+                    continue;
+                }
                 if (isDefinedInLoop(vn))
                 {
-                    ghidra::inspector.log("Adding to phiNodesAffectedByLoop", op);
+                    ghidra::inspector->log("\tAdding to phiNodesAffectedByLoop", op);
                     phiNodesAffectedByLoop.push_back(op);
                     break;
                 }
@@ -609,20 +621,6 @@ void VectorLoop::collect_phi_nodes()
             ghidra::pLogger->trace("\t{0:s}:", ss.str());
             ss.str("");
         }
-    }
-}
-
-void VectorLoop::clean_csr_phi_nodes()
-{
-    for (auto const &[key, val] : csRegisterPhiMapping)
-    {
-        std::vector<ghidra::Varnode *> *csrHeritageVns = val;
-        csrHeritageVns->erase(std::remove_if(csrHeritageVns->begin(), csrHeritageVns->end(),
-                                             [](ghidra::Varnode *vn)
-                                             {
-                                                 return vn->isFree();
-                                             }),
-                              csrHeritageVns->end());
     }
 }
 
@@ -802,6 +800,7 @@ void VectorLoop::collect_common_elements()
             case OperationType::pointerAddition:
             case OperationType::subtraction:
                 sIntegerOps.push_back(op);
+                loopLocalVns.push_back(op->op->getOut());
                 break;
             case OperationType::copy:
                 ghidra::pLogger->trace("Found a Copy operation");
@@ -1025,12 +1024,16 @@ bool VectorLoop::unresolvedDependencies(const ghidra::PcodeOp* result)
     bool unresolvedDependencies = false;
     std::stringstream ss;
     ghidra::uintb resultOffset = result->getAddr().getOffset();
+    ghidra::pLogger->info("Checking for unresolved dependencies outside of 0x{0:x} to 0x{1:x}",
+        firstAddr, resultOffset);
     for (auto vn: loopLocalVns)
     {
+        ghidra::inspector->log("\tChecking Varnode:", vn);
         for (auto iter=vn->beginDescend(); iter != vn->endDescend(); ++iter)
         {
             ghidra::PcodeOp* depOp = *iter;
             ghidra::uintb opOffset = depOp->getAddr().getOffset();
+            ghidra::inspector->log("\t\tDependent PcodeOp", depOp);
             if ((opOffset < firstAddr) ||
                 (opOffset > resultOffset))
             {
@@ -1045,6 +1048,7 @@ bool VectorLoop::unresolvedDependencies(const ghidra::PcodeOp* result)
             }
         }
     }
+    ghidra::pLogger->flush();
     return unresolvedDependencies;
 }
 
@@ -1106,13 +1110,13 @@ void VectorEpilogProcessor::getIntersectionVector(std::vector<ghidra::Varnode*>&
             myFilter = selectAny;
             break;
         default:
-            logger->error("Unknown result filter requested");
+            ghidra::pLogger->error("Unknown result filter requested");
             return;
     }
 
-    ghidra::inspector.collectDependencies(s1DepSet, root1, stopSet, MAX_DEPENDENCY_DEPTH);
+    ghidra::inspector->collectDependencies(s1DepSet, root1, stopSet, MAX_DEPENDENCY_DEPTH);
     if (trace) traceDependencies(s1DepSet, "intersection set root1");
-    ghidra::inspector.collectDependencies(s2DepSet, root2, stopSet,
+    ghidra::inspector->collectDependencies(s2DepSet, root2, stopSet,
         MAX_DEPENDENCY_DEPTH);
         if (trace) traceDependencies(s2DepSet, "intersection set root2");
     // Now compute the intersection, finding common dependencies of our two sources

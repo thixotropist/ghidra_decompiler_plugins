@@ -22,7 +22,7 @@ namespace riscv_vector
 VectorMatcher::VectorMatcher(ghidra::Funcdata& fData, ghidra::PcodeOp* initialVsetOp) :
     loopModel(fData, ghidra::pLogger->should_log(spdlog::level::trace)),
     data(fData),
-    functionEditor(data, ghidra::inspector, ghidra::pLogger),
+    functionEditor(data),
     codeSpace(nullptr),
     numElementsConstant(false),
     numElementsVariable(false),
@@ -140,18 +140,18 @@ void VectorMatcher::collect_loop_registers()
             ghidra::getRegisterName(resultVn, &regName);
             if (regName != "")
             {
-                ghidra::pLogger->info("Tracing loop dependencies for register result {0:s} with register offset 0x{1:x}",
+                ghidra::pLogger->info("\tTracing loop dependencies for register result {0:s} with register offset 0x{1:x}",
                                  regName, resultVn->getAddr().getOffset());
             }
             else
             {
-                ghidra::pLogger->info("Tracing loop dependencies for non-register object with offset 0x{0:x}",
+                ghidra::pLogger->info("\tTracing loop dependencies for non-register object with offset 0x{0:x}",
                                  resultVn->getAddr().getOffset());
             }
         }
         if (isInsideLoop)
         {
-            ghidra::pLogger->trace("  Examining context of op inside the loop:");
+            ghidra::pLogger->trace("\tExamining context of op inside the loop:");
             // if this is a vector op, identify the register assignments
             const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*op);
             if (opInfo != nullptr)
@@ -182,13 +182,11 @@ void VectorMatcher::collect_loop_registers()
                     }
                     vectorLoadAddrVn = op->getIn(1);
                     ghidra::pLogger->trace("    Vload found at 0x{0:x}", op->getAddr().getOffset());
-                    ghidra::pLogger->flush();
                     ghidra::pLogger->trace("    Vload register=0x{0:x}",
                                       vectorLoadRegisterVn->getOffset());
                 }
                 else if (opInfo->isStore)
                 {
-                    ghidra::pLogger->flush();
                     vectorStoreRegisterVn = op->getIn(1);
                     vectorStoreAddrVn = op->getIn(2);
                     vLoopStoreVn = op->getIn(2);
@@ -212,7 +210,7 @@ void VectorMatcher::collect_loop_registers()
                 if (trace)
                 {
                     descendentOp->printRaw(ss);
-                    ghidra::pLogger->trace("  Descendent op: {0:s}", ss.str());
+                    ghidra::pLogger->trace("\t\tDescendent op: {0:s}", ss.str());
                     ss.str("");
                 }
                 dependentVarnodesInLoop.push_back(resultVn);

@@ -11,6 +11,7 @@ namespace ghidra{
 Inspector::Inspector(std::shared_ptr<spdlog::logger> myLogger) :
     logger(myLogger)
 {
+  logger->trace("Ghidra Inspector initialized");
 }
 void Inspector::logActions()
 {
@@ -21,7 +22,7 @@ void Inspector::logActions()
   logger->info("Action Database statistics: {0:s}",
     ss.str());
 }
-void Inspector::log(const string label, const FlowBlock* fb)
+void Inspector::log(const string& label, const FlowBlock* fb)
 {
     int edgesIn = fb->sizeIn();
     int edgesOut = fb->sizeOut();
@@ -129,7 +130,7 @@ void Inspector::log(const string label, const FlowBlock* fb)
         ss.str("");
     }
 }
-void Inspector::log(const string label, const PcodeOp* op)
+void Inspector::log(const string& label, const PcodeOp* op)
 {
   std::stringstream ss;
   if (op == nullptr)
@@ -137,11 +138,11 @@ void Inspector::log(const string label, const PcodeOp* op)
   else
   {
     op->printRaw(ss);
-    logger->trace("{0:s}: {1:s} at at 0x{2:x}", label, ss.str(), op->getAddr().getOffset());
+    logger->trace("{0:s}: {1:s} at 0x{2:x}", label, ss.str(), op->getAddr().getOffset());
     ss.str("");
   }
 }
-void Inspector::log(const string label, const Varnode* vn)
+void Inspector::log(const string& label, const Varnode* vn)
 {
   std::stringstream ss;
   if (vn == nullptr)
@@ -153,7 +154,7 @@ void Inspector::log(const string label, const Varnode* vn)
     ss.str("");
   }
 }
-void Inspector::log(const string label, const Varnode* vn, int slot)
+void Inspector::log(const string& label, const Varnode* vn, int slot)
 {
   std::stringstream ss;
   if (vn == nullptr)
@@ -200,4 +201,75 @@ void Inspector::collectDependencies(std::set<Varnode*>& result, const Varnode* r
         }
     }
 }
+void Inspector::auditVarnodes(const ghidra::Funcdata& data, std::ofstream& ss)
+{
+  // free varnodes are not necessarily errors if found on this listing
+  VarnodeLocSet::const_iterator startiter;
+  for(startiter=data.beginLoc();startiter!=data.endLoc();++startiter)
+  {
+    ghidra::Varnode* vn = *startiter;
+    std::uintptr_t ptr_as_int = reinterpret_cast<std::uintptr_t>(vn);
+    ss << "0x" << std::hex << ptr_as_int << "\t";
+    vn->printRaw(ss);
+    ss << std::endl;
+  }
+}
+void Inspector::auditBlockGraph(const ghidra::Funcdata& data, std::ofstream& ss)
+{
+  ss << "Auditing this function's Basic BlockGraph" << std::endl;
+  const ghidra::BlockGraph& graph = data.getBasicBlocks();
+  const std::vector<FlowBlock*>& blocks = graph.getList();
+  int level = 1;
+  for (const auto bl: blocks)
+  {
+    auditBlockGraph(bl, ss, level);
+  }
+  ss << "Auditing this function's Structure BlockGraph" << std::endl;
+  const ghidra::BlockGraph& controlGraph = data.getStructure();
+  controlGraph.printTree(ss, 0);
+}
+
+void Inspector::auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, int level)
+{
+    std::stringstream padding;
+    for (int i = 0; i < level; i++)
+      padding << " ";
+    ss << padding.str() << "Block #" << bl->getIndex() << std::endl;
+    ss << padding.str() << "\tEdges in, out: " << bl->sizeIn() << ", " << bl->sizeOut() << std::endl;
+    bool reciprocalEdgeFound = false;
+    for (int edgeId = 0; edgeId < bl->sizeIn(); edgeId++)
+    {
+      const ghidra::FlowBlock* input_block = bl->getIn(edgeId);
+      for (int remoteEdgeId = 0; remoteEdgeId < input_block->sizeOut(); remoteEdgeId++)
+      {
+        if (input_block->getOut(remoteEdgeId) == bl)
+        {
+          reciprocalEdgeFound = true;
+          break;
+        }
+      }
+      if (!reciprocalEdgeFound)
+        ss << padding.str() <<  "\t\tReciprocal output edge missing from Block #" << input_block->getIndex() << std::endl;
+    }
+    reciprocalEdgeFound = false;
+    for (int edgeId = 0; edgeId < bl->sizeOut(); edgeId++)
+    {
+      const ghidra::FlowBlock* output_block = bl->getOut(edgeId);
+      for (int remoteEdgeId = 0; remoteEdgeId < output_block->sizeIn(); remoteEdgeId++)
+      {
+        if (output_block->getIn(remoteEdgeId) == bl)
+        {
+          reciprocalEdgeFound = true;
+          break;
+        }
+      }
+      if (!reciprocalEdgeFound)
+        ss << padding.str() << "\t\tReciprocal input edge missing from Block #" << output_block->getIndex() << std::endl;
+    }
+    int i = 0;
+    for (auto sub = bl->subBlock(i); sub != nullptr; i++)
+    {
+      auditBlockGraph(sub, ss, level + 1);
+    }
+  }
 }

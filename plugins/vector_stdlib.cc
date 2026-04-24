@@ -28,6 +28,7 @@
 
 namespace riscv_vector
 {
+
 bool VectorMatcher::isMemcpy()
 {
     // apply generic tests first
@@ -49,10 +50,11 @@ int VectorMatcher::transformMemcpy()
     std::stringstream ss;
     std::vector<ghidra::PcodeOp*> opsToDelete; // accumulate ops we are sure to delete in any transform
     if (info)
-        ghidra::inspector.log("before memcpy transform, ", loopBlock);
+        ghidra::inspector->log("before memcpy transform, ", loopBlock);
     if (loopModel.unresolvedDependencies(loopModel.terminationBranchOp))
     {
         ghidra::pLogger->warn("Unable to complete transform due to one or more references to a loop-local Varnode");
+        ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
     ghidra::pLogger->info("Transforming selection into vector_memcpy");
@@ -104,16 +106,17 @@ int VectorMatcher::transformStrlen()
     ghidra::Varnode* resultVn = nullptr;
     ghidra::PcodeOp* result = nullptr;
     if (info)
-        ghidra::inspector.log("before strlen transform, ", loopBlock);
+        ghidra::inspector->log("before strlen transform, ", loopBlock);
     // first identify the result Varnode as the register-typed varnode descending
     // from both the source load address pointer and the termination comparison operation.
     // we want the first such descendent found in the epilog
-    VectorEpilogProcessor epiProc(data, ghidra::inspector, ghidra::pLogger, loopModel);
+    VectorEpilogProcessor epiProc(data, loopModel);
     std::vector<ghidra::Varnode*> resultsVector;
     epiProc.getIntersectionVector(resultsVector, loopModel.vSourceOperands[0]->pRegister, loopModel.comparisonVarnode);
     if ((resultsVector.size() == 0) || (resultsVector[0] == nullptr))
     {
         ghidra::pLogger->info("Unable to find resultVn, abandon strlen transform");
+        ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
     resultVn = resultsVector[0];
@@ -126,6 +129,7 @@ int VectorMatcher::transformStrlen()
     if (sourceVn == nullptr)
     {
         ghidra::pLogger->warn("Failed to locate the strlen source operand - abandon transform");
+        ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
     sourceVn->printRaw(ss);
@@ -135,6 +139,7 @@ int VectorMatcher::transformStrlen()
     if (loopModel.unresolvedDependencies(result))
     {
         ghidra::pLogger->warn("Unable to complete transform due to one or more references to a loop-local Varnode");
+        ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
     data.getArch()->userops.registerBuiltin(VECTOR_STRLEN);
@@ -154,7 +159,7 @@ int VectorMatcher::transformStrlen()
         ss.str("");
     }
     data.opInsertEnd(newVectorOp, loopBlock);
-    if (trace) ghidra::inspector.log("Vector loop block after inserting vector_strlen is", loopBlock);
+    if (trace) ghidra::inspector->log("Vector loop block after inserting vector_strlen is", loopBlock);
     // replace old result with new result
     std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVn->beginDescend(), resultVn->endDescend());
     for (auto op: resultSet)
@@ -205,12 +210,12 @@ int VectorMatcher::transformStrcmp()
     ghidra::Varnode* firstArg = nullptr;  // the first argument to the vector_strcmp call
     ghidra::Varnode* secondArg = nullptr; // the second argument to the vector_strcmp call
     if (info)
-        ghidra::inspector.log("before strcmp transform, ", loopBlock);
+        ghidra::inspector->log("before strcmp transform, ", loopBlock);
     // Step 1: find the intersection of the two source operands pointer dependency set.
     // They should intersect twice - once in the loop termination's comparison condition, which we want to ignore,
     // and once again in the final result
 
-    VectorEpilogProcessor epiProc(data, ghidra::inspector, ghidra::pLogger, loopModel);
+    VectorEpilogProcessor epiProc(data, loopModel);
     std::set<ghidra::Varnode*> stopSet;
     stopSet.insert(loopModel.comparisonVarnode);
     epiProc.setStopSet(stopSet);
@@ -223,6 +228,7 @@ int VectorMatcher::transformStrcmp()
     if ((resultsVector.size() == 0) || (resultsVector[0] == nullptr))
     {
         ghidra::pLogger->info("Unable to find resultVn, abandon strcmp transform");
+        ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
     ghidra::Varnode* resultVn = resultsVector[0];
@@ -243,6 +249,7 @@ int VectorMatcher::transformStrcmp()
             // An addition op may be part of a negate-add sequence, which should
             // be fixed by another Rule in another pass
             ghidra::pLogger->info("strcmp result is addition, try in another pass");
+            ghidra::pLogger->flush();
             return TRANSFORM_ROLLED_BACK;
         case ghidra::CPUI_INT_SUB:
             // This is an ordering comparison, for instance string::operator<
@@ -250,6 +257,7 @@ int VectorMatcher::transformStrcmp()
         case ghidra::CPUI_CBRANCH:
             // This is a comparison already embedded in an unrelated branch
             ghidra::pLogger->warn("strcmp result is embedded in a branch statement - not implemented");
+            ghidra::pLogger->flush();
             return TRANSFORM_ROLLED_BACK;
         case ghidra::CPUI_INT_EQUAL:
             comparisonInverted = false;
@@ -259,11 +267,13 @@ int VectorMatcher::transformStrcmp()
             break;
         default:
             ghidra::pLogger->info("strcmp result is unrecognized, abandon transform");
+            ghidra::pLogger->flush();
             return TRANSFORM_ROLLED_BACK;
     }
     if (loopModel.unresolvedDependencies(result))
     {
         ghidra::pLogger->warn("Unable to complete transform due to one or more references to a loop-local Varnode");
+        ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
     // create a new Pcodeop with three varnode input parameters and one output varnode
@@ -303,7 +313,7 @@ int VectorMatcher::transformStrcmp()
     }
     data.opInsertEnd(newVectorOp, loopBlock);
     data.opInsertAfter(invertResultOp, newVectorOp);
-    if (trace) ghidra::inspector.log( "Vector loop block after inserting vector_strcmp", loopBlock);
+    if (trace) ghidra::inspector->log( "Vector loop block after inserting vector_strcmp", loopBlock);
     // replace old result with new result
     std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVn->beginDescend(), resultVn->endDescend());
     for (auto op: resultSet)

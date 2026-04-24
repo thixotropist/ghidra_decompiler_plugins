@@ -72,7 +72,6 @@ void FunctionEditor::deleteOp(PcodeOp* op, const std::string& message)
             descendentsToReview.insert(descOp);
         }
     }
-    pLogger->flush();
     data.opUnlink(op);
     descendentsToReview.erase(op);
 }
@@ -146,6 +145,8 @@ void FunctionEditor::removeDoWhileWrapperBlock(BlockBasic* blk)
                 {
                     FlowBlock* ib = doWhile->getIn(i);
                     edgesIn.push_back(ib);
+                    pLogger->info("Removing input edge from block {0:d}",
+                        ib->getIndex());
                     lsb->removeEdge(ib, doWhile);
                 }
                 std::vector<FlowBlock*> edgesOut;
@@ -153,6 +154,8 @@ void FunctionEditor::removeDoWhileWrapperBlock(BlockBasic* blk)
                 {
                     FlowBlock* ob = doWhile->getOut(i);
                     edgesOut.push_back(ob);
+                    pLogger->info("Removing output edge to block {0:d}",
+                        ob->getIndex());
                     lsb->removeEdge(doWhile, ob);
                 }
                 pLogger->info("Removing internal loop edge from vector block");
@@ -176,10 +179,14 @@ void FunctionEditor::removeDoWhileWrapperBlock(BlockBasic* blk)
                 // restore the edges extracted from the doWhile block
                 for (auto b: edgesIn)
                 {
+                    pLogger->info("Adding input edge from block {0:d} to the copy block",
+                        b->getIndex());
                     lsb->addEdge(b, copyBlk);
                 }
                 for (auto b: edgesOut)
                 {
+                    pLogger->info("Adding output edge to the copy block from block {0:d} ",
+                        b->getIndex());
                     lsb->addEdge(copyBlk, b);
                 }
                 delete doWhile;
@@ -226,7 +233,8 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
     std::set<PcodeOp*> uniqueOpsToDelete(opsToDelete.begin(), opsToDelete.end());
     for (auto op: uniqueOpsToDelete)
     {
-        deleteOp(op, "");
+        inspector->log("Deleting from uniqueOpsToDelete:", op);
+        deleteOp(op, "FunctionEditor::simplifyBlocks");
     }
     pLogger->info("Preparing to edit the flow block graph to remove the loop edge");
     BlockGraph& graph = data.getStructure();
@@ -240,7 +248,7 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
             removeUnusedOps(fb);
     if (pLogger->should_log(spdlog::level::trace))
     {
-        inspector.log("copyBlk after replacement", loopBlock->getCopyMap());
+        inspector->log("copyBlk after replacement", loopBlock->getCopyMap());
     }
     // Remove stale, free varnodes from any MULTIEQUAL PcodeOp descendents
     if (!descendentsToReview.empty())
@@ -265,16 +273,13 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
                             else goodSlot = 0;
                             pLogger->info("\tPreparing to replace slot {1:d} from PcodeOp {0:s} via duplication",
                                 ss.str(), slot);
-                            pLogger->flush();
                             ss.str("");
                             data.opRemoveInput(op, slot);
                             data.opInsertInput (op, op->getIn(goodSlot), slot);
-
                         }
                         else {
                             pLogger->info("\tPreparing to remove slot {1:d} from MULTIEQUAL PcodeOp {0:s}",
                             ss.str(), slot);
-                            pLogger->flush();
                             data.opRemoveInput(op, slot);
                             slot--;
                             ss.str("");
@@ -282,7 +287,6 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
                         op->printRaw(ss);
                         pLogger->info("\t\tResulting PcodeOp is {0:s}",
                             ss.str());
-                        pLogger->flush();
                         opFixed = true;
                     }
                 }
@@ -319,6 +323,7 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
             ss.str("");
         }
     }
+    pLogger->trace("FunctionEditor::simplifyBlocks exits");
 }
 
 void FunctionEditor::replaceBlock(const BlockGraph* graph, FlowBlock* oldBlock, FlowBlock* newBlock)

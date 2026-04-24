@@ -312,3 +312,15 @@ strategy can be used.  The starting point will be a `vsetvli` instruction.
 5. Scan descendents of the three MULTIEQUAL/Phi opcodes, replacing any descendent varnodes with the input varnodes found in step 2.
    Move these three MULTIEQUAL/Phi opcodes to a deletion list.
 6. Delete all matched opcodes in the reverse order they are found.
+
+## Other PcodeOp patterns
+
+```text
+0x0002a604:48:  j{0x00002058,0x00002050}:10(0x0002a604:48) = CONCAT88(a1(free),a2(0x0002a5cc:11))
+```
+
+This appears to be a `CPUI_PIECE` PcodeOp generating a 16 byte concatenation of registers a1 and a2.
+* This pattern appears in a function epilog, where the decompiler has incorrectly guessed that the return
+  value is 16 bytes to be returned in registers a0 and a1.
+* The `a1(free)` varnode will throw a low level exception.  The a1 register was used as a temporary in a vector
+  loop, and not recognized as dead.

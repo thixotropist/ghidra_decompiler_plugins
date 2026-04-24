@@ -550,7 +550,3 @@ We need to do a better job of defining the relationship between related sets:
 * Phi nodes that can be safely deleted during a transform
 * Phi nodes that have unresolved dependencies outside of the loop that block any transform
 * Phi nodes that have resolved descendents of temporary loop epilog registers
-
-### Phi nodes and vector Control and Status Registers
-
-Some MULTIEQUAL PCodeOps refer to Control and Status registers
