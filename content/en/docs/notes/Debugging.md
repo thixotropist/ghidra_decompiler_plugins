@@ -387,3 +387,44 @@ assumed dependency early and aborting the transform.  If the user corrects the s
 the transform should be performed.
 
 It appears that `drwav__on_write_memory` has the same issue.
+
+Track this down to find a missing dependency check, clearing this specific error.
+
+## Force Merge debugging
+
+The largest number of decompiler low level errors are now reported as this - from `get_next_arg`:
+
+      Low-level Error: Unable to force merge of op at 0x00037f10:182
+
+This is now wrapped as the integration test `whisper_sample_15`.  Inspecting the log traces suggests that
+this is *not* a consistency check related to edge editing, but something dealing with varnode merging into
+symbols.  The decompiler will attempt to merge varnodes and tie them into a smaller number of symbols.
+The plugin removes a lot of varnodes, and may be breaking links needed for that merge step.
+
+The `get_next_arg` refers to multiple symbols, but only a few are loaded into registers.:
+* `vl` is the symbol tied to a Control and Status register field.  Ghidra tracks this `MULTIEQUAL` PcodeOp with an internal
+  register named (in this case) `c0x0c20`.  This symbol is loaded into register `a4` during a `vector_strlen` stanza.
+* `stderr` is a symbol bound to a RAM address and loaded into register `a2`.
+* a string symbol is loaded into register `a1` in a code block ending in `exit`, so its heritage need not be tracked.
+
+Restart Ghidra with the plugin enabled, and open `whisper_cpp_rva23` to inspect `get_next_arg`.  The decompiler fails
+with `Unable to force merge of op at 0x00037f10:182`.  Can we patch this function to clear the fault, and get something
+useful out of the decompiler?
+
+Use the `Patch instruction` feature in the listing page to replace these lines with nop instructions:
+
+```text
+                             LAB_ram_00037e5c
+    ram:00037e5c 17 b6 10 00     auipc  param_3,0x10b
+    ram:00037e60 03 36 c6 9b     ld     param_3,-0x644(param_3=>->stderr)
+...
+    ram:00037eb2 73 27 00 c2     csrr   param_5,vl
+```
+
+After *all* three lines are patched to `nop` the decompiler window shows the low level error has cleared.  The decompiler
+reruns after *each* of the patches is installed, so all three patches appear to be needed to clear the error.
+
+Export the patched function to a debug file, which we can later use in a series of differential tests to see how each patch
+alters the generated Pcode and especially MULTIEQUAL nodes.
+
+We are likely to also need some sort of audit of the symbol table ties to varnodes.

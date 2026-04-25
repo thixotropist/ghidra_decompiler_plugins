@@ -34,7 +34,7 @@ REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "whisper_sample_8", "whisper_sample_10", "whisper_sample_11",
                     "whisper_sample_12", "whisper_sample_13a", "whisper_sample_13b",
                     "whisper_sample_14", "whisper_sample_15", "whisper_sample_16", "whisper_main",
-                     "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
+                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
 
 # some tests currently fail, so defer these to their own test case
 DEFERRED_TESTS = ("whisper_sample_5", "whisper_sample_12", "whisper_main",
@@ -73,7 +73,9 @@ def trim_output(result):
 
 def extract_c(result):
     """
-    isolate the decompiled C source from a single function test case
+    isolate the decompiled C source from a single function test case.
+    Note: the Ghidra script must issue the `print C` command immediately before
+    the `print Raw` command.
     """
     start = '[decomp]> print C'
     end = '[decomp]> print raw'

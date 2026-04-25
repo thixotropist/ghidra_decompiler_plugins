@@ -14,7 +14,7 @@ Here's a very simple vector copy function in its original assembly source:
 ```as
 .extern memcpy_i2
 memcpy_i2:
-    vsetivli zero,0x2,e8,mf8,ta,ma 
+    vsetivli zero,0x2,e8,mf8,ta,ma
     vle8.v   v1,(a1)
     vse8.v   v1,(a0)
     ret
@@ -64,7 +64,7 @@ The assembly source code is:
 
 ```as
 c.addi16sp sp,-0x160
-vsetivli   zero,0x4,e32,m1,ta,ma 
+vsetivli   zero,0x4,e32,m1,ta,ma
 vle32.v    v3,(a3)
 auipc      a4,0xe7
 addi       a4,a4,-0x65a
@@ -72,7 +72,7 @@ vsetivli   zero,0x2,e32,mf2,ta,ma
 vle32.v    v2,(a4)
 auipc      a5,0xe7
 addi       a5,a5,-0x662
-vsetivli   zero,0x8,e8,mf2,ta,ma 
+vsetivli   zero,0x8,e8,mf2,ta,ma
 vle8.v     v1,(a5)
 lw         a5,-0x5f4(s0)
 vsetivli   zero,0x10,e8,m1,ta,ma
@@ -87,7 +87,7 @@ vse8.v     v4,(a5)
 auipc      a4,0xd9
 flw        fa5,0x84(a4)
 addi       a5,s0,-0x274
-vsetivli   zero,0x4,e32,m1,ta,ma 
+vsetivli   zero,0x4,e32,m1,ta,ma
 vse32.v    v3,(a5)
 addi       a5,s0,-0x264
 vsetivli   zero,0x2,e32,mf2,ta,ma
@@ -95,7 +95,7 @@ vse32.v    v2,(a5)
 auipc      a1,0xdd
 addi       a1,a1,-0x500
 addi       a5,s0,-0x248
-vsetivli   zero,0x8,e8,mf2,ta,ma 
+vsetivli   zero,0x8,e8,mf2,ta,ma
 vse8.v     v1,(a5)
 sw         zero,-0x278(s0)
 fsw        fa5,-0x25c(s0)
@@ -116,7 +116,7 @@ long main(int argc,char *argv,void *allocator)
   undefined auVar3 [256];
   undefined auVar4 [256];
   undefined auVar5 [256];
-  
+
   vsetivli_e32m1tama(4);
   auVar4 = vle32_v(in_a3);
   vsetivli_e32mf2tama(2);
@@ -286,7 +286,7 @@ Notes:
 Therefore these pcode ops could be replaced with a single pcode op - *if* we were sure there were no descendents.
 We should also merge Basic Block 1 into Basic Block 2, as the branch instruction is to be absorbed.
 
-```text 
+```text
 0x00000048:XX vector_memcpy(a0(i), a1(i), a2(i))
 ```
 
