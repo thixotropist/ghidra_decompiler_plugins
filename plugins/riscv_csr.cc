@@ -10,20 +10,6 @@ ActionPluginPrepare::ActionPluginPrepare(std::shared_ptr<spdlog::logger> myLogge
     logger->info("Initializing ActionPluginPrepare");
 }
 
-static void dumpPcodes(const ghidra::Funcdata& data, std::shared_ptr<spdlog::logger> logger)
-{
-    std::stringstream ss;
-    ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
-    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
-    {
-        const ghidra::PcodeOp* op = iter->second;
-        if (op->isDead()) continue;
-        op->printRaw(ss);
-        ss << std::endl;
-    }
-    logger->trace("Function Pcodes:\n{0:s}", ss.str());
-}
-
 void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
 {
     std::stringstream ss;
@@ -60,6 +46,9 @@ void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
             if (addrSpace == ghidra::csRegisterAddrSpace)
             {
                 logger->info("\t\t ↑↑↑ Removing this opcode");
+                ss.str("");
+                op->getOut()->printInfo(ss);
+                logger->info("\t\t\tinfo: {0:s}", ss.str());
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                 data.opUninsert(modifiableOp);
                 data.opUnlink(modifiableOp);
@@ -84,7 +73,9 @@ void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
                 op->printRaw(ss);
                 logger->info("\t\t  Examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
                 ss.str("");
-                logger->info("\t\t\tFlags are 0x{0:x}", vn->getFlags());
+                vn->printInfo(ss);
+                logger->info("\t\t\t{0:s}", ss.str());
+                ss.str("");
                 ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
                 ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
@@ -93,7 +84,9 @@ void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
                 op->printRaw(ss);
                 logger->info("\t\t  Re-examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
                 ss.str("");
-                logger->info("\t\t\tFlags are 0x{0:x}", vn->getFlags());
+                vn->printInfo(ss);
+                logger->info("\t\t\t{0:s}", ss.str());
+                ss.str("");
             }
         }
     }

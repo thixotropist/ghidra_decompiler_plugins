@@ -39,12 +39,6 @@ void getRegisterName(intb offset, std::string* regName)
     *regName = trans->getRegisterName(registerAddrSpace, offset, 4);
 }
 
-void getCSRegisterName(const Varnode* vn, std::string* regName)
-{
-    const Translate *trans = csRegisterAddrSpace->getTrans();
-    *regName = trans->getRegisterName(csRegisterAddrSpace, vn->getAddr().getOffset(), 4);
-}
-
 bool sameRegister(const Varnode* a, const Varnode* b)
 {
     Address aAddr = a->getAddr();
@@ -57,12 +51,18 @@ bool sameRegister(const Varnode* a, const Varnode* b)
 
 void FunctionEditor::deleteOp(PcodeOp* op, const std::string& message)
 {
-
     pLogger->info("Deleting PcodeOp {0:s} at 0x{1:x}:{2:x}",
                 message, op->getAddr().getOffset(), op->getTime());
     Varnode* resultVn = op->getOut();
     if (resultVn != nullptr)
     {
+        resultVn->printInfo(ss);
+        pLogger->info("\tResult varnode info: {0:s}", ss.str());
+        ss.str("");
+        if (resultVn->isAddrTied())
+            pLogger->info("\tThe result varnode is AddrTied");
+        if (resultVn->isAddrForce())
+            pLogger->info("\tThe result varnode is AddrForce");
         std::list<PcodeOp*>::const_iterator opIter = resultVn->beginDescend();
         while (opIter != resultVn->endDescend())
         {
@@ -166,6 +166,25 @@ void FunctionEditor::removeDoWhileWrapperBlock(BlockBasic* blk)
                     graph.printTree(ss, 1);
                     pLogger->trace("Full tree before block replacement:\n{0:s}", ss.str());
                     ss.str("");
+                }
+                // Adjust any external MULTIEQUAL PcodeOps - they can not have more varnode inputs
+                // than the parent block has edges in
+                std::list<ghidra::PcodeOp*>::iterator endOp = blk->endOp();
+                std::list<ghidra::PcodeOp*>::iterator firstOp = blk->beginOp();
+                for (auto iter = firstOp; iter != endOp; iter++)
+                {
+                    ghidra::PcodeOp* op = *iter;
+                    if (op->code() != ghidra::CPUI_MULTIEQUAL) continue;
+                    const ghidra::Varnode* outVn = op->getOut();
+                    for (int slot = 0; slot < op->numInput(); ++slot)
+                    {
+                        if (op->getIn(slot) == outVn)
+                        {
+                            ghidra::pLogger->info("Trimming self-referential MULTIEQUAL Varnode input");
+                            data.opRemoveInput(op, slot);
+                            break;
+                        }
+                    }
                 }
                 copyBlk->setParent(grandparentBlock);
                 FunctionEditor::replaceBlock(&graph, parentBlock, copyBlk);
@@ -287,6 +306,7 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
                         op->printRaw(ss);
                         pLogger->info("\t\tResulting PcodeOp is {0:s}",
                             ss.str());
+                        ss.str("");
                         opFixed = true;
                     }
                 }
@@ -303,6 +323,7 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
                                 ss.str(), slot);
                         data.opRemoveInput(op, slot);
                         opFixed = true;
+                        ss.str("");
                         slot--;
                     }
                 }
@@ -322,6 +343,18 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
                 op->getAddr().getOffset(), op->getTime(), ss.str());
             ss.str("");
         }
+    }
+    if (pLogger->should_log(spdlog::level::trace))
+    {
+        data.printRaw(ss);
+        pLogger->trace("Final function Pcode after transform:\n{0:s}", ss.str());
+        ss.str("");
+    }
+    if (inspector->audit_multiequals)
+    {
+        inspector->auditMultiequals(data, ss);
+        pLogger->trace("Multiequal audit results:\n{0:s}", ss.str());
+        ss.str("");
     }
     pLogger->trace("FunctionEditor::simplifyBlocks exits");
 }

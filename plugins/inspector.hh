@@ -78,6 +78,13 @@ class Inspector
      */
     static void auditBlockGraph(const ghidra::Funcdata& data, std::ofstream& ss);
     /**
+     * @brief MULTIEQUAL PcodeOps have a complex relationship with a function's Blocks.
+     *        Capture some of those rules here to prevent low-level errors.
+     * @param data The Funcdata context for this function
+     * @param ss The stringstream to receive the audit
+     */
+    static void auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss);
+    /**
      * @brief Do we want to audit Varnode data structures for consistency?
      */
     static const bool audit_varnodes = false;
@@ -85,6 +92,10 @@ class Inspector
      * @brief Do we want to audit BlockGraph data structures for consistency?
      */
     static const bool audit_block_graph = false;
+    /**
+     * @brief Do we want to audit MULTIEQUALS and their correlation to input edges?
+     */
+    static const bool audit_multiequals = true;
   private:
   /**
    * @brief Audit the Funcdata BlockGraph to check for consistency errors
@@ -93,6 +104,7 @@ class Inspector
    * @param level indentation level to use
    */
     static void auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, int level);
+
     std::shared_ptr<spdlog::logger> logger;     ///< the SPDLOG logger to use for output
     bool logBlockStructure = true;             ///< if true, log full blocks during any blockgraph edits
 };

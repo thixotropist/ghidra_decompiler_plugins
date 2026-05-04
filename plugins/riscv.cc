@@ -87,13 +87,13 @@ std::ofstream reportFile; /// A file holding summary data for each possible vect
 }
 namespace ghidra
 {
-Architecture* arch;        /// The Ghidra architecture object for this program
-AddrSpace* registerAddrSpace; /// The address space holding RISCV registers
-AddrSpace* uniqueAddrSpace; /// The address space holding internal temporaries
-AddrSpace* ramAddrSpace; /// The address space for static RAM variables
-AddrSpace* stackAddrSpace; /// The address space for stack variables
-std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plugin
-std::shared_ptr<Inspector> inspector;
+Architecture* arch;        ///< The Ghidra architecture object for this program
+AddrSpace* registerAddrSpace; ///< The address space holding RISCV registers
+AddrSpace* uniqueAddrSpace; ///< The address space holding internal temporaries
+AddrSpace* ramAddrSpace; ///< The address space for static RAM variables
+AddrSpace* stackAddrSpace; ///< The address space for stack variables
+std::shared_ptr<spdlog::logger> pLogger; ///< An SPDLOG logger usable by this plugin
+std::shared_ptr<Inspector> inspector; ///< Inspector collects probes into Ghidra decompiler internals
 
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
@@ -107,7 +107,7 @@ extern "C" int plugin_init(void *context)
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::trace);
+    pLogger->set_level(spdlog::level::warn);
     pLogger->info("Logging system initialized");
     inspector = std::make_shared<Inspector>(pLogger);
     // log levels are trace, debug, info, warn, error and critical.

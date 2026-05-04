@@ -164,6 +164,11 @@ void Inspector::log(const string& label, const Varnode* vn, int slot)
     vn->printRaw(ss);
     logger->trace("{0:s}, slot {1:d}: {2:s}", label, slot, ss.str());
     ss.str("");
+    if (vn->isAddrTied())
+      logger->trace("\tThis Varnode is AddrTied");
+    ghidra::SymbolEntry* sym = vn->getSymbolEntry();
+    if (sym != nullptr)
+      logger->trace("\tFound a symbolEntry");
   }
 }
 
@@ -272,4 +277,58 @@ void Inspector::auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, 
       auditBlockGraph(sub, ss, level + 1);
     }
   }
+void Inspector::auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss)
+{
+  ss << "auditMultiequals:" << std::endl;
+  ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
+  for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+  {
+    const ghidra::PcodeOp* op = iter->second;
+    ghidra::OpCode opcode = op->code();
+    if (opcode == ghidra::CPUI_MULTIEQUAL)
+    {
+      const ghidra::BlockBasic* bl = op->getParent();
+      if (bl == nullptr) continue;
+      ghidra::uintb slots = op->numInput();
+      ghidra::uintb edgesIn = bl->sizeIn();
+      ss << "\tExamining CPUI_MULTIEQUAL Op at 0x" << std::hex <<
+        op->getAddr().getOffset() << ":" <<
+        op->getTime() << "; slots = " << std::dec << slots <<
+        "; edgesIn = " << edgesIn << std::endl;
+      if(slots > edgesIn)
+      {
+        ss << "Low-level error likely with op: " << std::hex <<
+          op->getAddr().getOffset() << ":" << op->getTime() << std::dec <<std::endl;
+        ss << "\toutput varnode: ";
+        const ghidra::Varnode* vnOut = op->getOut();
+        vnOut->printRaw(ss);
+        ss << ";";
+        vnOut->printInfo(ss);
+        ss << std::endl;
+        for (int slot = 0; slot < slots; ++slot)
+        {
+          const ghidra::Varnode* vnIn = op->getIn(slot);
+          ss << "\tinput varnode in slot " << slot << ": ";
+          vnIn->printRaw(ss);
+          ss << ";";
+          vnIn->printInfo(ss);
+          ss << std::endl;
+          if (vnOut == vnIn)
+          {
+            ss << "Autocorrect: removing extraneous input" << std::endl;;
+            ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
+            ghidra::Funcdata& modifiableData = const_cast<ghidra::Funcdata&>(data);
+            modifiableData.opRemoveInput(modifiableOp, slot);
+            --slot;
+            --slots;
+          }
+        }
+      } else if (slots < edgesIn)
+      {
+        ss << "Slot/Edge count mismatch with op: " << std::hex <<
+          op->getAddr().getOffset() << ":" << op->getTime() << std::dec <<std::endl;
+      }
+    }
+  }
+}
 }

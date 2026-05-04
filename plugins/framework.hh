@@ -57,13 +57,6 @@ void getRegisterName(const Varnode* vn, std::string* regName);
 void getRegisterName(intb offset, std::string* regName);
 
 /**
- * @brief Get the register name associated with an offset in control and status register space
- * @param offset The offset of a register in control and status register space
- * @param regName pointer to the control and status register name result
- */
-void getCSRegisterName(intb offset, std::string* regName);
-
-/**
  * @brief compare registers associated with two Varnodes
  * @param a first of two varnodes
  * @param b second of two varnodes
