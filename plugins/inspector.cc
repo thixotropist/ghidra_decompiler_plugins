@@ -329,27 +329,25 @@ void Inspector::auditMultiequals(ghidra::Funcdata& data, std::stringstream& ss)
         ss << "Slot/Edge count mismatch with op: " << std::hex <<
           op->getAddr().getOffset() << ":" << op->getTime() << std::dec <<std::endl;
       }
-      // now check for free CSR varnodes
-      if (op->getOut()->getAddr().getSpace() == ghidra::csRegisterAddrSpace)
+    // now check for free CSR varnodes
+
+      // replace any free CSR input varnodes with indirect CSR varnodes
+      for (int slot = 0; slot < op->numInput(); ++slot)
       {
-        // replace any free CSR input varnodes with indirect CSR varnodes
-        for (int slot = 0; slot < op->numInput(); ++slot)
+        const ghidra::Varnode *vn = op->getIn(slot);
+        if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace) &&
+            vn->isFree())
         {
-          const ghidra::Varnode *vn = op->getIn(slot);
-          if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace) &&
-              vn->isFree())
-          {
-            ss << "Audit found a free csr varnode at 0x" << std::hex <<
-              op->getAddr().getOffset() << ":" << op->getTime() << std::endl;
-            ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
-            ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
-            ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
-            data.opUnsetInput(modifiableOp, slot);
-            data.opSetInput(modifiableOp, newVn, slot);
-            ss << "Revised OpcodeOp is now: ";
-            op->printRaw(ss);
-            ss << std::dec << std::endl;
-          }
+          ss << "Audit found a free csr varnode at 0x" << std::hex <<
+            op->getAddr().getOffset() << ":" << op->getTime() << std::endl;
+          ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
+          ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
+          ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
+          data.opUnsetInput(modifiableOp, slot);
+          data.opSetInput(modifiableOp, newVn, slot);
+          ss << "Revised OpcodeOp is now: ";
+          op->printRaw(ss);
+          ss << std::dec << std::endl;
         }
       }
     }

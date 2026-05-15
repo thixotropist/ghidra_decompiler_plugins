@@ -15,7 +15,7 @@ import re
 logging.basicConfig(level=logging.INFO)
 logger = logging
 
-GHIDRA_INSTALL_DIR = "/opt/ghidra_12.1_DEV/"
+GHIDRA_INSTALL_DIR = "/opt/ghidra_12.2_DEV/"
 DECOMPILER_DIR = GHIDRA_INSTALL_DIR + "Ghidra/Features/Decompiler/os/linux_x86_64/"
 DECOMPILER_PATH = DECOMPILER_DIR + "decompile"
 DATATEST_PATH = DECOMPILER_DIR + "decompile_datatest"
