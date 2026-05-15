@@ -293,8 +293,10 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
                             pLogger->info("\tPreparing to replace slot {1:d} from PcodeOp {0:s} via duplication",
                                 ss.str(), slot);
                             ss.str("");
-                            data.opRemoveInput(op, slot);
-                            data.opInsertInput (op, op->getIn(goodSlot), slot);
+                            pLogger->flush();
+                            data.opUnsetInput(op, slot);
+                            data.opSetInput (op, op->getIn(goodSlot), slot);
+                            pLogger->flush();
                         }
                         else {
                             pLogger->info("\tPreparing to remove slot {1:d} from MULTIEQUAL PcodeOp {0:s}",

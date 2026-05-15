@@ -10,6 +10,7 @@ import subprocess
 import logging
 import os
 import shutil
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging
@@ -36,7 +37,9 @@ REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "whisper_sample_3", "whisper_sample_5", "whisper_sample_6", "whisper_sample_7",
                     "whisper_sample_8", "whisper_sample_10", "whisper_sample_11",
                     "whisper_sample_12", "whisper_sample_13a", "whisper_sample_13b",
-                    "whisper_sample_14", "whisper_sample_15", "whisper_sample_16", "whisper_main",
+                    "whisper_sample_14", "whisper_sample_15", "whisper_sample_16",
+                    "whisper_sample_17", "whisper_sample_18", "whisper_sample_19",
+                    "whisper_main",
                     "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
 
 # if some tests fail, defer them
@@ -65,6 +68,9 @@ expected = {
     'whisper_sample_14': {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_15':  {'vector_memcpy':1, 'vector_strlen':1},
     'whisper_sample_16':  {'vector_memcpy':3},
+    'whisper_sample_17':  {'vector_strlen':1},
+    'whisper_sample_18': {'vector_memset':1, 'vector_memcpy':7, 'vector_strlen':4},
+    'whisper_sample_19': {'vector_memcpy':9, 'vector_strlen':4},
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},
     'dpdk_sample_3':  {'vector_strlen':2},
@@ -143,7 +149,14 @@ def run_datatest(test_case, sample, plugin=True, datatest_path=DATATEST_PATH,
     with open(f"/tmp/{sample}.testlog", "w", encoding="utf8") as f:
         f.write(result.stdout)
         f.write(result.stderr)
-    if not continue_on_failure:
+    if continue_on_failure:
+        if re.search(re.escape('Low-level ERROR'), result.stdout):
+            print("\tTest generated a Low-level error")
+            result.returncode = 1
+        if re.search(re.escape('Execution ERROR'), result.stdout):
+            print("\tTest generated an execution error")
+            result.returncode = 1
+    else:
         test_case.assertEqual(0, result.returncode,
             f"Datatest of {sample} failed")
         test_case.assertNotIn("Low-level ERROR", result.stdout,

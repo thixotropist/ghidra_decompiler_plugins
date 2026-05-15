@@ -107,7 +107,7 @@ extern "C" int plugin_init(void *context)
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::warn);
+    pLogger->set_level(spdlog::level::trace);
     pLogger->info("Logging system initialized");
     inspector = std::make_shared<Inspector>(pLogger);
     // log levels are trace, debug, info, warn, error and critical.

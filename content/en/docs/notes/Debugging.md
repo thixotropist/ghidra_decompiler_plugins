@@ -1,7 +1,7 @@
 ---
 title: Debugging
 description: refactoring made a lot of improvements, and cleared away bad code that somehow worked. How do we address the new and improved failures?
-weight: 110
+weight: 120
 ---
 
 `dpdk_sample_1`, `whisper_sample_5`, `whisper_sample_12`,  and `whisper_main` currently fail.  Compare the failure modes to see where to start?
@@ -399,9 +399,9 @@ Violating these rules will manifest as Low level errors and exceptions crashing 
 There are several debugging paths available to us:
 
 1. Source code inspection to try and infer obscure decompiler design rules and constraints.
-2. Inspection of decompiler logging and tracing messages, especially `warn` or `error` log messages.
+2. Inspection of decompiler plugin logging and tracing messages, especially `warn` or `error` log messages.
    This is often accompanied with additional trace-level log messages to provide more context.
-3. Run the decompiler under `valgrind` or `gdb` to inspect backtrace stacks and objects associated with an error.
+3. Run the decompiler datatest under `valgrind` or `gdb` to inspect backtrace stacks and objects associated with an error.
 4. Generate synthetic, minimal functions manifesting the observed error(s) to perform differential analysis on elements
    triggering the faults.
 5. Add additional logging messages to the core decompiler - not a plugin - to display private object data
@@ -412,6 +412,9 @@ Think of these paths as dimensions to explore in parallel, where each step down 
 the preferred options for progressing down the other paths.
 
 ### Getting started
+
+>Warning: Some of the assumptions in the text below turn out to be incorrect.  Backtracing from faulty
+>         assumptions to solid insight is a skill worth developing.
 
 The largest number of decompiler low level errors are now reported as this - from `get_next_arg`:
 
@@ -461,7 +464,7 @@ and studying the plugin differential results is a good start.  The steps taken s
 3. Resolve any easy problems to reduce clutter.
 4. Pick a remaining problem, in this case `Unable to force merge`
 5. Survey the functions exhibiting this problem, picking one of the smaller such functions, `get_next_arg`.
-6. Export this function as an integration test, showing that it exibits the same error repeatably.
+6. Export this function as an integration test, showing that it exhibits the same error repeatably.
 7. Use Ghidra with the plugin enabled to inspect `get_next_arg` within the executable, patching various
    instructions into `nop` or `c.nop` until the decompiler completes with good transforms.
 
@@ -669,7 +672,7 @@ The logs are very similar, with no obvious differences that help refine the prob
 
 Browse through the source code to locate additional datatest commands we can use, especially ones that might show missing detail on varnodes.
 
-For example, decompile get_next_arg_test_2 without a plugin, running the baseline commands and then trying some new ones:
+For example, decompile `get_next_arg_test_2` without a plugin, running the baseline commands and then trying some new ones:
 
 ```
 decomp]> restore test_data/get_next_arg_test_2_save.xml
@@ -767,12 +770,13 @@ Type: long
 Note:
 * HighVariables are only available if FuncData::isHighOn returns true, that is if `FuncData::flags&highlevel_on` is non-zero.
   That is probably not true during our plugin execution.
-* We should add `vn->printInfo(ss)` and `vn->printCover(ss)` in places we use `vn->printRaw(ss)`.
+* We should add `vn->printInfo(ss)` and `vn->printCover(ss)` in places we use `vn->printRaw(ss)`.  `printInfo` helps somewhat, but `printCover`
+  fails since it is generated in an Action that follows our plugin's execution.
 
 ### back to code inspection with gdb
 
-Run test_2 under gdb and localize the error thrown.  The code suggests that Cover::addRefPoint expects that MULTIEQUAL Pcodes
-at the beginning of a block will have one input Varnode for each of the inward flows.
+Run test_2 under gdb and localize the error thrown.  The code suggests that `Cover::addRefPoint` expects that MULTIEQUAL Pcodes
+at the beginning of a block will have one input Varnode for each of the inward edges.
 
 ```c
 void Cover::addRefPoint(const PcodeOp *ref,const Varnode *vn)

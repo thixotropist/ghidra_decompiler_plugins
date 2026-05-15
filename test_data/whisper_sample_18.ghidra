@@ -1,0 +1,11 @@
+restore test_data/whisper_sample_18_save.xml
+map function 0xbd02e whisper_bench_memcpy_str
+parse line extern void whisper_bench_memcpy_str(ulong param_1);
+map function 0x69904 ggml_time_us
+parse line extern long ggml_time_us(void);
+map function 0x1fc60 snprintf
+parse line extern void* snprintf(void*, long, char*, float);
+load function whisper_bench_memcpy_str
+decompile whisper_bench_memcpy_str
+print C
+print raw

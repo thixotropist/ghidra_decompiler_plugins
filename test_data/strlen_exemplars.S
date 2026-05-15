@@ -76,6 +76,25 @@ LAB_tmp1:
     c.addi16sp  sp,0x20
     ret
 
+.global strlen_var3
+.type strlen_var3, %function
+# strlen plus 1, to measure the number of bytes to copy
+strlen_var3:
+    c.mv       a5,a0
+    c.li       a3,0
+1:
+    vsetvli    a4,zero,e8,m1,ta,ma
+    c.add      a5,a3
+    vle8ff.v   v1,(a5)
+    vmseq.vi   v1,v1,0x0
+    csrr       a3,vl
+    vfirst.m   a1,v1
+    blt        a1,zero,1b
+    c.add      a5,a1
+    c.sub      a5,a0
+    c.addi     a5,0x1
+    c.mv       a0,a5
+    ret
 .global other_function
 .type other_function, %function
 other_function:

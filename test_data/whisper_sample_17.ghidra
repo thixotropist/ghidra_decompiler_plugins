@@ -1,0 +1,13 @@
+restore test_data/whisper_sample_17_save.xml
+map function 0xf9d84 ggml_backend_cpu_device_context
+parse line extern void* ggml_backend_cpu_device_context(void *this);
+map function 0x1f8e0 isspace
+parse line extern int isspace(char ch);
+map function 0x1fad0 new
+parse line extern void* new(long sz);
+map function 0x1faf0 delete
+parse line extern void delete(void* this, void* x);
+load function ggml_backend_cpu_device_context
+decompile ggml_backend_cpu_device_context
+print C
+print raw

@@ -1126,12 +1126,16 @@ void VectorEpilogProcessor::getIntersectionVector(std::vector<ghidra::Varnode*>&
         s2DepSet.begin(), s2DepSet.end(),       // Range 2
         std::back_inserter(intersection_vector) // Output iterator
     );
-    std::sort(intersection_vector.begin(), intersection_vector.begin(),
-        [](const ghidra::Varnode* a, const ghidra::Varnode* b) {
-        return a->getDef()->getAddr().getOffset() < b->getDef()->getAddr().getOffset();});
+    std::ranges::sort(intersection_vector,
+        [](const ghidra::Varnode* a, const ghidra::Varnode* b)
+        {
+            ghidra::uintb addrA = a->getDef()->getAddr().getOffset();
+            ghidra::uintb addrB = b->getDef()->getAddr().getOffset();
+            return addrA < addrB;
+        });
     std::copy_if(intersection_vector.begin(), intersection_vector.end(),
                  std::back_inserter(results),
                  myFilter);
-    if (trace) traceResultCandidates(results, "\tPotential result Varnodes: ");
+    if (trace) traceResultCandidates(results, "\tPotential result Varnodes after sorting and filtering: ");
 }
 }

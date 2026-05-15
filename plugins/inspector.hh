@@ -83,7 +83,7 @@ class Inspector
      * @param data The Funcdata context for this function
      * @param ss The stringstream to receive the audit
      */
-    static void auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss);
+    static void auditMultiequals(ghidra::Funcdata& data, std::stringstream& ss);
     /**
      * @brief Do we want to audit Varnode data structures for consistency?
      */
@@ -104,7 +104,6 @@ class Inspector
    * @param level indentation level to use
    */
     static void auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, int level);
-
     std::shared_ptr<spdlog::logger> logger;     ///< the SPDLOG logger to use for output
     bool logBlockStructure = true;             ///< if true, log full blocks during any blockgraph edits
 };

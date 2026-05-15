@@ -5,6 +5,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 #include "framework.hh"
 #include "inspector.hh"
+#include "riscv_sleigh.hh"
 
 namespace ghidra{
 
@@ -277,7 +278,7 @@ void Inspector::auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, 
       auditBlockGraph(sub, ss, level + 1);
     }
   }
-void Inspector::auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss)
+void Inspector::auditMultiequals(ghidra::Funcdata& data, std::stringstream& ss)
 {
   ss << "auditMultiequals:" << std::endl;
   ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
@@ -327,6 +328,29 @@ void Inspector::auditMultiequals(const ghidra::Funcdata& data, std::stringstream
       {
         ss << "Slot/Edge count mismatch with op: " << std::hex <<
           op->getAddr().getOffset() << ":" << op->getTime() << std::dec <<std::endl;
+      }
+      // now check for free CSR varnodes
+      if (op->getOut()->getAddr().getSpace() == ghidra::csRegisterAddrSpace)
+      {
+        // replace any free CSR input varnodes with indirect CSR varnodes
+        for (int slot = 0; slot < op->numInput(); ++slot)
+        {
+          const ghidra::Varnode *vn = op->getIn(slot);
+          if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace) &&
+              vn->isFree())
+          {
+            ss << "Audit found a free csr varnode at 0x" << std::hex <<
+              op->getAddr().getOffset() << ":" << op->getTime() << std::endl;
+            ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
+            ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
+            ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
+            data.opUnsetInput(modifiableOp, slot);
+            data.opSetInput(modifiableOp, newVn, slot);
+            ss << "Revised OpcodeOp is now: ";
+            op->printRaw(ss);
+            ss << std::dec << std::endl;
+          }
+        }
       }
     }
   }
