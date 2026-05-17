@@ -3,6 +3,9 @@
  * @file framework.cc
  * Provide common extensions to the Ghidra decompiler framework.
  */
+
+#include <ranges>
+
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
@@ -75,10 +78,8 @@ void FunctionEditor::deleteOp(PcodeOp* op, const std::string& message)
             pLogger->info("\tThe result varnode is AddrTied");
         if (resultVn->isAddrForce())
             pLogger->info("\tThe result varnode is AddrForce");
-        std::list<PcodeOp*>::const_iterator opIter = resultVn->beginDescend();
-        while (opIter != resultVn->endDescend())
+        for (PcodeOp* descOp: std::ranges::subrange{resultVn->beginDescend(), resultVn->endDescend()})
         {
-            PcodeOp* descOp = *opIter++;
             pLogger->info("\tNote Descendent PcodeOp {0:s} at 0x{1:x}:{2:x}",
                         message, descOp->getAddr().getOffset(), descOp->getTime());
             descendentsToReview.insert(descOp);
@@ -181,11 +182,8 @@ void FunctionEditor::removeDoWhileWrapperBlock(BlockBasic* blk)
                 }
                 // Adjust any external MULTIEQUAL PcodeOps - they can not have more varnode inputs
                 // than the parent block has edges in
-                std::list<ghidra::PcodeOp*>::iterator endOp = blk->endOp();
-                std::list<ghidra::PcodeOp*>::iterator firstOp = blk->beginOp();
-                for (auto iter = firstOp; iter != endOp; iter++)
+                for (ghidra::PcodeOp* op: std::ranges::subrange{blk->beginOp(), blk->endOp()})
                 {
-                    ghidra::PcodeOp* op = *iter;
                     if (op->code() != ghidra::CPUI_MULTIEQUAL) continue;
                     const ghidra::Varnode* outVn = op->getOut();
                     for (int slot = 0; slot < op->numInput(); ++slot)
@@ -383,10 +381,9 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
 bool FunctionEditor::fixup(std::stringstream& ss)
 {
     bool fixupsPerformed = false;
-    ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
-    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+    std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};
+    for (auto [seqNum,op] : viewOps)
     {
-        const ghidra::PcodeOp* op = iter->second;
         ghidra::OpCode opcode = op->code();
         if (opcode == ghidra::CPUI_MULTIEQUAL)
         {

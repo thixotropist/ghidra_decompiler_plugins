@@ -3,6 +3,7 @@
 #include <set>
 #include <algorithm>
 #include <iterator>
+#include <ranges>
 
 #include "spdlog/spdlog.h"
 
@@ -202,11 +203,8 @@ void VectorMatcher::collect_loop_registers()
             }
             if (opIsVoid) continue;
             // Add new dependent ops to visit if this op has a known result *and* this op is inside the loop
-            std::list<ghidra::PcodeOp *>::const_iterator begin = resultVn->beginDescend();
-            std::list<ghidra::PcodeOp *>::const_iterator end = resultVn->endDescend();
-            for (auto descendent = begin; descendent != end; ++descendent)
+            for (ghidra::PcodeOp *descendentOp: std::ranges::subrange{resultVn->beginDescend(), resultVn->endDescend()})
             {
-                ghidra::PcodeOp *descendentOp = *descendent;
                 if (trace)
                 {
                     descendentOp->printRaw(ss);

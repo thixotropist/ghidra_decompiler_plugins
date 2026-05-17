@@ -7,6 +7,7 @@
  * @copyright Copyright (c) 2025
  */
 #include <stack>
+#include <ranges>
 
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
@@ -213,9 +214,9 @@ int VectorSeries::match()
         }
         ghidra::pLogger->info("Exploring dependencies of the vector load op at 0x{0:x}",
             loadOp->getAddr().getOffset());
-        for (auto it = outputVn->beginDescend(); it != outputVn->endDescend(); ++it)
+
+        for (ghidra::PcodeOp* descOp: std::ranges::subrange{outputVn->beginDescend(), outputVn->endDescend()})
         {
-            ghidra::PcodeOp* descOp = *it;
             if (currentBlock != descOp->getParent()) continue;
             const RiscvUserPcode *descOpInfo = RiscvUserPcode::getUserPcode(*descOp);
             // we only transform vector store opcodes
@@ -229,20 +230,20 @@ int VectorSeries::match()
             }
             numTransformedStores++;
             ghidra::pLogger->info("Inserting vector op 0x{0:x} at 0x{1:x}",
-                            builtinOp, (*it)->getAddr().getOffset());
+                            builtinOp, descOp->getAddr().getOffset());
             reportFile << "\tLoad op at 0x" << std::hex << loadOp->getAddr().getOffset() <<
                 " has a valid dependent vector store op at 0x" <<
                 descOp->getAddr().getOffset() << std::dec << std::endl;
             // vector_mem* invocations count bytes, not elements.
             // construct a new constant Varnode to hold the number of bytes
             ghidra::Varnode *new_size_varnode = data.newConstant(1, numBytes);
-            ghidra::Varnode *destVn = (*it)->getIn(2);
+            ghidra::Varnode *destVn = descOp->getIn(2);
             // we have destination, source, and size so construct the vector_mem* op
-            ghidra::PcodeOp *newOp = insertVoidCallOther(data, (*it)->getAddr(), builtinOp, destVn, sourceVn, new_size_varnode);
+            ghidra::PcodeOp *newOp = insertVoidCallOther(data, descOp->getAddr(), builtinOp, destVn, sourceVn, new_size_varnode);
             if (trace) ghidra::inspector->log("  queued for insertion vector opcode", newOp);
             // accumulate pcode additions and deletions as a pending transaction
-            pcodesToBeBuilt.push_back(new std::pair<ghidra::PcodeOp *, ghidra::PcodeOp *>(newOp, *it));
-            deleteSet.push_back(*it);
+            pcodesToBeBuilt.push_back(new std::pair<ghidra::PcodeOp *, ghidra::PcodeOp *>(newOp, descOp));
+            deleteSet.push_back(descOp);
             ++transformCountNonLoop;
         }
         // Can we delete the vector load operation too?
@@ -1039,9 +1040,8 @@ bool VectorLoop::unresolvedDependencies(const ghidra::PcodeOp* result)
     for (auto vn: loopLocalVns)
     {
         ghidra::inspector->log("\tChecking Varnode:", vn);
-        for (auto iter=vn->beginDescend(); iter != vn->endDescend(); ++iter)
+        for (ghidra::PcodeOp* depOp: std::ranges::subrange{vn->beginDescend(),vn->endDescend()})
         {
-            ghidra::PcodeOp* depOp = *iter;
             ghidra::uintb opOffset = depOp->getAddr().getOffset();
             ghidra::inspector->log("\t\tDependent PcodeOp", depOp);
             if ((opOffset < firstAddr) ||

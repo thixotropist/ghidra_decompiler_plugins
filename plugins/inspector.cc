@@ -1,6 +1,7 @@
 #include <string>
 #include <set>
 #include <stack>
+#include <ranges>
 
 #include "spdlog/spdlog.h"
 
@@ -193,9 +194,8 @@ void Inspector::collectDependencies(std::set<Varnode*>& result, const Varnode* r
     int count = 0;
     while ((vn != nullptr) && (count++ < maxDepth))
     {
-        for (auto iter=vn->beginDescend(); iter != vn->endDescend(); ++iter)
+        for (ghidra::PcodeOp* op: std::ranges::subrange{vn->beginDescend(),vn->endDescend()})
         {
-            ghidra::PcodeOp* op = (*iter);
             if (visitedOps.count(op) > 0)
                 continue;
             visitedOps.insert(op);
@@ -220,9 +220,8 @@ void Inspector::auditVarnodes(const ghidra::Funcdata& data, std::ofstream& ss)
 {
   // free varnodes are not necessarily errors if found on this listing
   VarnodeLocSet::const_iterator startiter;
-  for(startiter=data.beginLoc();startiter!=data.endLoc();++startiter)
+  for(ghidra::Varnode* vn: std::ranges::subrange{data.beginLoc(), data.endLoc()})
   {
-    ghidra::Varnode* vn = *startiter;
     std::uintptr_t ptr_as_int = reinterpret_cast<std::uintptr_t>(vn);
     ss << "0x" << std::hex << ptr_as_int << "\t";
     vn->printRaw(ss);
@@ -290,10 +289,9 @@ void Inspector::auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, 
 void Inspector::auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss)
 {
   ss << "auditMultiequals:" << std::endl;
-  ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
-  for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+  std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};
+  for (auto [seqNum,op] : viewOps)
   {
-    const ghidra::PcodeOp* op = iter->second;
     ghidra::OpCode opcode = op->code();
     if (opcode == ghidra::CPUI_MULTIEQUAL)
     {

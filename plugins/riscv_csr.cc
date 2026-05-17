@@ -1,5 +1,7 @@
+#include <ranges>
 
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
@@ -29,10 +31,9 @@ void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
         ghidra::inspector->auditVarnodes(data, outFile);
         outFile.close();
     }
-    ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
-    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+    std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};
+    for (auto [seqNum,op] : viewOps)
     {
-        const ghidra::PcodeOp* op = iter->second;
         ghidra::OpCode opcode = op->code();
         if ((opcode == ghidra::CPUI_COPY) ||
             (opcode == ghidra::CPUI_MULTIEQUAL) ||
@@ -64,12 +65,11 @@ void ActionPluginPrepare::purgeCsrHeritage(ghidra::Funcdata& data)
     }
 
     // Now clean up any 'free' varnode inputs and replace them with indirect equivalents.
-    //logger->trace("Revised PcodeOps in function:");
-    //dumpPcodes(data, logger);
-    firstOp = data.beginOpAll();
-    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+    // Build a view of <SeqNum,PcodeOp*> pairs in this function, noting that we may have
+    // deleted some of these in the previous step
+    viewOps = std::ranges::subrange{data.beginOpAll(), data.endOpAll()};
+    for (auto [seqNum,op] : viewOps)
     {
-        const ghidra::PcodeOp* op = iter->second;
         if (op->isDead()) continue;
         for (int slot = 0; slot < op->numInput(); slot++)
         {
