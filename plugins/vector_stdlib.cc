@@ -15,10 +15,13 @@
 
 #include "spdlog/spdlog.h"
 
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
 #include "framework.hh"
 #include "riscv.hh"

@@ -1,8 +1,17 @@
 #ifndef RISCV_SLEIGH_HH_
 #define RISCV_SLEIGH_HH_
+
+#include <string>
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh"
+
 #include "riscv.hh"
 
 /**
+ * @file riscv_sleigh.hh
  * @brief Collect definitions and tests that depend on specifics of
  * this Architecture's SLEIGH definitions
  */

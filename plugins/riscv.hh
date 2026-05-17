@@ -22,6 +22,17 @@
 #include <fstream>
 
 #include "spdlog/spdlog.h"
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
 #include "riscv_csr.hh"
 #include "framework.hh"
 
@@ -29,7 +40,6 @@
  * @file riscv.hh
  * @brief Components available to RISCV-64 plugins
  */
-
 namespace ghidra
 {
 static const int RETURN_NO_TRANSFORM = 0;

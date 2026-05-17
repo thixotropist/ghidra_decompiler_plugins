@@ -1,4 +1,16 @@
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+
+/**
+ * @file framework.cc
+ * Provide common extensions to the Ghidra decompiler framework.
+ */
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
 #include "framework.hh"
 #include "riscv_sleigh.hh"
 
@@ -358,7 +370,88 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
         pLogger->trace("Multiequal audit results:\n{0:s}", ss.str());
         ss.str("");
     }
+    bool fixupsNeeded = fixup(ss);
+    if (fixupsNeeded)
+    {
+        pLogger->warn("Fixups required - some transform did not clean up after itself: {0:s}",
+            ss.str());
+        ss.str("");
+    }
     pLogger->trace("FunctionEditor::simplifyBlocks exits");
+}
+
+bool FunctionEditor::fixup(std::stringstream& ss)
+{
+    bool fixupsPerformed = false;
+    ghidra::PcodeOpTree::const_iterator firstOp = data.beginOpAll();
+    for (auto iter = firstOp; iter != data.endOpAll(); iter++)
+    {
+        const ghidra::PcodeOp* op = iter->second;
+        ghidra::OpCode opcode = op->code();
+        if (opcode == ghidra::CPUI_MULTIEQUAL)
+        {
+            const ghidra::BlockBasic* bl = op->getParent();
+            if (bl == nullptr) continue;
+            ghidra::uintb slots = op->numInput();
+            ghidra::uintb edgesIn = bl->sizeIn();
+            if(slots > edgesIn)
+            {
+                ss << "Low-level error likely with op: " << std::hex <<
+                op->getAddr().getOffset() << ":" << op->getTime() << std::dec <<std::endl;
+                ss << "\toutput varnode: ";
+                const ghidra::Varnode* vnOut = op->getOut();
+                vnOut->printRaw(ss);
+                ss << ";";
+                vnOut->printInfo(ss);
+                ss << std::endl;
+                for (int slot = 0; slot < slots; ++slot)
+                {
+                    const ghidra::Varnode* vnIn = op->getIn(slot);
+                    ss << "\tinput varnode in slot " << slot << ": ";
+                    vnIn->printRaw(ss);
+                    ss << ";";
+                    vnIn->printInfo(ss);
+                    ss << std::endl;
+                    if (vnOut == vnIn)
+                    {
+                        fixupsPerformed = true;
+                        ss << "Autocorrect: removing extraneous input" << std::endl;;
+                        ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
+                        ghidra::Funcdata& modifiableData = const_cast<ghidra::Funcdata&>(data);
+                        modifiableData.opRemoveInput(modifiableOp, slot);
+                        --slot;
+                        --slots;
+                    }
+                }
+            } else if (slots < edgesIn)
+            {
+                ss << "Slot/Edge count mismatch with op: " << std::hex <<
+                op->getAddr().getOffset() << ":" << op->getTime() << std::dec <<std::endl;
+            }
+            // now check for free CSR varnodes
+            // replace any free CSR input varnodes with indirect CSR varnodes
+            for (int slot = 0; slot < op->numInput(); ++slot)
+            {
+                const ghidra::Varnode *vn = op->getIn(slot);
+                if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace) &&
+                    vn->isFree())
+                {
+                    fixupsPerformed = true;
+                    ss << "Fixup found a free csr varnode at 0x" << std::hex <<
+                        op->getAddr().getOffset() << ":" << op->getTime() << std::endl;
+                    ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
+                    ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
+                    ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
+                    data.opUnsetInput(modifiableOp, slot);
+                    data.opSetInput(modifiableOp, newVn, slot);
+                    ss << "Revised OpcodeOp is now: ";
+                    op->printRaw(ss);
+                    ss << std::dec << std::endl;
+                }
+            }
+        }
+    }
+    return fixupsPerformed;
 }
 
 void FunctionEditor::replaceBlock(const BlockGraph* graph, FlowBlock* oldBlock, FlowBlock* newBlock)

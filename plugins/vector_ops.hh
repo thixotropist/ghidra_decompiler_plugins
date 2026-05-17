@@ -1,3 +1,24 @@
+#ifndef VECTOR_OPS_HH
+#define VECTOR_OPS_HH
+
+#include <set>
+#include <vector>
+
+#include "spdlog/spdlog.h"
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
+#include "inspector.hh"
+#include "framework.hh"
+#include "riscv.hh"
+
 /**
  * @file vector_ops.hh
  * @author thixotropist
@@ -5,18 +26,6 @@
  * @date 2025-10-07
  * @copyright Copyright (c) 2025
  */
-
-#ifndef VECTOR_OPS_HH
-#define VECTOR_OPS_HH
-
-#include <set>
-#include <vector>
-#include "spdlog/spdlog.h"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
-#include "inspector.hh"
-#include "framework.hh"
-#include "riscv.hh"
 
 namespace riscv_vector{
 

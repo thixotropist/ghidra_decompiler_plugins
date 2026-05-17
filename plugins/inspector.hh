@@ -4,15 +4,19 @@
 #include <string>
 #include <sstream>
 #include <set>
-#include <algorithm>
-#include <iterator>
 
 #include "spdlog/spdlog.h"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
 /**
  * @file inspector.hh
+ * @brief Components for inspecting Ghidra native objects
  */
 namespace ghidra{
 /**
@@ -82,8 +86,9 @@ class Inspector
      *        Capture some of those rules here to prevent low-level errors.
      * @param data The Funcdata context for this function
      * @param ss The stringstream to receive the audit
+     * @todo: Move the processor-dependent corrective code out of this inspector class
      */
-    static void auditMultiequals(ghidra::Funcdata& data, std::stringstream& ss);
+    static void auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss);
     /**
      * @brief Do we want to audit Varnode data structures for consistency?
      */
@@ -95,7 +100,7 @@ class Inspector
     /**
      * @brief Do we want to audit MULTIEQUALS and their correlation to input edges?
      */
-    static const bool audit_multiequals = true;
+    static const bool audit_multiequals = false;
   private:
   /**
    * @brief Audit the Funcdata BlockGraph to check for consistency errors

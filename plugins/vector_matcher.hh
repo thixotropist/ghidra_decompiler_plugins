@@ -1,18 +1,22 @@
 #ifndef VECTOR_MATCHER_HH_
 #define VECTOR_MATCHER_HH_
 
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
 #include "inspector.hh"
 #include "vector_ops.hh"
-  /**
-   * @file vector_matcher.hh
-   */
+/**
+ * @file vector_matcher.hh
+ */
 namespace riscv_vector
 {
-
 /**
  * @brief VectorMatcher collects features extracted from sequences of vector instructions,
  * where those features can be later used to match against common patterns.

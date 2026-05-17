@@ -1,6 +1,10 @@
 #ifndef RISCV_CSR_HH
 #define RISCV_CSR_HH
+
 #include "spdlog/spdlog.h"
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
 #include "framework.hh"
 /**
  * @file riscv_csr.hh
@@ -17,7 +21,9 @@
 namespace riscv_vector
 {
 
-///@brief Actions to perform on the entire Function before running rules in the oppool1 pool
+/**
+ * @brief Actions to perform on the entire Function before running rules in the oppool1 pool
+ */
 class ActionPluginPrepare
 {
   public:

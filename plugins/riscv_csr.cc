@@ -1,3 +1,10 @@
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
+
 #include "inspector.hh"
 #include "riscv_csr.hh"
 #include "riscv_sleigh.hh"

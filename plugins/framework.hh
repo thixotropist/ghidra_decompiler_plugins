@@ -1,23 +1,25 @@
 #ifndef FRAMEWORK_HH_
 #define FRAMEWORK_HH_
+
 #include <string>
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
 #include "inspector.hh"
 #include "riscv.hh"
 #include "riscv_csr.hh"
 
-namespace ghidra{
-
 /**
  * @file framework.hh
  * @brief Components available for all plugins
  */
-
+namespace ghidra{
 extern std::shared_ptr<spdlog::logger> pLogger; ///< SPDLOG plugin logger
 
 /**
@@ -112,6 +114,12 @@ class FunctionEditor
      * @param relatedBlocks prolog and other blocks to be purged of unused ops
      */
     void simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock, std::vector<FlowBlock*>* relatedBlocks);
+    /**
+     * @brief Scan the entire function for - and correct if possible - any remaining errors left by less-than-perfect transforms
+     * @param ss The stringstream to collect notifications of any changes
+     * @returns True if any fixups were necessary
+     */
+    bool fixup(std::stringstream& ss);
   private:
     Funcdata& data;       ///<@ Ghidra function data
     std::stringstream ss; ///<@ string buffer to collect printRaw output

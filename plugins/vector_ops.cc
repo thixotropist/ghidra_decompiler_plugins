@@ -7,6 +7,16 @@
  * @copyright Copyright (c) 2025
  */
 #include <stack>
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+
 #include "framework.hh"
 #include "vector_ops.hh"
 #include "riscv.hh"
@@ -438,7 +448,7 @@ bool VectorLoop::isDefinedInLoop(const ghidra::Varnode* vn)
         {
             std::stringstream ss;
             vn->getAddr().printRaw(ss);
-            ghidra::pLogger->warn("\tVarnode {0:s} references unknown control and status register , definition in loop unknown",
+            ghidra::pLogger->info("\tVarnode {0:s} references unknown control and status register , definition in loop unknown",
                 ss.str());
             return false;
         }
@@ -734,7 +744,7 @@ void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
             {
                 otherScalarOps.push_back(new ScalarOperation(OperationType::unknown, op));
                 int opcode = op->code();
-                ghidra::pLogger->warn("    Unexpected Ghidra op found in analysis: {0:d}", opcode);
+                ghidra::pLogger->info("    Unexpected Ghidra op found in analysis: {0:d}", opcode);
             }
         }
     }
