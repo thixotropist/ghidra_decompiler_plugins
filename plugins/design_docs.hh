@@ -3,7 +3,7 @@
  * @page design_notes Design Notes
  * @section exemplar_pcode PCode Exemplars
  *
- * We will use two relatively simple examples for this design study - vectorizations
+ * We will use two relatively simple examples for this design study - RISC-V stdlib vectorizations
  * of `memcpy` and `strlen`.
  *
  * @subsection memcpy_exemplar memcpy
@@ -60,7 +60,7 @@ Basic Block 4 0x000209ec-0x000209f2
  * vector transformation?
  *
  * This design study will start with the `vector_memcpy` patterns and code and then:
- * - itemize features common to `vector_strlen`
+ * - itemize features in common with `vector_strlen`
  * - implement common supporting code in or near VectorLoop::collect_common_elements
  * - remove ad hoc code from VectorMatcher::transformMemcpy and
  *   VectorMatcher::collect_loop_registers
@@ -74,7 +74,6 @@ Basic Block 4 0x000209ec-0x000209f2
  * - one or more `PHI` or `MULTIEQUAL` codes showing the dependency chain of Varnodes.  These codes
  *   define the interface between registers that change within the loop and the code locations
  *   that set the initial values of those registers upstream of the loop.
- *   and registers.
  * - one or more vector load instructions.
  * - vector operations to transform the loaded values.  These may apply to either source operands
  *   or pointer arrays.
@@ -93,7 +92,7 @@ Basic Block 4 0x000209ec-0x000209f2
  * features and code.  There exists some supporting but unused code already, so adapt that
  * and discard the unneeded support for striped vector operands.
  *
- * The best test case for this exercise is `test/whisper_sample_1.ghidra`, as it contains one
+ * The simplest test case for this exercise is `test/whisper_sample_1.ghidra`, as it contains one
  * sample each of `vector_memcpy` and `vector_strlen`.
 
 * There are two VectorOperands in use within @ref memcpy_exemplar
@@ -137,4 +136,17 @@ Basic Block 4 0x000209ec-0x000209f2
 *   registers that need to be deleted.
 *
 * @subsection loop_transforms Loop Transforms
+*
+* Vector loop features are next matched against common patterns, then a single potential transform
+* is selected.  The following steps include:
+* - use the extracted common features to locate prolog, epilog, result registers, and temporary registers.
+* - if any temporary registers have been marked as parameters to subsequent function calls, abort the transform.
+*   The transform may be reattempted if that subsequent function call signature is trimmed to remove the assumed
+*   dependency.\
+* - resolve the linkages between loop-internal temporary registers and their external registers.  This
+*   usually gives the parameters to the transform code.
+* - delete all PcodeOps within the loop, replacing them with the transform `vector_*` function call.
+* - edit the function's BlockGraph structure to remove the enclosing `do ... while` control block.
+* - make a cleanup pass through the prolog, loop block, and epilog block to remove any PCodeOps with
+*   unused output Varnodes.
 */

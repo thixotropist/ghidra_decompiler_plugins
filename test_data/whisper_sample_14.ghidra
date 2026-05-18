@@ -1,0 +1,7 @@
+restore test_data/whisper_sample_14_save.xml
+map function 0x31430 drwav_buffer_reader_read_u16
+parse line extern void drwav_buffer_reader_read_u16(void *param_1,ushort *param_2);
+load function drwav_buffer_reader_read_u16
+decompile drwav_buffer_reader_read_u16
+print C
+print raw

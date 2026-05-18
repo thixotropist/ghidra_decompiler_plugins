@@ -1,0 +1,13 @@
+restore test_data/whisper_sample_19_save.xml
+map function 0x32aee drwav__metadata_process_chunk
+parse line extern ulong drwav__metadata_process_chunk(void *this, long that);
+map function 0x32a04 drwav__metadata_process_unknown_chunk
+parse line extern ulong drwav__metadata_process_unknown_chunk(void* param_1,void* *param_2,long param_3,long param_4);
+map function 0x31430 drwav_buffer_read_u16
+parse line extern void drwav_buffer_read_u16(void* param_1, ushort* param_2);
+map function 0x33c3c drwav_frourcc_equal
+parse line extern bool drwav_frourcc_equal(char*, char*);
+load function drwav__metadata_process_chunk
+decompile drwav__metadata_process_chunk
+print C
+print raw

@@ -1,19 +1,29 @@
 #ifndef INSPECTOR_HH_
 #define INSPECTOR_HH_
 
+#include <string>
+#include <sstream>
+#include <set>
+
 #include "spdlog/spdlog.h"
+
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
 /**
  * @file inspector.hh
+ * @brief Components for inspecting Ghidra native objects
  */
 namespace ghidra{
-
 /**
  * @brief Inspect Ghidra objects relevant to graph editing
  */
 class Inspector
 {
-  std::shared_ptr<spdlog::logger> logger;     ///< the SPDLOG logger to use for output
   public:
     /**
      * @brief Construct a new Inspector object
@@ -21,12 +31,86 @@ class Inspector
      */
     explicit Inspector(std::shared_ptr<spdlog::logger> myLogger);
     /**
-     * @brief Inspect a single FlowBlock
-     *
+     * @brief Log a single FlowBlock
      * @param label a descriptive string for the FlowBlock's context
      * @param fb the FlowBlock to be logged
      */
-    void log(const string label, const FlowBlock* fb); /// log fb details
+    void log(const std::string& label, const FlowBlock* fb);
+    /**
+     * @brief Log a single PcodeOp
+     * @param label a descriptive string for the PcodeOp's context
+     * @param op the Opcode to be logged
+     */
+    void log(const std::string& label, const PcodeOp* op);
+    /**
+     * @brief Log a single Varnode
+     * @param label a descriptive string for the Varnode's context
+     * @param vn the Varnode to be logged
+     */
+    void log(const std::string& label, const Varnode* vn);
+    /**
+     * @brief Log a single Varnode with slot identifier
+     * @param label a descriptive string for the Varnode's context
+     * @param vn the Varnode to be logged
+     * @param slot the slot in which this Varnode was found
+     */
+    void log(const std::string& label, const Varnode* vn, int slot);
+    /**
+     * @brief Collect dependency set of a given Varnode
+     * @details Collect dependent varnodes found within a given space
+     * @param result The set of dependent Varnodes found
+     * @param root The Varnode to start the dependent search
+     * @param stopSet Varnodes we don't want to descend from
+     * @param maxDepth The maximum length of any dependency chain
+     */
+    static void collectDependencies(std::set<Varnode*>& result, const Varnode* root,
+      const std::set<Varnode*>& stopSet, int maxDepth);
+    /**
+     * @brief Log the current ActionDatabase
+     */
+    void logActions();
+    /**
+     * @brief Audit the Funcdata Varnodes to check for consistency errors
+     * @param data The Funcdata context for this function
+     * @param ss The stringstream to receive the audit
+     */
+    static void auditVarnodes(const ghidra::Funcdata& data, std::ofstream& ss);
+    /**
+     * @brief Audit the Funcdata BlockGraph to check for consistency errors
+     * @param data The Funcdata context for this function
+     * @param ss The stringstream to receive the audit
+     */
+    static void auditBlockGraph(const ghidra::Funcdata& data, std::ofstream& ss);
+    /**
+     * @brief MULTIEQUAL PcodeOps have a complex relationship with a function's Blocks.
+     *        Capture some of those rules here to prevent low-level errors.
+     * @param data The Funcdata context for this function
+     * @param ss The stringstream to receive the audit
+     * @todo: Move the processor-dependent corrective code out of this inspector class
+     */
+    static void auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss);
+    /**
+     * @brief Do we want to audit Varnode data structures for consistency?
+     */
+    static const bool audit_varnodes = false;
+    /**
+     * @brief Do we want to audit BlockGraph data structures for consistency?
+     */
+    static const bool audit_block_graph = false;
+    /**
+     * @brief Do we want to audit MULTIEQUALS and their correlation to input edges?
+     */
+    static const bool audit_multiequals = false;
+  private:
+  /**
+   * @brief Audit the Funcdata BlockGraph to check for consistency errors
+   * @param data The Funcdata context for this function
+   * @param ss The stringstream to receive the audit
+   * @param level indentation level to use
+   */
+    static void auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, int level);
+    std::shared_ptr<spdlog::logger> logger;     ///< the SPDLOG logger to use for output
+    bool logBlockStructure = true;             ///< if true, log full blocks during any blockgraph edits
 };
 }
 #endif /* INSPECTOR_HH_ */

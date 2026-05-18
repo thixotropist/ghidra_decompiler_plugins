@@ -1,5 +1,6 @@
 ---
 title: Walkthrough Examples
+description: An early version of the plugin recognizes the RISC-V inline vectorization of `memcpy`
 weight: 50
 ---
 

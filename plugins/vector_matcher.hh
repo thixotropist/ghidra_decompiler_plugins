@@ -1,18 +1,22 @@
 #ifndef VECTOR_MATCHER_HH_
 #define VECTOR_MATCHER_HH_
 
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
 #include "inspector.hh"
 #include "vector_ops.hh"
-  /**
-   * @file vector_matcher.hh
-   */
+/**
+ * @file vector_matcher.hh
+ */
 namespace riscv_vector
 {
-
 /**
  * @brief VectorMatcher collects features extracted from sequences of vector instructions,
  * where those features can be later used to match against common patterns.
@@ -22,8 +26,8 @@ class VectorMatcher {
     VectorLoop loopModel;  ///< Model the function being matched
     const int TRANSFORM_COMPLETED = 1;   ///< Return code on a completed transform
     const int TRANSFORM_ROLLED_BACK = 0; ///< Return code if a transform was aborted
-    ghidra::Inspector inspector;     ///< Dump interior Ghidra objects to a logger
     ghidra::Funcdata& data;          ///< Function context data
+    ghidra::FunctionEditor functionEditor; ///< Tools to edit a function's structure
     ghidra::AddrSpace* codeSpace;    ///< The code address space containing the loop
     ghidra::Address nextInstructionAddress; ///< location at which we resume execution
     ghidra::BlockBasic* loopBlock;   ///< the parent block of the loop
@@ -55,43 +59,35 @@ class VectorMatcher {
      * @brief is this selection a simple memcpy?
      */
     bool isMemcpy();
-     /**
+    /**
      * @brief is this selection a simple strlen?
      */
     bool isStrlen();
+    /**
+     * @brief is this selection a simple strcmp?
+     */
+    bool isStrcmp();
     /**
      * @brief transform the selection into a vector_memcpy
      * @return int 1 if transform successful, 0 if no transform completed
      */
     int transformMemcpy();
-      /**
+    /**
      * @brief transform the selection into a vector_strlen
      * @return int 1 if transform successful, 0 if no transform completed
      */
     int transformStrlen();
+    /**
+     * @brief transform the selection into a vector_strcmp
+     * @return int 1 if transform successful, 0 if no transform completed
+     */
+    int transformStrcmp();
   private:
     /**
      * @brief Follow Phi nodes into the loop to identify the role of loop registers
      *
      */
     void collect_loop_registers();
-    /**
-     * @brief Trim the list of PcodeOps of any ops referencing the given result Varnode
-     *
-     * @param resultVarnode the result Varnode to be purged
-     * @param dependentOps a list of PcodeOps which might reference the result Varnode
-     */
-    void isolateResultsInEpilog(const ghidra::Varnode* resultVarnode, std::list<ghidra::PcodeOp *>& dependentOps);
-    /**
-     * @brief Remove Phi node dependencies on interior loop Varnodes
-     * @return True if successful, False if non-Phi node dependencies are found
-     */
-    bool removeExteriorDependencies();
-    /**
-     * @brief Remove any enclosing DoWhile block
-     * @param blk The BlockBasic possibly wrapped with an empty DoWhile
-     */
-    void removeDoWhileWrapperBlock(ghidra::BlockBasic* blk);
   };
 }
 #endif /* VECTOR_MATCHER_HH_ */

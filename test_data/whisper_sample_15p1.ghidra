@@ -1,0 +1,10 @@
+// datatest 15 patch 1 replaces three instructions with no-ops, allowing an early form of the RISC-V vector plugin
+// to complete.  This is part of a differential debugging effort and may not be useful as a regression test later.
+//
+restore test_data/whisper_sample_15p1_save.xml
+map function 0x37e30 get_next_arg
+parse line extern ulong* get_next_arg(void *param_1,void* param_2,void *param_3,char *param_4,void *param_5);
+load function get_next_arg
+decompile get_next_arg
+print C
+print raw

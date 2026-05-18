@@ -1,9 +1,10 @@
 ---
 title: Ghidra Patches
+description: Ghidra decompiler plugins need support within the decompiler, to load and debug user-supplied plugins.
 weight: 70
 ---
 
-Ghidra decompiler plugins need support within the decompiler.  This support is installed
+This support is installed
 via the `ghidra.pat` patch file in the top directory applied to a released Ghidra distribution.
 This patch file currently provides:
 

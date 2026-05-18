@@ -1,21 +1,25 @@
 #ifndef FRAMEWORK_HH_
 #define FRAMEWORK_HH_
+
 #include <string>
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
+#include "inspector.hh"
 #include "riscv.hh"
-
-namespace ghidra{
+#include "riscv_csr.hh"
 
 /**
  * @file framework.hh
  * @brief Components available for all plugins
  */
-
+namespace ghidra{
 extern std::shared_ptr<spdlog::logger> pLogger; ///< SPDLOG plugin logger
 
 /**
@@ -63,15 +67,27 @@ void getRegisterName(intb offset, std::string* regName);
 bool sameRegister(const Varnode* a, const Varnode* b);
 
 /**
- * @brief Methods to edit a Ghidra function's data
+ * @brief Methods to edit a Ghidra function's data, for instance to remove Do ... While wrappers.
  *
  */
 class FunctionEditor
 {
   public:
-    Funcdata& data; ///<@brief Ghidra function data
-    ///@brief Editor methods operating on a Ghidra Function data object
-    explicit FunctionEditor(Funcdata& dataParam) : data(dataParam) {};
+    ///@brief Constructor
+    explicit FunctionEditor(Funcdata& dataParam) :
+      data(dataParam),
+      trace(false),
+      info(false)
+      {
+        trace = ghidra::pLogger->should_log(spdlog::level::trace);
+        info = ghidra::pLogger->should_log(spdlog::level::info);
+      };
+    /**
+     * @brief remove a single PcodeOp with optional logging
+     * @param op PcodeOp to remove from the function
+     * @param message Optional String to insert into the deletion message
+     */
+    void deleteOp(PcodeOp* op, const std::string& message);
     /**
      * @brief Given a BlockBasic, remove any enclosing empty do...while wrapper
      *
@@ -90,11 +106,31 @@ class FunctionEditor
      * @brief Remove any PCodeOps for which the output Varnode has no descendents
      */
     void removeUnusedOps(FlowBlock* block);
+    /**
+     * @brief Remove specific and unused PcodeOps, then any empty do while wrappers
+     * @param opsToDelete PcodeOps to delete entirely
+     * @param loopBlock a block to absorb into its parent block
+     * @param epilogBlock an optional epilog block to be purged of unused ops
+     * @param relatedBlocks prolog and other blocks to be purged of unused ops
+     */
+    void simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock, std::vector<FlowBlock*>* relatedBlocks);
+    /**
+     * @brief Scan the entire function for - and correct if possible - any remaining errors left by less-than-perfect transforms
+     * @param ss The stringstream to collect notifications of any changes
+     * @returns True if any fixups were necessary
+     */
+    bool fixup(std::stringstream& ss);
+  private:
+    Funcdata& data;       ///<@ Ghidra function data
+    std::stringstream ss; ///<@ string buffer to collect printRaw output
+    std::set<PcodeOp*> descendentsToReview; ///<@ descendents of deleted ops, possibly containing free varnode references
+    bool trace;           ///<@ true if we are logging at trace level
+    bool info;            ///<@ true if we are logging at trace level
+    bool logBlockStructure = true;             ///< if true, log full blocks during any blockgraph edits
 };
 
 /**
  * @brief Collect methods for editing a BlockGraph
- *
  */
 class BlockGraphEditor {
   public:

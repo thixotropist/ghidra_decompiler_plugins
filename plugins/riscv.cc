@@ -6,15 +6,25 @@
 #include "spdlog/sinks/basic_file_sink.h"
 
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/capability.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/sleigh_arch.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/block.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/action.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/ruleaction.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 #include "riscv.hh"
+#include "inspector.hh"
 #include "rule_vector_transform.hh"
+#include "riscv_csr.hh"
+#include "riscv_sleigh.hh"
 #include "vector_ops.hh"
 
 static const bool DO_SURVEY = false;  ///< survey the loaded architecture
@@ -80,13 +90,18 @@ const RiscvUserPcode* RiscvUserPcode::getUserPcode(const ghidra::PcodeOp& op)
 std::map<int, riscv_vector::RiscvUserPcode*> riscvPcodeMap;      /// lookup a user pcode given Ghidra's sleigh index
 std::map<std::string, ghidra::uintb> riscvNameToGhidraId;
 std::ofstream reportFile; /// A file holding summary data for each possible vector stanza
+
 }
 namespace ghidra
 {
-Architecture* arch;        /// The Ghidra architecture object for this program
-AddrSpace* registerAddrSpace; /// The address space holding RISCV registers
-AddrSpace* csRegisterAddrSpace; /// The address space holding RISCV control and status registers
-std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plugin
+Architecture* arch;        ///< The Ghidra architecture object for this program
+AddrSpace* registerAddrSpace; ///< The address space holding RISCV registers
+AddrSpace* uniqueAddrSpace; ///< The address space holding internal temporaries
+AddrSpace* ramAddrSpace; ///< The address space for static RAM variables
+AddrSpace* stackAddrSpace; ///< The address space for stack variables
+std::shared_ptr<spdlog::logger> pLogger; ///< An SPDLOG logger usable by this plugin
+std::shared_ptr<Inspector> inspector; ///< Inspector collects probes into Ghidra decompiler internals
+
 /**
  * @brief Initialize a sample plugin after ghidra::Architecture::init is executed.
  * @details The binary program should be loaded with no analysis yet performed.
@@ -95,10 +110,15 @@ std::shared_ptr<spdlog::logger> pLogger; /// An SPDLOG logger usable by this plu
  */
 extern "C" int plugin_init(void *context)
 {
+    // prepare a logger to handle processor-specific Rules
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::warn);
+    pLogger->set_level(spdlog::level::trace);
+    pLogger->info("Logging system initialized");
+    inspector = std::make_shared<Inspector>(pLogger);
+    // log levels are trace, debug, info, warn, error and critical.
+    pLogger->info("Ghidra inspector initialized");
     std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
     riscv_vector::reportFile.open(summariesFilename);
     riscv_vector::reportFile << "RISC-V Summary Report" << std::endl;
@@ -108,7 +128,9 @@ extern "C" int plugin_init(void *context)
         riscv_vector::TRANSFORM_LIMIT_LOOPS, riscv_vector::TRANSFORM_LIMIT_NONLOOPS);
     arch = reinterpret_cast<Architecture*>(context);
     registerAddrSpace = arch->getSpaceByName("register");
-    csRegisterAddrSpace = arch->getSpaceByName("csreg");
+    uniqueAddrSpace = arch->getSpaceByName("unique");
+    ramAddrSpace = arch->getSpaceByName("ram");
+    stackAddrSpace = arch->getSpaceByName("stack");
     pLogger->info("Plugin framework initialized");
     // The pcode index identifies the target of a CALLOTHER
     for (int index=0; index<=MAX_USER_PCODES; index++) {
@@ -118,6 +140,7 @@ extern "C" int plugin_init(void *context)
         riscv_vector::riscvNameToGhidraId.insert(std::make_pair(op->getName(), index));
     }
     pLogger->trace("Found {0} user pcode ops during plugin_init", riscv_vector::riscvPcodeMap.size());
+
     // handle any static initializers
     riscv_vector::VectorLoop::static_init();
     pLogger->info("Plugin RISC-V Vector support initialized");
@@ -129,12 +152,25 @@ extern "C" int plugin_init(void *context)
  */
 extern "C" int plugin_getrules(std::vector<Rule*>& rules)
 {
-    pLogger->trace("Adding a new Rule to pluginrules");
+    bool trace = pLogger->should_log(spdlog::level::trace);
+    pLogger->info("Inspecting sleigh-dependencies");
+    pLogger->flush();
+    // load definitions specific to a given SLEIGH definition file
+    ghidra::riscv_sleigh_init(arch);
+    if (trace)
+    {
+        std::stringstream ss;
+        ghidra::riscv_sleigh_inspect(arch, ss);
+        pLogger->trace("{0:s}", ss.str());
+    }
+    pLogger->trace("Adding a new Rules to pluginrules");
+    rules.push_back(new riscv_vector::RuleCsrRemoveHeritage("pluginrules"));
     rules.push_back(new riscv_vector::RuleVectorTransform("pluginrules"));
     pLogger->flush();
     return 1;
 }
 
+static bool runSurvey = true;
 /**
  * @brief register any new builtins
  * @details access from UserOpManage::registerBuiltin
@@ -145,36 +181,51 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
     pLogger->trace("Entering plugin_registerBuiltin with id=0x{0:x}", id);
     pLogger->trace("Creating a new DatatypeUserOp");
     int4 ptrSize = glb->types->getSizeOfPointer();
-    int4 wordSize = glb->getDefaultDataSpace()->getAddrSize();
+    int4 wordSize = ptrSize;
     // define some common parameter types
     Datatype *vType = glb->types->getTypeVoid();
     Datatype *charType = glb->types->getTypeChar(1);
     Datatype *ptrType = glb->types->getTypePointer(ptrSize, vType, wordSize);
     Datatype *uintType = glb->types->getBase(wordSize, TYPE_UINT);
+    Datatype *intType = glb->types->getBase(wordSize, TYPE_INT);
     Datatype *charPtrType = glb->types->getTypePointer(ptrSize, charType, wordSize);
     switch(id)
     {
     case riscv_vector::VECTOR_MEMCPY:
     {
         res = new DatatypeUserOp("vector_memcpy", glb, riscv_vector::VECTOR_MEMCPY, vType, ptrType, ptrType, uintType);
-        pLogger->trace("Creation complete");
         break;
     }
     case riscv_vector::VECTOR_MEMSET:
     {
         res = new DatatypeUserOp("vector_memset", glb, riscv_vector::VECTOR_MEMSET, vType, ptrType, uintType, uintType);
-        pLogger->trace("Creation complete");
         break;
     }
     case riscv_vector::VECTOR_STRLEN:
     {
         res = new DatatypeUserOp("vector_strlen", glb, riscv_vector::VECTOR_STRLEN, uintType, charPtrType);
-        pLogger->trace("Creation complete");
+        break;
+    }
+    case riscv_vector::VECTOR_STRCMP:
+    {
+        res = new DatatypeUserOp("vector_strcmp", glb, riscv_vector::VECTOR_STRCMP, intType, charPtrType, charPtrType);
+        break;
+    }
+    case riscv_vector::VECTOR_STRNCMP:
+    {
+        res = new DatatypeUserOp("vector_strncmp", glb, riscv_vector::VECTOR_STRNCMP, intType, charPtrType, charPtrType, uintType);
         break;
     }
     default:
-        pLogger->warn("Unrecognized new DatatypeUserOp");
+        pLogger->warn("Unrecognized new DatatypeUserOp: 0x{0:x}", id);
         res = nullptr;
+    }
+    // Optionally run some survey code exactly once, after Ghidra has initialized all of its
+    // internals.
+    if (riscv_vector::SURVEY_ACTION_DATABASE && runSurvey)
+    {
+        inspector->logActions();
+        runSurvey = false;
     }
     pLogger->flush();
     return res;

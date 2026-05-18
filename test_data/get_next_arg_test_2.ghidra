@@ -1,0 +1,9 @@
+restore test_data/get_next_arg_test_2_save.xml
+map function 0x100000 get_next_arg_test_2
+parse line extern ulong* get_next_arg_test_2(int *param_1,int param_2,char** param_3,void *param_4,void *param_5);
+map function 0x100118 dummy_new
+parse line extern ulong* dummy_new(ulong size);
+load function get_next_arg_test_2
+decompile get_next_arg_test_2
+print C
+print raw

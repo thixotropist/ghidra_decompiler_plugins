@@ -1,0 +1,7 @@
+restore test_data/whisper_sample_7_save.xml
+map function 0x97772 quantize_q4_0
+parse line extern long quantize_q4_0(long param_1,long param_2,long param_3,long param_4,long param_5);
+load function quantize_q4_0
+decompile quantize_q4_0
+print C
+print raw

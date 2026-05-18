@@ -1,0 +1,1141 @@
+ [info] Logging system initialized
+ [trace] Ghidra Inspector initialized
+ [info] Ghidra inspector initialized
+ [info] Maximum number of vector transforms:	loop: 0x7fffffff, non-loop: 0x7fffffff)
+ [info] Plugin framework initialized
+ [trace] Found 1277 user pcode ops during plugin_init
+ [trace] Adding VectorLoop instruction handlers to opHandlers map
+ [info] Plugin RISC-V Vector support initialized
+ [info] Inspecting sleigh-dependencies
+ [info] Attempting arch->getSpaceByName("csreg")
+ [trace] Identified vl register offset as 0x6100
+ [trace] csRegisterAddrSpace index is 5
+ [trace] Inspecting SLEIGH objects for this architecture
+Standard and SLA-specific Address spaces by index:
+	0 : const
+	1 : OTHER
+	2 : unique
+	3 : ram
+	4 : register
+	5 : csreg
+	6 : fspec
+	7 : iop
+	8 : join
+	9 : stack
+
+ [trace] Adding a new Rules to pluginrules
+ [trace] Prepared a new RuleCsrRemoveHeritage for Action database
+ [trace] Prepared a new RuleVectorTransform for Action database
+ [info] Initializing ActionPluginPrepare
+ [trace] 	0x10004c: [61] c0x0c20(0x0010004c:153) = c0x0c20(i) [] i0x0010004c:3a(free)
+ [info] 		 ↑↑↑ Removing this opcode
+ [trace] 	0x10005c: [61] c0x0c20(0x0010005c:154) = c0x0c20(free) [] i0x0010005c:45(free)
+ [info] 		 ↑↑↑ Removing this opcode
+ [trace] 	0x100062: [61] t1(0x00100062:f3) = [create] i0x00100062:49(free)
+ [trace] 	0x100062: [61] a1(0x00100062:102) = [create] i0x00100062:49(free)
+ [trace] 	0x100062: [61] a6(0x00100062:123) = [create] i0x00100062:49(free)
+ [trace] 	0x100062: [61] c0x0c20(0x00100062:155) = c0x0c20(free) [] i0x00100062:49(free)
+ [info] 		 ↑↑↑ Removing this opcode
+ [trace] 	0x100066: [60] t1(0x00100066:f6) = a0(i) ? t1(0x00100062:f3)
+ [trace] 	0x100066: [60] a1(0x00100066:103) = a1(0x00100000:c1) ? a1(0x00100062:102)
+ [trace] 	0x100066: [60] a6(0x00100066:127) = a6(0x0010001c:1a) ? a6(0x00100062:123)
+ [trace] 	0x100066: [60] a0:4(0x00100066:13d) = u0x0001f300:4(0x00100010:11) ? a0:4(0x00100062:49)
+ [trace] 	0x100066: [60] c0x0c20(0x00100066:158) = c0x0c20(i) ? c0x0c20(free)
+ [info] 		 ↑↑↑ Removing this opcode
+ [trace] 	0x100070: [1] a4(0x00100070:53) = #0x0
+ [trace] 	0x100074: [60] a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(free)
+ [trace] 	0x100074: [60] a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+ [trace] 	0x1000a2: [60] a0(0x001000a2:fb) = a0(0x00100068:177) ? a0(0x001000f4:89)
+ [trace] 	0x1000b0: [1] a0(0x001000b0:78) = t1(0x00100066:f6)
+ [trace] 	0x1000b4: [1] c0x0c20(0x001000b4:156) = c0x0c20(free)
+ [info] 		 ↑↑↑ Removing this opcode
+ [trace] 	0x1000e0: [60] a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+ [trace] 	0x1000e0: [60] a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x00100090:60) ? a5(0x00100090:60)
+ [trace] 	0x1000e0: [60] a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+ [trace] 	0x100110: [1] a0(0x00100110:9f) = t1(0x00100066:f6)
+ [trace] 	0x100114: [1] c0x0c20(0x00100114:157) = c0x0c20(free)
+ [info] 		 ↑↑↑ Removing this opcode
+ [info] 		  Examining slot 1 of PcodeOp: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(free)
+ [info] 			Flags are 0x128c000
+ [info] 		  Re-examining slot 1 of PcodeOp: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+ [info] 			Flags are 0x128c000
+ [trace] Entering applyOp with a recognized vset* user pcode op at 0x100074
+ [info] Analyzing potential vector loop stanza at 0x100074 in pid:tid 917225:917225
+ [trace]   Iterating over vset phi pcodes
+ [trace]   Analysis of Phi node: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+ [trace] 	Analysis of Varnode, slot 0: a4(0x00100070:53)
+ [trace] 	Checking for in-loop definition: a4(0x00100070:53)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Analysis of Varnode, slot 1: c0x0c20(i)
+ [trace] 	This Varnode is AddrTied
+ [trace] 	Checking for in-loop definition: c0x0c20(i)
+ [trace] 	CSR offset is 0x6100
+ [trace] 	Examining Varnode: c0x0c20(i)
+ [trace] 	Varnode references vector register vl and is likely modified in loop: c0x0c20(i)
+ [trace] 	Adding to phiNodesAffectedByLoop: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i) at 0x100074
+ [trace]   Analysis of Phi node: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+ [trace] 	Analysis of Varnode, slot 0: a6(0x00100066:127)
+ [trace] 	Checking for in-loop definition: a6(0x00100066:127)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Analysis of Varnode, slot 1: a5(0x00100078:56)
+ [trace] 	Checking for in-loop definition: a5(0x00100078:56)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Adding to phiNodesAffectedByLoop: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56) at 0x100074
+ [trace]   Found 2 Phi nodes affected by the loop
+ [trace] 	Checking for in-loop definition: a4(0x00100070:53)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: c0x0c20(i)
+ [trace] 	CSR offset is 0x6100
+ [trace] 	Examining Varnode: c0x0c20(i)
+ [trace] 	Varnode references vector register vl and is likely modified in loop: c0x0c20(i)
+ [trace] 	Checking for in-loop definition: a6(0x00100066:127)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a5(0x00100078:56)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] Phi Node for register a4:
+ [trace] 	a4(0x00100070:53), :
+ [trace] Phi Node for register a5:
+ [trace] 	a6(0x00100066:127), :
+ [trace] Beginning loop pcode analysis
+ [trace]   PcodeOp at 0x100074: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+ [trace]   PcodeOp at 0x100074: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+ [trace]   PcodeOp at 0x100074: vsetvli_e8m1tama(#0x0)
+ [trace]   PcodeOp at 0x100078: a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1)
+ [trace]   PcodeOp at 0x10007a: v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56))
+ [trace]   PcodeOp at 0x10007e: v1(0x0010007e:5a) = vmseq_vi(v1(0x0010007a:58),#0x0)
+ [trace]   PcodeOp at 0x100086: a2(0x00100086:5c) = vfirst_m(v1(0x0010007e:5a))
+ [trace]   PcodeOp at 0x10008a: u0x00004100:1(0x0010008a:5d) = a2(0x00100086:5c) < #0x0
+ [trace]   PcodeOp at 0x10008a: goto Block_4:0x00100074 if (u0x00004100:1(0x0010008a:5d) != 0) else Block_5:0x0010008e
+ [trace] Comparison target = a2(0x00100086:5c) = vfirst_m(v1(0x0010007e:5a))
+	Termination flags = 0x4
+ [trace] Searching for Phi node referencing a5(0x00100078:56)
+ [info] LastOp: goto Block_4:0x00100074 if (u0x00004100:1(0x0010008a:5d) != 0) else Block_5:0x0010008e
+ [info] Possible Epilog Pcode: u0x10000023(0x00100090:13e) = a6(0x00100066:127) * #0xffffffffffffffff
+ [info] Possible Epilog Pcode: u0x10000045(0x00100090:178) = u0x10000023(0x00100090:13e) + a2(0x00100086:5c)
+ [info] Possible Epilog Pcode: a5(0x00100090:60) = a5(0x00100078:56) + u0x10000045(0x00100090:178)(*#0x1)
+ [info] Possible Epilog Pcode: u0x00004200:1(0x00100096:63) = #0xf < a5(0x00100090:60)
+ [info] Possible Epilog Pcode: goto Block_6:0x001000b6 if (u0x00004200:1(0x00100096:63) != 0) else Block_7:0x0010009a
+ [info] Possible Epilog Pcode: u0x00003e00:1(0x0010009c:67) = a5(0x00100090:60) == #0x1
+ [trace] Examining context of: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+ [info] 	Tracing loop dependencies for register result a4 with register offset 0x2070
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a4(0x00100074:118)
+ [trace] 		Descendent op: a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1)
+ [trace] Examining context of: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+ [info] 	Tracing loop dependencies for register result a5 with register offset 0x2078
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a5(0x00100074:11f)
+ [trace] 		Descendent op: a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1)
+ [trace] Examining context of: a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1)
+ [info] 	Tracing loop dependencies for register result a5 with register offset 0x2078
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a5(0x00100078:56)
+ [trace] 		Descendent op: v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56))
+ [trace] 		Descendent op: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+ [trace] 		Descendent op: a5(0x00100090:60) = a5(0x00100078:56) + u0x10000045(0x00100090:178)(*#0x1)
+ [trace] Examining context of: v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56))
+ [info] 	Tracing loop dependencies for register result v1 with register offset 0x4020
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: v1(0x0010007a:58)
+ [trace] 		Descendent op: v1(0x0010007e:5a) = vmseq_vi(v1(0x0010007a:58),#0x0)
+ [trace] Examining context of: a5(0x00100090:60) = a5(0x00100078:56) + u0x10000045(0x00100090:178)(*#0x1)
+ [info] 	Tracing loop dependencies for register result a5 with register offset 0x2078
+ [trace]   Examining context of op outside the loop:
+ [trace]   exterior dependency to fix: a5(0x00100090:60)
+ [trace] Examining context of: v1(0x0010007e:5a) = vmseq_vi(v1(0x0010007a:58),#0x0)
+ [info] 	Tracing loop dependencies for register result v1 with register offset 0x4020
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: v1(0x0010007e:5a)
+ [trace] 		Descendent op: a2(0x00100086:5c) = vfirst_m(v1(0x0010007e:5a))
+ [trace] Examining context of: a2(0x00100086:5c) = vfirst_m(v1(0x0010007e:5a))
+ [info] 	Tracing loop dependencies for register result a2 with register offset 0x2060
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a2(0x00100086:5c)
+ [trace] 		Descendent op: u0x00004100:1(0x0010008a:5d) = a2(0x00100086:5c) < #0x0
+ [trace] 		Descendent op: u0x10000045(0x00100090:178) = u0x10000023(0x00100090:13e) + a2(0x00100086:5c)
+ [trace] Examining context of: u0x00004100:1(0x0010008a:5d) = a2(0x00100086:5c) < #0x0
+ [info] 	Tracing loop dependencies for register result v8 with register offset 0x4100
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: u0x00004100:1(0x0010008a:5d)
+ [trace] 		Descendent op: goto Block_4:0x00100074 if (u0x00004100:1(0x0010008a:5d) != 0) else Block_5:0x0010008e
+ [trace] Examining context of: u0x10000045(0x00100090:178) = u0x10000023(0x00100090:13e) + a2(0x00100086:5c)
+ [info] 	Tracing loop dependencies for non-register object with offset 0x10000045
+ [trace]   Examining context of op outside the loop:
+ [trace]   exterior dependency to fix: u0x10000045(0x00100090:178)
+ [trace] Examining context of: goto Block_4:0x00100074 if (u0x00004100:1(0x0010008a:5d) != 0) else Block_5:0x0010008e
+ [trace] 	Examining context of op inside the loop:
+ [trace] Checking PcodeOp for dependencies: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+ [trace] Searching for loop variables referring to register a4
+ [trace] Checking PcodeOp for dependencies: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+ [trace] Searching for loop variables referring to register a5
+ [info] Summary of traits:
+	Vector stanza begins at 0x100074
+	elementSize = 1
+	multiplier = 1
+	code size = 0x16
+ [info]
+	Number of loop vector opcodes = 4
+	Number of Phi nodes affected by loop = 2
+	Number of arithmetic ops = 3
+ [info]
+	Number of elements is constant = false
+	Number of elements is variable = true
+	Found unexpected Ghidra opcode = false
+	Found unexpected vector opcode = false
+	Found unexpected user pcodes = false
+ [info]
+	Found simple flow structure = true
+	Found vector registers match = true
+ [info]
+	Number of elements varnode identified = true
+	Number of elements per loop varnode identified = false
+	Vector load address varnode identified = false
+	Vector store address varnode identified = false
+ [info] VectorLoop info:
+	name = pending
+	type = unknown
+	Loop Flags = 0x10
+	Number of vector operations = 4
+	Number of scalar operations = 3
+ [info] 	Vector Operation type vector setup
+ [info] 	Vector Operation type load vector from memory, fail only first
+ [info] 	Vector Operation type vector comparison
+ [info] 	Vector Operation type vector comparison
+ [info] 	Scalar Operation type pointer_addition
+ [info] 	Scalar Operation type comparison
+ [info] 	Scalar Operation type conditional branch
+ [trace] Testing the vector stanza for a vector_memcpy match
+ [trace] Testing the vector stanza for a vector_strlen match
+ [trace] Inspect FlowBlock before strlen transform,  of type Basic
+ [trace] 	EdgesIn = 2; EdgesOut = 2; List Elements = 0; Flags = 0x0;
+ [trace] 	copyMap is:
+Basic Block 4 0x00100074-0x0010008a
+0x00100074:11f:	a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+0x00100074:118:	a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+0x00100074:55:	vsetvli_e8m1tama(#0x0)
+0x00100078:56:	a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1)
+0x0010007a:58:	v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56))
+0x0010007e:5a:	v1(0x0010007e:5a) = vmseq_vi(v1(0x0010007a:58),#0x0)
+0x00100086:5c:	a2(0x00100086:5c) = vfirst_m(v1(0x0010007e:5a))
+0x0010008a:5d:	u0x00004100:1(0x0010008a:5d) = a2(0x00100086:5c) < #0x0
+0x0010008a:5e:	goto Block_4:0x00100074 if (u0x00004100:1(0x0010008a:5d) != 0) else Block_5:0x0010008e
+
+ [trace] 	intersection set root1: v1(0x0010007a:58), a5(0x00100090:60), u0x00004200:1(0x00100096:63), u0x00003e00:1(0x0010009c:67), u0x0002f700:1(0x001000a0:69), a0(0x001000a6:6e), a4(0x001000e0:7d), v1(0x001000e4:7f), a3(0x001000e8:80), a6(0x001000ea:81), a0(0x001000f0:84), u0x0002f700:1(0x001000f2:85), a0(0x001000b6:a4), a0(0x001000e0:fc), a3(0x001000e0:10d), a5(0x00100074:11f), a6(0x001000e0:124), u0x1000002b(0x001000e8:13f),
+ [trace] 	intersection set root2: u0x00004100:1(0x0010008a:5d), a5(0x00100090:60), u0x00004200:1(0x00100096:63), u0x00003e00:1(0x0010009c:67), u0x0002f700:1(0x001000a0:69), a0(0x001000a6:6e), a4(0x001000e0:7d), v1(0x001000e4:7f), a3(0x001000e8:80), a6(0x001000ea:81), a0(0x001000f0:84), u0x0002f700:1(0x001000f2:85), a0(0x001000b6:a4), a0(0x001000e0:fc), a3(0x001000e0:10d), a6(0x001000e0:124), u0x1000002b(0x001000e8:13f), u0x10000045(0x00100090:178),
+ [trace] 	Checking for in-loop definition: a5(0x00100090:60)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: u0x00004200:1(0x00100096:63)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: u0x00003e00:1(0x0010009c:67)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: u0x0002f700:1(0x001000a0:69)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a0(0x001000a6:6e)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a4(0x001000e0:7d)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: v1(0x001000e4:7f)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a3(0x001000e8:80)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a6(0x001000ea:81)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a0(0x001000f0:84)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: u0x0002f700:1(0x001000f2:85)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a0(0x001000b6:a4)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a0(0x001000e0:fc)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a3(0x001000e0:10d)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a6(0x001000e0:124)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: u0x1000002b(0x001000e8:13f)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 		Potential result Varnodes: : a5(0x00100090:60),
+ [trace] 	Selecting as the result Varnode a5(0x00100090:60)
+ [trace] 	Selecting as the source Varnode a6(0x00100066:127)
+ [info] Checking for unresolved dependencies outside of 0x100074 to 0x100090
+ [trace] 	Checking Varnode:: a5(0x00100078:56)
+ [trace] 		Dependent PcodeOp: v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56)) at 0x10007a
+ [trace] 		Dependent PcodeOp: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56) at 0x100074
+ [trace] 		Dependent PcodeOp: a5(0x00100090:60) = a5(0x00100078:56) + u0x10000045(0x00100090:178)(*#0x1) at 0x100090
+ [trace] 	Checking Varnode:: a5(0x00100078:56)
+ [trace] 		Dependent PcodeOp: v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56)) at 0x10007a
+ [trace] 		Dependent PcodeOp: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56) at 0x100074
+ [trace] 		Dependent PcodeOp: a5(0x00100090:60) = a5(0x00100078:56) + u0x10000045(0x00100090:178)(*#0x1) at 0x100090
+ [trace] 	Checking Varnode:: a2(0x00100086:5c)
+ [trace] 		Dependent PcodeOp: u0x00004100:1(0x0010008a:5d) = a2(0x00100086:5c) < #0x0 at 0x10008a
+ [trace] 		Dependent PcodeOp: u0x10000045(0x00100090:178) = u0x10000023(0x00100090:13e) + a2(0x00100086:5c) at 0x100090
+ [trace] Entering plugin_registerBuiltin with id=0x11000002
+ [trace] Creating a new DatatypeUserOp
+ [trace] 	Inserting a new vector operation
+		a5(0x0010008a:17d) = syscall[#0x11000002:4](a6(0x00100066:127))
+ [trace] Inspect FlowBlock Vector loop block after inserting vector_strlen is of type Basic
+ [trace] 	EdgesIn = 2; EdgesOut = 2; List Elements = 0; Flags = 0x0;
+ [trace] 	copyMap is:
+Basic Block 4 0x00100074-0x0010008a
+0x00100074:11f:	a5(0x00100074:11f) = a6(0x00100066:127) ? a5(0x00100078:56)
+0x00100074:118:	a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i)
+0x00100074:55:	vsetvli_e8m1tama(#0x0)
+0x00100078:56:	a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1)
+0x0010007a:58:	v1(0x0010007a:58) = vle8ff_v(a5(0x00100078:56))
+0x0010007e:5a:	v1(0x0010007e:5a) = vmseq_vi(v1(0x0010007a:58),#0x0)
+0x00100086:5c:	a2(0x00100086:5c) = vfirst_m(v1(0x0010007e:5a))
+0x0010008a:5d:	u0x00004100:1(0x0010008a:5d) = a2(0x00100086:5c) < #0x0
+0x0010008a:17d:	a5(0x0010008a:17d) = vector_strlen(a6(0x00100066:127))
+0x0010008a:5e:	goto Block_4:0x00100074 if (u0x00004100:1(0x0010008a:5d) != 0) else Block_5:0x0010008e
+
+ [trace] Examining dependency at 0x100096:63
+ [trace] Replacing result varnode from slot 1 of op at 0x100096
+ [trace] Examining dependency at 0x10009c:67
+ [trace] Replacing result varnode from slot 0 of op at 0x10009c
+ [trace] Examining dependency at 0x1000a0:69
+ [trace] Replacing result varnode from slot 0 of op at 0x1000a0
+ [trace] Examining dependency at 0x1000da:c0
+ [trace] Replacing result varnode from slot 2 of op at 0x1000da
+ [trace] Examining dependency at 0x1000a2:6d
+ [trace] Replacing result varnode from slot 2 of op at 0x1000a2
+ [trace] Examining dependency at 0x1000a6:6e
+ [trace] Replacing result varnode from slot 1 of op at 0x1000a6
+ [trace] Examining dependency at 0x1000e0:10d
+ [trace] Replacing result varnode from slot 1 of op at 0x1000e0
+ [trace] Replacing result varnode from slot 2 of op at 0x1000e0
+ [trace] Examining dependency at 0x1000e0:10d
+ [trace] Examining dependency at 0x1000b6:a4
+ [trace] Replacing result varnode from slot 0 of op at 0x1000b6
+ [trace] Deleting from uniqueOpsToDelete:: vsetvli_e8m1tama(#0x0) at 0x100074
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x100074:55
+ [trace] Deleting from uniqueOpsToDelete:: a5(0x00100078:56) = a5(0x00100074:11f) + a4(0x00100074:118)(*#0x1) at 0x100078
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x100078:56
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x10007a:58
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x100074:11f
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x100090:60
+ [trace] Deleting from uniqueOpsToDelete:: v1(0x0010007a:58) = vle8ff_v(a5(free)) at 0x10007a
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x10007a:58
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x10007e:5a
+ [trace] Deleting from uniqueOpsToDelete:: v1(0x0010007e:5a) = vmseq_vi(v1(free),#0x0) at 0x10007e
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x10007e:5a
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x100086:5c
+ [trace] Deleting from uniqueOpsToDelete:: a2(0x00100086:5c) = vfirst_m(v1(free)) at 0x100086
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x100086:5c
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x10008a:5d
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x100090:178
+ [trace] Deleting from uniqueOpsToDelete:: u0x00004100:1(0x0010008a:5d) = a2(free) < #0x0 at 0x10008a
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x10008a:5d
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x10008a:5e
+ [trace] Deleting from uniqueOpsToDelete:: goto Block_4:0x00100074 if (u0x00004100:1(free) != 0) else Block_5:0x0010008e at 0x10008a
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x10008a:5e
+ [trace] Deleting from uniqueOpsToDelete:: a5(0x00100090:60) = a5(free) + u0x10000045(0x00100090:178)(*#0x1) at 0x100090
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x100090:60
+ [trace] Deleting from uniqueOpsToDelete:: a4(0x00100074:118) = a4(0x00100070:53) ? c0x0c20(i) at 0x100074
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x100074:118
+ [trace] Deleting from uniqueOpsToDelete:: a5(0x00100074:11f) = a6(0x00100066:127) ? a5(free) at 0x100074
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x100074:11f
+ [info] Preparing to edit the flow block graph to remove the loop edge
+ [info] Searching for an enclosing DoWhile block
+ [trace] Found candidate Parent block:
+Dowhile block 4
+Basic Block 4 0x00100074-0x0010008a
+0x0010008a:17d:	a5(0x0010008a:17d) = vector_strlen(a6(0x00100066:127))
+
+ [trace] Found candidate Grandparent block:
+List block 0
+If block 0
+Condition block(||) 0
+Basic Block 0 0x00100000-0x00100014
+0x00100000:c1:	a1(0x00100000:c1) = ZEXT48(a1:4(i))
+0x00100008:c:	u0x00006800:4(0x00100008:c) = *(ram,a1(0x00100000:c1))
+0x00100008:d:	a6(0x00100008:d) = SEXT48(u0x00006800:4(0x00100008:c))
+0x00100010:11:	u0x0001f300:4(0x00100010:11) = u0x00006800:4(0x00100008:c) + #0x1:4
+0x00100010:13:	a0(0x00100010:13) = SEXT48(u0x0001f300:4(0x00100010:11))
+0x00100014:14:	u0x00003f00:1(0x00100014:14) = a2(i) <= a0(0x00100010:13)
+0x00100014:15:	goto Block_2:0x0010002c if (u0x00003f00:1(0x00100014:14) != 0) else Block_1:0x00100018
+Basic Block 1 0x00100018-0x00100028
+0x00100018:16:	u0x0000ca00(0x00100018:16) = a6(0x00100008:d) * #0x8
+0x0010001c:176:	u0x10000035(0x0010001c:176) = u0x0000ca00(0x00100018:16) + #0x8
+0x0010001c:19:	u0x0001fe00(0x0010001c:19) = a3(i) + u0x10000035(0x0010001c:176)
+0x0010001c:1a:	a6(0x0010001c:1a) = *(ram,u0x0001fe00(0x0010001c:19))
+0x00100024:1f:	u0x00005c00:1(0x00100024:1f) = *(ram,a6(0x0010001c:1a))
+0x00100028:21:	u0x00004300:1(0x00100028:21) = u0x00005c00:1(0x00100024:1f) == #0x2d:1
+0x00100028:22:	goto Block_2:0x0010002c if (u0x00004300:1(0x00100028:21) != 0) else Block_3:0x00100066
+Basic Block 2 0x0010002c-0x00100062
+0x00100034:2a:	a0(0x00100034:2a) = *(ram,r0x0020a9e8(i))
+0x0010004c:142:	r0x0020a9e8(0x0010004c:142) = r0x0020a9e8(i) [] i0x0010004c:3a(free)
+0x0010004c:3a:	call ffunc_0x00100116(free)(a0(0x00100034:2a),#0x1c2b88,a4(i))
+0x0010005c:143:	r0x0020a9e8(0x0010005c:143) = r0x0020a9e8(0x0010004c:142) [] i0x0010005c:45(free)
+0x0010005c:45:	call ffunc_0x0010011a(free)(a2(i),a3(i),a5(i))
+0x00100062:f3:	t1(0x00100062:f3) = [create] i0x00100062:49(free)
+0x00100062:102:	a1(0x00100062:102) = [create] i0x00100062:49(free)
+0x00100062:123:	a6(0x00100062:123) = [create] i0x00100062:49(free)
+0x00100062:144:	r0x0020a9e8(0x00100062:144) = r0x0020a9e8(0x0010005c:143) [] i0x00100062:49(free)
+0x00100062:49:	a0:4(0x00100062:49) = call ffunc_0x0010011c(free)(#0x0)
+Basic Block 3 0x00100066-0x00100072
+0x00100066:152:	r0x0020a9e8(0x00100066:152) = r0x0020a9e8(i) ? r0x0020a9e8(0x00100062:144)
+0x00100066:13d:	a0:4(0x00100066:13d) = u0x0001f300:4(0x00100010:11) ? a0:4(0x00100062:49)
+0x00100066:127:	a6(0x00100066:127) = a6(0x0010001c:1a) ? a6(0x00100062:123)
+0x00100066:103:	a1(0x00100066:103) = a1(0x00100000:c1) ? a1(0x00100062:102)
+0x00100066:f6:	t1(0x00100066:f6) = a0(i) ? t1(0x00100062:f3)
+0x00100066:147:	r0x0020a9e8(0x00100066:147) = r0x0020a9e8(0x00100066:152) [] i0x00100066:4c(free)
+0x00100066:4c:	*(ram,a1(0x00100066:103)) = a0:4(0x00100066:13d)
+0x00100068:177:	a0(0x00100068:177) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x0010006c:148:	r0x0020a9e8(0x0010006c:148) = r0x0020a9e8(0x00100066:147) [] i0x0010006c:51(free)
+0x0010006c:51:	*(ram,t1(0x00100066:f6)) = a0(0x00100068:177)
+0x00100070:53:	a4(0x00100070:53) = #0x0
+Dowhile block 4
+Basic Block 4 0x00100074-0x0010008a
+0x0010008a:17d:	a5(0x0010008a:17d) = vector_strlen(a6(0x00100066:127))
+Basic Block 5 0x0010008e-0x00100096
+0x00100090:13e:	u0x10000023(0x00100090:13e) = a6(0x00100066:127) * #0xffffffffffffffff
+0x00100090:178:	u0x10000045(0x00100090:178) = u0x10000023(0x00100090:13e) + a2(free)
+0x00100096:63:	u0x00004200:1(0x00100096:63) = #0xf < a5(0x0010008a:17d)
+0x00100096:64:	goto Block_6:0x001000b6 if (u0x00004200:1(0x00100096:63) != 0) else Block_7:0x0010009a
+
+ [info] Removing pointless DoWhile block
+ [trace] Checking list entry 0 of type 8
+ [trace] Checking list entry 1 of type 3
+ [trace] Checking list entry 2 of type 10
+ [info] Removing input edge from block 3
+ [info] Removing output edge to block 5
+ [info] Removing internal loop edge from vector block
+ [trace] Full tree before block replacement:
+  0
+    List block 0
+      If block 0
+        List block 0
+          If block 0
+            Condition block(||) 0
+              Basic Block 0 0x00100000-0x00100014
+              Basic Block 1 0x00100018-0x00100028
+            Basic Block 2 0x0010002c-0x00100062
+          Basic Block 3 0x00100066-0x00100072
+          Dowhile block 4
+            Basic Block 4 0x00100074-0x0010008a
+          Basic Block 5 0x0010008e-0x00100096
+        Basic Block 6 0x001000b6-0x001000da
+        If block 7
+          List block 7
+            If block 7
+              Basic Block 7 0x0010009a-0x0010009c
+              Basic Block 8 0x001000fa-0x00100114
+            Basic Block 9 0x001000a0-0x001000a0
+      List block 10
+        Dowhile block 10
+          Basic Block 10 0x001000e0-0x001000f2
+        Basic Block 11 0x001000f4-0x001000f8
+      Basic Block 12 0x001000a2-0x001000b4
+
+ [info] 	Replacing oldBlock reference in BlockGraph index 4
+ [trace] Full tree after block replacement:
+  0
+    List block 0
+      If block 0
+        List block 0
+          If block 0
+            Condition block(||) 0
+              Basic Block 0 0x00100000-0x00100014
+              Basic Block 1 0x00100018-0x00100028
+            Basic Block 2 0x0010002c-0x00100062
+          Basic Block 3 0x00100066-0x00100072
+          Basic Block 4 0x00100074-0x0010008a
+          Basic Block 5 0x0010008e-0x00100096
+        Basic Block 6 0x001000b6-0x001000da
+        If block 7
+          List block 7
+            If block 7
+              Basic Block 7 0x0010009a-0x0010009c
+              Basic Block 8 0x001000fa-0x00100114
+            Basic Block 9 0x001000a0-0x001000a0
+      List block 10
+        Dowhile block 10
+          Basic Block 10 0x001000e0-0x001000f2
+        Basic Block 11 0x001000f4-0x001000f8
+      Basic Block 12 0x001000a2-0x001000b4
+
+ [info] Adding input edge from block 3 to the copy block
+ [info] Adding output edge to the copy block from block 5
+ [trace] Full tree after dowhile deletion:
+  0
+    List block 0
+      If block 0
+        List block 0
+          If block 0
+            Condition block(||) 0
+              Basic Block 0 0x00100000-0x00100014
+              Basic Block 1 0x00100018-0x00100028
+            Basic Block 2 0x0010002c-0x00100062
+          Basic Block 3 0x00100066-0x00100072
+          Basic Block 4 0x00100074-0x0010008a
+          Basic Block 5 0x0010008e-0x00100096
+        Basic Block 6 0x001000b6-0x001000da
+        If block 7
+          List block 7
+            If block 7
+              Basic Block 7 0x0010009a-0x0010009c
+              Basic Block 8 0x001000fa-0x00100114
+            Basic Block 9 0x001000a0-0x001000a0
+      List block 10
+        Dowhile block 10
+          Basic Block 10 0x001000e0-0x001000f2
+        Basic Block 11 0x001000f4-0x001000f8
+      Basic Block 12 0x001000a2-0x001000b4
+
+ [info] Queuing for deletion PcodeOp with unused output at 0x100090:178
+ [info] Deleting PcodeOp with unused output at 0x100090:178
+ [info] Queuing for deletion PcodeOp with unused output at 0x100090:13e
+ [info] Deleting PcodeOp with unused output at 0x100090:13e
+ [info] Queuing for deletion PcodeOp with unused output at 0x100070:53
+ [info] Deleting PcodeOp with unused output at 0x100070:53
+ [trace] Inspect FlowBlock copyBlk after replacement of type BlockCopy
+ [trace] 	EdgesIn = 1; EdgesOut = 1; List Elements = 0; Flags = 0x0;
+ [trace] 	parent Flowblock is:
+List block 0
+If block 0
+Condition block(||) 0
+Basic Block 0 0x00100000-0x00100014
+0x00100000:c1:	a1(0x00100000:c1) = ZEXT48(a1:4(i))
+0x00100008:c:	u0x00006800:4(0x00100008:c) = *(ram,a1(0x00100000:c1))
+0x00100008:d:	a6(0x00100008:d) = SEXT48(u0x00006800:4(0x00100008:c))
+0x00100010:11:	u0x0001f300:4(0x00100010:11) = u0x00006800:4(0x00100008:c) + #0x1:4
+0x00100010:13:	a0(0x00100010:13) = SEXT48(u0x0001f300:4(0x00100010:11))
+0x00100014:14:	u0x00003f00:1(0x00100014:14) = a2(i) <= a0(0x00100010:13)
+0x00100014:15:	goto Block_2:0x0010002c if (u0x00003f00:1(0x00100014:14) != 0) else Block_1:0x00100018
+Basic Block 1 0x00100018-0x00100028
+0x00100018:16:	u0x0000ca00(0x00100018:16) = a6(0x00100008:d) * #0x8
+0x0010001c:176:	u0x10000035(0x0010001c:176) = u0x0000ca00(0x00100018:16) + #0x8
+0x0010001c:19:	u0x0001fe00(0x0010001c:19) = a3(i) + u0x10000035(0x0010001c:176)
+0x0010001c:1a:	a6(0x0010001c:1a) = *(ram,u0x0001fe00(0x0010001c:19))
+0x00100024:1f:	u0x00005c00:1(0x00100024:1f) = *(ram,a6(0x0010001c:1a))
+0x00100028:21:	u0x00004300:1(0x00100028:21) = u0x00005c00:1(0x00100024:1f) == #0x2d:1
+0x00100028:22:	goto Block_2:0x0010002c if (u0x00004300:1(0x00100028:21) != 0) else Block_3:0x00100066
+Basic Block 2 0x0010002c-0x00100062
+0x00100034:2a:	a0(0x00100034:2a) = *(ram,r0x0020a9e8(i))
+0x0010004c:142:	r0x0020a9e8(0x0010004c:142) = r0x0020a9e8(i) [] i0x0010004c:3a(free)
+0x0010004c:3a:	call ffunc_0x00100116(free)(a0(0x00100034:2a),#0x1c2b88,a4(i))
+0x0010005c:143:	r0x0020a9e8(0x0010005c:143) = r0x0020a9e8(0x0010004c:142) [] i0x0010005c:45(free)
+0x0010005c:45:	call ffunc_0x0010011a(free)(a2(i),a3(i),a5(i))
+0x00100062:f3:	t1(0x00100062:f3) = [create] i0x00100062:49(free)
+0x00100062:102:	a1(0x00100062:102) = [create] i0x00100062:49(free)
+0x00100062:123:	a6(0x00100062:123) = [create] i0x00100062:49(free)
+0x00100062:144:	r0x0020a9e8(0x00100062:144) = r0x0020a9e8(0x0010005c:143) [] i0x00100062:49(free)
+0x00100062:49:	a0:4(0x00100062:49) = call ffunc_0x0010011c(free)(#0x0)
+Basic Block 3 0x00100066-0x00100072
+0x00100066:152:	r0x0020a9e8(0x00100066:152) = r0x0020a9e8(i) ? r0x0020a9e8(0x00100062:144)
+0x00100066:13d:	a0:4(0x00100066:13d) = u0x0001f300:4(0x00100010:11) ? a0:4(0x00100062:49)
+0x00100066:127:	a6(0x00100066:127) = a6(0x0010001c:1a) ? a6(0x00100062:123)
+0x00100066:103:	a1(0x00100066:103) = a1(0x00100000:c1) ? a1(0x00100062:102)
+0x00100066:f6:	t1(0x00100066:f6) = a0(i) ? t1(0x00100062:f3)
+0x00100066:147:	r0x0020a9e8(0x00100066:147) = r0x0020a9e8(0x00100066:152) [] i0x00100066:4c(free)
+0x00100066:4c:	*(ram,a1(0x00100066:103)) = a0:4(0x00100066:13d)
+0x00100068:177:	a0(0x00100068:177) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x0010006c:148:	r0x0020a9e8(0x0010006c:148) = r0x0020a9e8(0x00100066:147) [] i0x0010006c:51(free)
+0x0010006c:51:	*(ram,t1(0x00100066:f6)) = a0(0x00100068:177)
+Basic Block 4 0x00100074-0x0010008a
+0x0010008a:17d:	a5(0x0010008a:17d) = vector_strlen(a6(0x00100066:127))
+Basic Block 5 0x0010008e-0x00100096
+0x00100096:63:	u0x00004200:1(0x00100096:63) = #0xf < a5(0x0010008a:17d)
+0x00100096:64:	goto Block_6:0x001000b6 if (u0x00004200:1(0x00100096:63) != 0) else Block_7:0x0010009a
+
+ [trace] Final function Pcode after transform:
+0
+Basic Block 0 0x00100000-0x00100014
+0x00100000:c1:	a1(0x00100000:c1) = ZEXT48(a1:4(i))
+0x00100008:c:	u0x00006800:4(0x00100008:c) = *(ram,a1(0x00100000:c1))
+0x00100008:d:	a6(0x00100008:d) = SEXT48(u0x00006800:4(0x00100008:c))
+0x00100010:11:	u0x0001f300:4(0x00100010:11) = u0x00006800:4(0x00100008:c) + #0x1:4
+0x00100010:13:	a0(0x00100010:13) = SEXT48(u0x0001f300:4(0x00100010:11))
+0x00100014:14:	u0x00003f00:1(0x00100014:14) = a2(i) <= a0(0x00100010:13)
+0x00100014:15:	goto Block_2:0x0010002c if (u0x00003f00:1(0x00100014:14) != 0) else Block_1:0x00100018
+Basic Block 1 0x00100018-0x00100028
+0x00100018:16:	u0x0000ca00(0x00100018:16) = a6(0x00100008:d) * #0x8
+0x0010001c:176:	u0x10000035(0x0010001c:176) = u0x0000ca00(0x00100018:16) + #0x8
+0x0010001c:19:	u0x0001fe00(0x0010001c:19) = a3(i) + u0x10000035(0x0010001c:176)
+0x0010001c:1a:	a6(0x0010001c:1a) = *(ram,u0x0001fe00(0x0010001c:19))
+0x00100024:1f:	u0x00005c00:1(0x00100024:1f) = *(ram,a6(0x0010001c:1a))
+0x00100028:21:	u0x00004300:1(0x00100028:21) = u0x00005c00:1(0x00100024:1f) == #0x2d:1
+0x00100028:22:	goto Block_2:0x0010002c if (u0x00004300:1(0x00100028:21) != 0) else Block_3:0x00100066
+Basic Block 2 0x0010002c-0x00100062
+0x00100034:2a:	a0(0x00100034:2a) = *(ram,r0x0020a9e8(i))
+0x0010004c:142:	r0x0020a9e8(0x0010004c:142) = r0x0020a9e8(i) [] i0x0010004c:3a(free)
+0x0010004c:3a:	call ffunc_0x00100116(free)(a0(0x00100034:2a),#0x1c2b88,a4(i))
+0x0010005c:143:	r0x0020a9e8(0x0010005c:143) = r0x0020a9e8(0x0010004c:142) [] i0x0010005c:45(free)
+0x0010005c:45:	call ffunc_0x0010011a(free)(a2(i),a3(i),a5(i))
+0x00100062:f3:	t1(0x00100062:f3) = [create] i0x00100062:49(free)
+0x00100062:102:	a1(0x00100062:102) = [create] i0x00100062:49(free)
+0x00100062:123:	a6(0x00100062:123) = [create] i0x00100062:49(free)
+0x00100062:144:	r0x0020a9e8(0x00100062:144) = r0x0020a9e8(0x0010005c:143) [] i0x00100062:49(free)
+0x00100062:49:	a0:4(0x00100062:49) = call ffunc_0x0010011c(free)(#0x0)
+Basic Block 3 0x00100066-0x00100072
+0x00100066:152:	r0x0020a9e8(0x00100066:152) = r0x0020a9e8(i) ? r0x0020a9e8(0x00100062:144)
+0x00100066:13d:	a0:4(0x00100066:13d) = u0x0001f300:4(0x00100010:11) ? a0:4(0x00100062:49)
+0x00100066:127:	a6(0x00100066:127) = a6(0x0010001c:1a) ? a6(0x00100062:123)
+0x00100066:103:	a1(0x00100066:103) = a1(0x00100000:c1) ? a1(0x00100062:102)
+0x00100066:f6:	t1(0x00100066:f6) = a0(i) ? t1(0x00100062:f3)
+0x00100066:147:	r0x0020a9e8(0x00100066:147) = r0x0020a9e8(0x00100066:152) [] i0x00100066:4c(free)
+0x00100066:4c:	*(ram,a1(0x00100066:103)) = a0:4(0x00100066:13d)
+0x00100068:177:	a0(0x00100068:177) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x0010006c:148:	r0x0020a9e8(0x0010006c:148) = r0x0020a9e8(0x00100066:147) [] i0x0010006c:51(free)
+0x0010006c:51:	*(ram,t1(0x00100066:f6)) = a0(0x00100068:177)
+Basic Block 4 0x00100074-0x0010008a
+0x0010008a:17d:	a5(0x0010008a:17d) = vector_strlen(a6(0x00100066:127))
+Basic Block 5 0x0010008e-0x00100096
+0x00100096:63:	u0x00004200:1(0x00100096:63) = #0xf < a5(0x0010008a:17d)
+0x00100096:64:	goto Block_6:0x001000b6 if (u0x00004200:1(0x00100096:63) != 0) else Block_7:0x0010009a
+Basic Block 6 0x001000b6-0x001000da
+0x001000b6:a4:	a0(0x001000b6:a4) = a5(0x0010008a:17d) + #0x1(*#0x1)
+0x001000d6:14e:	r0x0020a9e8(0x001000d6:14e) = r0x0020a9e8(0x0010006c:148) [] i0x001000d6:bd(free)
+0x001000d6:bd:	*(ram,t1(0x00100066:f6)) = a0(0x001000b6:a4)
+0x001000da:17a:	u0x00020500(0x001000da:17a) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x001000da:14f:	r0x0020a9e8(0x001000da:14f) = r0x0020a9e8(0x001000d6:14e) [] i0x001000da:c0(free)
+0x001000da:c0:	*(ram,u0x00020500(0x001000da:17a)) = a5(0x0010008a:17d)
+0x001000da:   	[ goto Block_10:0x001000e0 ]
+Basic Block 7 0x0010009a-0x0010009c
+0x0010009c:67:	u0x00003e00:1(0x0010009c:67) = a5(0x0010008a:17d) == #0x1
+0x0010009c:68:	goto Block_8:0x001000fa if (u0x00003e00:1(0x0010009c:67) != 0) else Block_9:0x001000a0
+Basic Block 8 0x001000fa-0x00100114
+0x001000fa:8d:	u0x00005c00:1(0x001000fa:8d) = *(ram,a6(0x00100066:127))
+0x001000fe:8f:	a0(0x001000fe:8f) = t1(0x00100066:f6) + #0x11
+0x00100100:17b:	u0x00020500(0x00100100:17b) = t1(0x00100066:f6) + #0x1(*#0x8)
+0x00100100:14b:	r0x0020a9e8(0x00100100:14b) = r0x0020a9e8(0x0010006c:148) [] i0x00100100:92(free)
+0x00100100:92:	*(ram,u0x00020500(0x00100100:17b)) = #0x1
+0x00100104:17c:	u0x00006c00(0x00100104:17c) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x00100104:14c:	r0x0020a9e8(0x00100104:14c) = r0x0020a9e8(0x00100100:14b) [] i0x00100104:95(free)
+0x00100104:95:	*(ram,u0x00006c00(0x00100104:17c)) = u0x00005c00:1(0x001000fa:8d)
+0x00100108:14d:	r0x0020a9e8(0x00100108:14d) = r0x0020a9e8(0x00100104:14c) [] i0x00100108:98(free)
+0x00100108:98:	*(ram,a0(0x001000fe:8f)) = #0x0:1
+0x00100110:9f:	a0(0x00100110:9f) = t1(0x00100066:f6)
+0x00100114:146:	r0x0020a9e8(0x00100114:146) = r0x0020a9e8(0x00100108:14d)
+0x00100114:a2:	return(#0x0) a0(0x00100110:9f)
+Basic Block 9 0x001000a0-0x001000a0
+0x001000a0:69:	u0x0002f700:1(0x001000a0:69) = a5(0x0010008a:17d) == #0x0
+0x001000a0:6a:	goto Block_12:0x001000a2 if (u0x0002f700:1(0x001000a0:69) != 0) else Block_10:0x001000e0
+Basic Block 10 0x001000e0-0x001000f2
+0x001000e0:175:	r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+0x001000e0:124:	a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+0x001000e0:10d:	a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+0x001000e0:fc:	a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+0x001000e0:7d:	a4(0x001000e0:7d) = vsetvli_e8m1tama(a3(0x001000e0:10d))
+0x001000e4:7f:	v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124))
+0x001000e8:13f:	u0x1000002b(0x001000e8:13f) = a4(0x001000e0:7d) * #0xffffffffffffffff
+0x001000e8:80:	a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+0x001000ea:81:	a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1)
+0x001000ec:83:	vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc))
+0x001000f0:84:	a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d)
+0x001000f2:85:	u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0
+0x001000f2:86:	goto Block_10:0x001000e0 if (u0x0002f700:1(0x001000f2:85) != 0) else Block_11:0x001000f4
+Basic Block 11 0x001000f4-0x001000f8
+0x001000f4:89:	a0(0x001000f4:89) = *(ram,t1(0x00100066:f6))
+0x001000f8:8a:	goto Block_12:0x001000a2
+Basic Block 12 0x001000a2-0x001000b4
+0x001000a2:151:	r0x0020a9e8(0x001000a2:151) = r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000e0:175)
+0x001000a2:fb:	a0(0x001000a2:fb) = a0(0x00100068:177) ? a0(0x001000f4:89)
+0x001000a2:179:	u0x00020500(0x001000a2:179) = t1(0x00100066:f6) + #0x1(*#0x8)
+0x001000a2:149:	r0x0020a9e8(0x001000a2:149) = r0x0020a9e8(0x001000a2:151) [] i0x001000a2:6d(free)
+0x001000a2:6d:	*(ram,u0x00020500(0x001000a2:179)) = a5(0x0010008a:17d)
+0x001000a6:6e:	a0(0x001000a6:6e) = a0(0x001000a2:fb) + a5(0x0010008a:17d)
+0x001000a8:14a:	r0x0020a9e8(0x001000a8:14a) = r0x0020a9e8(0x001000a2:149) [] i0x001000a8:71(free)
+0x001000a8:71:	*(ram,a0(0x001000a6:6e)) = #0x0:1
+0x001000b0:78:	a0(0x001000b0:78) = t1(0x00100066:f6)
+0x001000b4:145:	r0x0020a9e8(0x001000b4:145) = r0x0020a9e8(0x001000a8:14a)
+0x001000b4:7b:	return(#0x0) a0(0x001000b0:78)
+
+ [trace] FunctionEditor::simplifyBlocks exits
+ [trace] Entering applyOp with a recognized vset* user pcode op at 0x1000e0
+ [info] Analyzing potential vector loop stanza at 0x1000e0 in pid:tid 917225:917225
+ [trace]   Iterating over vset phi pcodes
+ [trace]   Analysis of Phi node: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+ [trace] 	Analysis of Varnode, slot 0: a0(0x001000f0:84)
+ [trace] 	Checking for in-loop definition: a0(0x001000f0:84)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Adding to phiNodesAffectedByLoop: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4) at 0x1000e0
+ [trace]   Analysis of Phi node: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+ [trace] 	Analysis of Varnode, slot 0: a3(0x001000e8:80)
+ [trace] 	Checking for in-loop definition: a3(0x001000e8:80)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Adding to phiNodesAffectedByLoop: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d) at 0x1000e0
+ [trace]   Analysis of Phi node: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+ [trace] 	Analysis of Varnode, slot 0: a6(0x001000ea:81)
+ [trace] 	Checking for in-loop definition: a6(0x001000ea:81)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Adding to phiNodesAffectedByLoop: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127) at 0x1000e0
+ [trace]   Found 3 Phi nodes affected by the loop
+ [trace] 	Checking for in-loop definition: a0(0x001000f0:84)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Checking for in-loop definition: a0(0x00100068:177)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a0(0x001000b6:a4)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a3(0x001000e8:80)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Checking for in-loop definition: a5(0x0010008a:17d)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a5(0x0010008a:17d)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a6(0x001000ea:81)
+ [trace] 		addressInLoop = true
+ [trace] 		blockIsLoopblock = true
+ [trace] 	Checking for in-loop definition: a6(0x00100066:127)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] 	Checking for in-loop definition: a6(0x00100066:127)
+ [trace] 		addressInLoop = false
+ [trace] 		blockIsLoopblock = false
+ [trace] Phi Node for register a0:
+ [trace] 	a0(0x00100068:177), a0(0x001000b6:a4), :
+ [trace] Phi Node for register a3:
+ [trace] 	a5(0x0010008a:17d), :
+ [trace] Phi Node for register a6:
+ [trace] 	a6(0x00100066:127), :
+ [trace] Beginning loop pcode analysis
+ [trace]   PcodeOp at 0x1000e0: r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+ [trace]   PcodeOp at 0x1000e0: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+ [trace]   PcodeOp at 0x1000e0: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+ [trace]   PcodeOp at 0x1000e0: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+ [trace]   PcodeOp at 0x1000e0: a4(0x001000e0:7d) = vsetvli_e8m1tama(a3(0x001000e0:10d))
+ [trace]   PcodeOp at 0x1000e4: v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124))
+ [trace]   PcodeOp at 0x1000e8: u0x1000002b(0x001000e8:13f) = a4(0x001000e0:7d) * #0xffffffffffffffff
+ [trace]   PcodeOp at 0x1000e8: a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+ [trace]   PcodeOp at 0x1000ea: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1)
+ [trace]   PcodeOp at 0x1000ec: vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc))
+ [trace]   PcodeOp at 0x1000f0: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d)
+ [trace]   PcodeOp at 0x1000f2: u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0
+ [trace]   PcodeOp at 0x1000f2: goto Block_10:0x001000e0 if (u0x0002f700:1(0x001000f2:85) != 0) else Block_11:0x001000f4
+ [trace] Comparison target = a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+	Termination flags = 0x1
+ [trace] Searching for Phi node referencing a6(0x001000e0:124)
+ [trace] Searching for Phi node referencing a0(0x001000e0:fc)
+ [info] LastOp: goto Block_10:0x001000e0 if (u0x0002f700:1(0x001000f2:85) != 0) else Block_11:0x001000f4
+ [info] Possible Epilog Pcode: a0(0x001000f4:89) = *(ram,t1(0x00100066:f6))
+ [info] Possible Epilog Pcode: goto Block_12:0x001000a2
+ [info] Possible Epilog Pcode: r0x0020a9e8(0x001000a2:151) = r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000e0:175)
+ [info] Possible Epilog Pcode: a0(0x001000a2:fb) = a0(0x00100068:177) ? a0(0x001000f4:89)
+ [info] Possible Epilog Pcode: u0x00020500(0x001000a2:179) = t1(0x00100066:f6) + #0x1(*#0x8)
+ [info] Possible Epilog Pcode: r0x0020a9e8(0x001000a2:149) = r0x0020a9e8(0x001000a2:151) [] i0x001000a2:6d(free)
+ [trace] Examining context of: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+ [info] 	Tracing loop dependencies for register result a0 with register offset 0x2050
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a0(0x001000e0:fc)
+ [trace] 		Descendent op: vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc))
+ [trace] 		Descendent op: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d)
+ [trace] Examining context of: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+ [info] 	Tracing loop dependencies for register result a3 with register offset 0x2068
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a3(0x001000e0:10d)
+ [trace] 		Descendent op: a4(0x001000e0:7d) = vsetvli_e8m1tama(a3(0x001000e0:10d))
+ [trace] 		Descendent op: a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+ [trace] Examining context of: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+ [info] 	Tracing loop dependencies for register result a6 with register offset 0x2080
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a6(0x001000e0:124)
+ [trace] 		Descendent op: v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124))
+ [trace] 		Descendent op: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1)
+ [trace] Examining context of: vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc))
+ [trace] 	Examining context of op inside the loop:
+ [trace]     Vstore found: vector register=0x4020; destination register=0x2050
+ [trace] Examining context of: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d)
+ [info] 	Tracing loop dependencies for register result a0 with register offset 0x2050
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a0(0x001000f0:84)
+ [trace] 		Descendent op: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+ [trace] Examining context of: a4(0x001000e0:7d) = vsetvli_e8m1tama(a3(0x001000e0:10d))
+ [info] 	Tracing loop dependencies for register result a4 with register offset 0x2070
+ [trace] 	Examining context of op inside the loop:
+ [trace]     Vset found: numElementsRegister=0x2068
+ [trace]   inloop dependency: a4(0x001000e0:7d)
+ [trace] 		Descendent op: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d)
+ [trace] 		Descendent op: u0x1000002b(0x001000e8:13f) = a4(0x001000e0:7d) * #0xffffffffffffffff
+ [trace] 		Descendent op: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1)
+ [trace] Examining context of: a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+ [info] 	Tracing loop dependencies for register result a3 with register offset 0x2068
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a3(0x001000e8:80)
+ [trace] 		Descendent op: u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0
+ [trace] 		Descendent op: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+ [trace] Examining context of: v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124))
+ [info] 	Tracing loop dependencies for register result v1 with register offset 0x4020
+ [trace] 	Examining context of op inside the loop:
+ [trace]     Vload found at 0x1000e4
+ [trace]     Vload register=0x4020
+ [trace]   inloop dependency: v1(0x001000e4:7f)
+ [trace] 		Descendent op: vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc))
+ [trace] Examining context of: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1)
+ [info] 	Tracing loop dependencies for register result a6 with register offset 0x2080
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: a6(0x001000ea:81)
+ [trace] 		Descendent op: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+ [trace] Examining context of: u0x1000002b(0x001000e8:13f) = a4(0x001000e0:7d) * #0xffffffffffffffff
+ [info] 	Tracing loop dependencies for non-register object with offset 0x1000002b
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: u0x1000002b(0x001000e8:13f)
+ [trace] 		Descendent op: a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+ [trace] Examining context of: u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0
+ [info] 	Tracing loop dependencies for non-register object with offset 0x2f700
+ [trace] 	Examining context of op inside the loop:
+ [trace]   inloop dependency: u0x0002f700:1(0x001000f2:85)
+ [trace] 		Descendent op: goto Block_10:0x001000e0 if (u0x0002f700:1(0x001000f2:85) != 0) else Block_11:0x001000f4
+ [trace] Examining context of: goto Block_10:0x001000e0 if (u0x0002f700:1(0x001000f2:85) != 0) else Block_11:0x001000f4
+ [trace] 	Examining context of op inside the loop:
+ [trace] Checking PcodeOp for dependencies: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+ [trace] Searching for loop variables referring to register a0
+ [trace] 	vStoreVn identified as a0(0x001000e0:fc)
+ [trace] Checking PcodeOp for dependencies: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+ [trace] Searching for loop variables referring to register a3
+ [trace] 	vNumElem identified as a3(0x001000e0:10d)
+ [trace] Checking PcodeOp for dependencies: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+ [trace] Searching for loop variables referring to register a6
+ [trace] 	vLoadVn identified as a6(0x001000e0:124)
+ [info] Summary of traits:
+	Vector stanza begins at 0x1000e0
+	elementSize = 1
+	multiplier = 1
+	code size = 0x12
+ [info]
+	Number of loop vector opcodes = 3
+	Number of Phi nodes affected by loop = 3
+	Number of arithmetic ops = 6
+ [info]
+	Number of elements is constant = false
+	Number of elements is variable = true
+	Found unexpected Ghidra opcode = false
+	Found unexpected vector opcode = false
+	Found unexpected user pcodes = false
+ [info]
+	Found simple flow structure = true
+	Found vector registers match = true
+ [info]
+	Number of elements varnode identified = true
+	Number of elements per loop varnode identified = true
+	Vector load address varnode identified = true
+	Vector store address varnode identified = true
+ [info] VectorLoop info:
+	name = pending
+	type = unknown
+	Loop Flags = 0x0
+	Number of vector operations = 3
+	Number of scalar operations = 6
+ [info] 	Vector Operation type vector setup
+ [info] 	Vector Operation type load vector from memory
+ [info] 	Vector Operation type store vector to memory
+ [info] 	Scalar Operation type multiplication
+ [info] 	Scalar Operation type pointer_addition
+ [info] 	Scalar Operation type pointer_addition
+ [info] 	Scalar Operation type addition
+ [info] 	Scalar Operation type comparison
+ [info] 	Scalar Operation type conditional branch
+ [trace] Testing the vector stanza for a vector_memcpy match
+ [trace] Inspect FlowBlock before memcpy transform,  of type Basic
+ [trace] 	EdgesIn = 3; EdgesOut = 2; List Elements = 0; Flags = 0x0;
+ [trace] 	copyMap is:
+Basic Block 10 0x001000e0-0x001000f2
+0x001000e0:175:	r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+0x001000e0:124:	a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127)
+0x001000e0:10d:	a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d)
+0x001000e0:fc:	a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4)
+0x001000e0:7d:	a4(0x001000e0:7d) = vsetvli_e8m1tama(a3(0x001000e0:10d))
+0x001000e4:7f:	v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124))
+0x001000e8:13f:	u0x1000002b(0x001000e8:13f) = a4(0x001000e0:7d) * #0xffffffffffffffff
+0x001000e8:80:	a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1)
+0x001000ea:81:	a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1)
+0x001000ec:83:	vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc))
+0x001000f0:84:	a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d)
+0x001000f2:85:	u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0
+0x001000f2:86:	goto Block_10:0x001000e0 if (u0x0002f700:1(0x001000f2:85) != 0) else Block_11:0x001000f4
+
+ [info] Checking for unresolved dependencies outside of 0x1000e0 to 0x1000f2
+ [trace] 	Checking Varnode:: a4(0x001000e0:7d)
+ [trace] 		Dependent PcodeOp: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d) at 0x1000f0
+ [trace] 		Dependent PcodeOp: u0x1000002b(0x001000e8:13f) = a4(0x001000e0:7d) * #0xffffffffffffffff at 0x1000e8
+ [trace] 		Dependent PcodeOp: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1) at 0x1000ea
+ [trace] 	Checking Varnode:: u0x1000002b(0x001000e8:13f)
+ [trace] 		Dependent PcodeOp: a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1) at 0x1000e8
+ [trace] 	Checking Varnode:: a3(0x001000e8:80)
+ [trace] 		Dependent PcodeOp: u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0 at 0x1000f2
+ [trace] 		Dependent PcodeOp: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d) at 0x1000e0
+ [trace] 	Checking Varnode:: a6(0x001000ea:81)
+ [trace] 		Dependent PcodeOp: a6(0x001000e0:124) = a6(0x001000ea:81) ? a6(0x00100066:127) ? a6(0x00100066:127) at 0x1000e0
+ [trace] 	Checking Varnode:: a0(0x001000f0:84)
+ [trace] 		Dependent PcodeOp: a0(0x001000e0:fc) = a0(0x001000f0:84) ? a0(0x00100068:177) ? a0(0x001000b6:a4) at 0x1000e0
+ [trace] 	Checking Varnode:: a6(0x001000e0:124)
+ [trace] 		Dependent PcodeOp: v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124)) at 0x1000e4
+ [trace] 		Dependent PcodeOp: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(0x001000e0:7d)(*#0x1) at 0x1000ea
+ [trace] 	Checking Varnode:: a0(0x001000e0:fc)
+ [trace] 		Dependent PcodeOp: vse8_v(v1(0x001000e4:7f),a0(0x001000e0:fc)) at 0x1000ec
+ [trace] 		Dependent PcodeOp: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(0x001000e0:7d) at 0x1000f0
+ [trace] 	Checking Varnode:: a3(0x001000e8:80)
+ [trace] 		Dependent PcodeOp: u0x0002f700:1(0x001000f2:85) = a3(0x001000e8:80) != #0x0 at 0x1000f2
+ [trace] 		Dependent PcodeOp: a3(0x001000e0:10d) = a3(0x001000e8:80) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d) at 0x1000e0
+ [info] Transforming selection into vector_memcpy
+ [trace] Entering plugin_registerBuiltin with id=0x11000001
+ [trace] Creating a new DatatypeUserOp
+ [info] 	Inserting a new vector operation
+		syscall[#0x11000001:4](a0(0x00100068:177),a6(0x00100066:127),a5(0x0010008a:17d))
+ [trace] Deleting from uniqueOpsToDelete:: a4(0x001000e0:7d) = vsetvli_e8m1tama(a3(0x001000e0:10d)) at 0x1000e0
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:7d
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000f0:84
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000e8:13f
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000ea:81
+ [trace] Deleting from uniqueOpsToDelete:: v1(0x001000e4:7f) = vle8_v(a6(0x001000e0:124)) at 0x1000e4
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e4:7f
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000ec:83
+ [trace] Deleting from uniqueOpsToDelete:: a3(0x001000e8:80) = a3(0x001000e0:10d) + u0x1000002b(0x001000e8:13f)(*#0x1) at 0x1000e8
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e8:80
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000f2:85
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:10d
+ [trace] Deleting from uniqueOpsToDelete:: a6(0x001000ea:81) = a6(0x001000e0:124) + a4(free)(*#0x1) at 0x1000ea
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000ea:81
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:124
+ [trace] Deleting from uniqueOpsToDelete:: vse8_v(v1(free),a0(0x001000e0:fc)) at 0x1000ec
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000ec:83
+ [trace] Deleting from uniqueOpsToDelete:: a0(0x001000f0:84) = a0(0x001000e0:fc) + a4(free) at 0x1000f0
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000f0:84
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:fc
+ [trace] Deleting from uniqueOpsToDelete:: u0x0002f700:1(0x001000f2:85) = a3(free) != #0x0 at 0x1000f2
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000f2:85
+ [info] 	Note Descendent PcodeOp FunctionEditor::simplifyBlocks at 0x1000f2:86
+ [trace] Deleting from uniqueOpsToDelete:: goto Block_10:0x001000e0 if (u0x0002f700:1(free) != 0) else Block_11:0x001000f4 at 0x1000f2
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000f2:86
+ [trace] Deleting from uniqueOpsToDelete:: a0(0x001000e0:fc) = a0(free) ? a0(0x00100068:177) ? a0(0x001000b6:a4) at 0x1000e0
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:fc
+ [trace] Deleting from uniqueOpsToDelete:: a3(0x001000e0:10d) = a3(free) ? a5(0x0010008a:17d) ? a5(0x0010008a:17d) at 0x1000e0
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:10d
+ [trace] Deleting from uniqueOpsToDelete:: a6(0x001000e0:124) = a6(free) ? a6(0x00100066:127) ? a6(0x00100066:127) at 0x1000e0
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e0:124
+ [trace] Deleting from uniqueOpsToDelete:: u0x1000002b(0x001000e8:13f) = a4(free) * #0xffffffffffffffff at 0x1000e8
+ [info] Deleting PcodeOp FunctionEditor::simplifyBlocks at 0x1000e8:13f
+ [info] Preparing to edit the flow block graph to remove the loop edge
+ [info] Searching for an enclosing DoWhile block
+ [trace] Found candidate Parent block:
+Dowhile block 10
+Basic Block 10 0x001000e0-0x001000f2
+0x001000e0:175:	r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+0x001000f2:17e:	vector_memcpy(a0(0x00100068:177),a6(0x00100066:127),a5(0x0010008a:17d))
+
+ [trace] Found candidate Grandparent block:
+List block 10
+Dowhile block 10
+Basic Block 10 0x001000e0-0x001000f2
+0x001000e0:175:	r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+0x001000f2:17e:	vector_memcpy(a0(0x00100068:177),a6(0x00100066:127),a5(0x0010008a:17d))
+Basic Block 11 0x001000f4-0x001000f8
+0x001000f4:89:	a0(0x001000f4:89) = *(ram,t1(0x00100066:f6))
+0x001000f8:8a:	goto Block_12:0x001000a2
+
+ [info] Removing pointless DoWhile block
+ [trace] Checking list entry 0 of type 10
+ [info] Removing output edge to block 11
+ [info] Removing internal loop edge from vector block
+ [trace] Full tree before block replacement:
+  0
+    List block 0
+      If block 0
+        List block 0
+          If block 0
+            Condition block(||) 0
+              Basic Block 0 0x00100000-0x00100014
+              Basic Block 1 0x00100018-0x00100028
+            Basic Block 2 0x0010002c-0x00100062
+          Basic Block 3 0x00100066-0x00100072
+          Basic Block 4 0x00100074-0x0010008a
+          Basic Block 5 0x0010008e-0x00100096
+        Basic Block 6 0x001000b6-0x001000da
+        If block 7
+          List block 7
+            If block 7
+              Basic Block 7 0x0010009a-0x0010009c
+              Basic Block 8 0x001000fa-0x00100114
+            Basic Block 9 0x001000a0-0x001000a0
+      List block 10
+        Dowhile block 10
+          Basic Block 10 0x001000e0-0x001000f2
+        Basic Block 11 0x001000f4-0x001000f8
+      Basic Block 12 0x001000a2-0x001000b4
+
+ [info] 	Replacing oldBlock reference in BlockGraph index 10
+ [trace] Full tree after block replacement:
+  0
+    List block 0
+      If block 0
+        List block 0
+          If block 0
+            Condition block(||) 0
+              Basic Block 0 0x00100000-0x00100014
+              Basic Block 1 0x00100018-0x00100028
+            Basic Block 2 0x0010002c-0x00100062
+          Basic Block 3 0x00100066-0x00100072
+          Basic Block 4 0x00100074-0x0010008a
+          Basic Block 5 0x0010008e-0x00100096
+        Basic Block 6 0x001000b6-0x001000da
+        If block 7
+          List block 7
+            If block 7
+              Basic Block 7 0x0010009a-0x0010009c
+              Basic Block 8 0x001000fa-0x00100114
+            Basic Block 9 0x001000a0-0x001000a0
+      List block 10
+        Basic Block 10 0x001000e0-0x001000f2
+        Basic Block 11 0x001000f4-0x001000f8
+      Basic Block 12 0x001000a2-0x001000b4
+
+ [info] Adding output edge to the copy block from block 11
+ [trace] Full tree after dowhile deletion:
+  0
+    List block 0
+      If block 0
+        List block 0
+          If block 0
+            Condition block(||) 0
+              Basic Block 0 0x00100000-0x00100014
+              Basic Block 1 0x00100018-0x00100028
+            Basic Block 2 0x0010002c-0x00100062
+          Basic Block 3 0x00100066-0x00100072
+          Basic Block 4 0x00100074-0x0010008a
+          Basic Block 5 0x0010008e-0x00100096
+        Basic Block 6 0x001000b6-0x001000da
+        If block 7
+          List block 7
+            If block 7
+              Basic Block 7 0x0010009a-0x0010009c
+              Basic Block 8 0x001000fa-0x00100114
+            Basic Block 9 0x001000a0-0x001000a0
+      List block 10
+        Basic Block 10 0x001000e0-0x001000f2
+        Basic Block 11 0x001000f4-0x001000f8
+      Basic Block 12 0x001000a2-0x001000b4
+
+ [trace] Inspect FlowBlock copyBlk after replacement of type BlockCopy
+ [trace] 	EdgesIn = 0; EdgesOut = 1; List Elements = 0; Flags = 0x0;
+ [trace] 	parent Flowblock is:
+List block 10
+Basic Block 10 0x001000e0-0x001000f2
+0x001000e0:175:	r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+0x001000f2:17e:	vector_memcpy(a0(0x00100068:177),a6(0x00100066:127),a5(0x0010008a:17d))
+Basic Block 11 0x001000f4-0x001000f8
+0x001000f4:89:	a0(0x001000f4:89) = *(ram,t1(0x00100066:f6))
+0x001000f8:8a:	goto Block_12:0x001000a2
+
+ [trace] Final function Pcode after transform:
+0
+Basic Block 0 0x00100000-0x00100014
+0x00100000:c1:	a1(0x00100000:c1) = ZEXT48(a1:4(i))
+0x00100008:c:	u0x00006800:4(0x00100008:c) = *(ram,a1(0x00100000:c1))
+0x00100008:d:	a6(0x00100008:d) = SEXT48(u0x00006800:4(0x00100008:c))
+0x00100010:11:	u0x0001f300:4(0x00100010:11) = u0x00006800:4(0x00100008:c) + #0x1:4
+0x00100010:13:	a0(0x00100010:13) = SEXT48(u0x0001f300:4(0x00100010:11))
+0x00100014:14:	u0x00003f00:1(0x00100014:14) = a2(i) <= a0(0x00100010:13)
+0x00100014:15:	goto Block_2:0x0010002c if (u0x00003f00:1(0x00100014:14) != 0) else Block_1:0x00100018
+Basic Block 1 0x00100018-0x00100028
+0x00100018:16:	u0x0000ca00(0x00100018:16) = a6(0x00100008:d) * #0x8
+0x0010001c:176:	u0x10000035(0x0010001c:176) = u0x0000ca00(0x00100018:16) + #0x8
+0x0010001c:19:	u0x0001fe00(0x0010001c:19) = a3(i) + u0x10000035(0x0010001c:176)
+0x0010001c:1a:	a6(0x0010001c:1a) = *(ram,u0x0001fe00(0x0010001c:19))
+0x00100024:1f:	u0x00005c00:1(0x00100024:1f) = *(ram,a6(0x0010001c:1a))
+0x00100028:21:	u0x00004300:1(0x00100028:21) = u0x00005c00:1(0x00100024:1f) == #0x2d:1
+0x00100028:22:	goto Block_2:0x0010002c if (u0x00004300:1(0x00100028:21) != 0) else Block_3:0x00100066
+Basic Block 2 0x0010002c-0x00100062
+0x00100034:2a:	a0(0x00100034:2a) = *(ram,r0x0020a9e8(i))
+0x0010004c:142:	r0x0020a9e8(0x0010004c:142) = r0x0020a9e8(i) [] i0x0010004c:3a(free)
+0x0010004c:3a:	call ffunc_0x00100116(free)(a0(0x00100034:2a),#0x1c2b88,a4(i))
+0x0010005c:143:	r0x0020a9e8(0x0010005c:143) = r0x0020a9e8(0x0010004c:142) [] i0x0010005c:45(free)
+0x0010005c:45:	call ffunc_0x0010011a(free)(a2(i),a3(i),a5(i))
+0x00100062:f3:	t1(0x00100062:f3) = [create] i0x00100062:49(free)
+0x00100062:102:	a1(0x00100062:102) = [create] i0x00100062:49(free)
+0x00100062:123:	a6(0x00100062:123) = [create] i0x00100062:49(free)
+0x00100062:144:	r0x0020a9e8(0x00100062:144) = r0x0020a9e8(0x0010005c:143) [] i0x00100062:49(free)
+0x00100062:49:	a0:4(0x00100062:49) = call ffunc_0x0010011c(free)(#0x0)
+Basic Block 3 0x00100066-0x00100072
+0x00100066:152:	r0x0020a9e8(0x00100066:152) = r0x0020a9e8(i) ? r0x0020a9e8(0x00100062:144)
+0x00100066:13d:	a0:4(0x00100066:13d) = u0x0001f300:4(0x00100010:11) ? a0:4(0x00100062:49)
+0x00100066:127:	a6(0x00100066:127) = a6(0x0010001c:1a) ? a6(0x00100062:123)
+0x00100066:103:	a1(0x00100066:103) = a1(0x00100000:c1) ? a1(0x00100062:102)
+0x00100066:f6:	t1(0x00100066:f6) = a0(i) ? t1(0x00100062:f3)
+0x00100066:147:	r0x0020a9e8(0x00100066:147) = r0x0020a9e8(0x00100066:152) [] i0x00100066:4c(free)
+0x00100066:4c:	*(ram,a1(0x00100066:103)) = a0:4(0x00100066:13d)
+0x00100068:177:	a0(0x00100068:177) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x0010006c:148:	r0x0020a9e8(0x0010006c:148) = r0x0020a9e8(0x00100066:147) [] i0x0010006c:51(free)
+0x0010006c:51:	*(ram,t1(0x00100066:f6)) = a0(0x00100068:177)
+Basic Block 4 0x00100074-0x0010008a
+0x0010008a:17d:	a5(0x0010008a:17d) = vector_strlen(a6(0x00100066:127))
+Basic Block 5 0x0010008e-0x00100096
+0x00100096:63:	u0x00004200:1(0x00100096:63) = #0xf < a5(0x0010008a:17d)
+0x00100096:64:	goto Block_6:0x001000b6 if (u0x00004200:1(0x00100096:63) != 0) else Block_7:0x0010009a
+Basic Block 6 0x001000b6-0x001000da
+0x001000b6:a4:	a0(0x001000b6:a4) = a5(0x0010008a:17d) + #0x1(*#0x1)
+0x001000d6:14e:	r0x0020a9e8(0x001000d6:14e) = r0x0020a9e8(0x0010006c:148) [] i0x001000d6:bd(free)
+0x001000d6:bd:	*(ram,t1(0x00100066:f6)) = a0(0x001000b6:a4)
+0x001000da:17a:	u0x00020500(0x001000da:17a) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x001000da:14f:	r0x0020a9e8(0x001000da:14f) = r0x0020a9e8(0x001000d6:14e) [] i0x001000da:c0(free)
+0x001000da:c0:	*(ram,u0x00020500(0x001000da:17a)) = a5(0x0010008a:17d)
+0x001000da:   	[ goto Block_10:0x001000e0 ]
+Basic Block 7 0x0010009a-0x0010009c
+0x0010009c:67:	u0x00003e00:1(0x0010009c:67) = a5(0x0010008a:17d) == #0x1
+0x0010009c:68:	goto Block_8:0x001000fa if (u0x00003e00:1(0x0010009c:67) != 0) else Block_9:0x001000a0
+Basic Block 8 0x001000fa-0x00100114
+0x001000fa:8d:	u0x00005c00:1(0x001000fa:8d) = *(ram,a6(0x00100066:127))
+0x001000fe:8f:	a0(0x001000fe:8f) = t1(0x00100066:f6) + #0x11
+0x00100100:17b:	u0x00020500(0x00100100:17b) = t1(0x00100066:f6) + #0x1(*#0x8)
+0x00100100:14b:	r0x0020a9e8(0x00100100:14b) = r0x0020a9e8(0x0010006c:148) [] i0x00100100:92(free)
+0x00100100:92:	*(ram,u0x00020500(0x00100100:17b)) = #0x1
+0x00100104:17c:	u0x00006c00(0x00100104:17c) = t1(0x00100066:f6) + #0x2(*#0x8)
+0x00100104:14c:	r0x0020a9e8(0x00100104:14c) = r0x0020a9e8(0x00100100:14b) [] i0x00100104:95(free)
+0x00100104:95:	*(ram,u0x00006c00(0x00100104:17c)) = u0x00005c00:1(0x001000fa:8d)
+0x00100108:14d:	r0x0020a9e8(0x00100108:14d) = r0x0020a9e8(0x00100104:14c) [] i0x00100108:98(free)
+0x00100108:98:	*(ram,a0(0x001000fe:8f)) = #0x0:1
+0x00100110:9f:	a0(0x00100110:9f) = t1(0x00100066:f6)
+0x00100114:146:	r0x0020a9e8(0x00100114:146) = r0x0020a9e8(0x00100108:14d)
+0x00100114:a2:	return(#0x0) a0(0x00100110:9f)
+Basic Block 9 0x001000a0-0x001000a0
+0x001000a0:69:	u0x0002f700:1(0x001000a0:69) = a5(0x0010008a:17d) == #0x0
+0x001000a0:6a:	goto Block_12:0x001000a2 if (u0x0002f700:1(0x001000a0:69) != 0) else Block_10:0x001000e0
+Basic Block 10 0x001000e0-0x001000f2
+0x001000e0:175:	r0x0020a9e8(0x001000e0:175) = r0x0020a9e8(0x001000e0:175) ? r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000da:14f)
+0x001000f2:17e:	vector_memcpy(a0(0x00100068:177),a6(0x00100066:127),a5(0x0010008a:17d))
+Basic Block 11 0x001000f4-0x001000f8
+0x001000f4:89:	a0(0x001000f4:89) = *(ram,t1(0x00100066:f6))
+0x001000f8:8a:	goto Block_12:0x001000a2
+Basic Block 12 0x001000a2-0x001000b4
+0x001000a2:151:	r0x0020a9e8(0x001000a2:151) = r0x0020a9e8(0x0010006c:148) ? r0x0020a9e8(0x001000e0:175)
+0x001000a2:fb:	a0(0x001000a2:fb) = a0(0x00100068:177) ? a0(0x001000f4:89)
+0x001000a2:179:	u0x00020500(0x001000a2:179) = t1(0x00100066:f6) + #0x1(*#0x8)
+0x001000a2:149:	r0x0020a9e8(0x001000a2:149) = r0x0020a9e8(0x001000a2:151) [] i0x001000a2:6d(free)
+0x001000a2:6d:	*(ram,u0x00020500(0x001000a2:179)) = a5(0x0010008a:17d)
+0x001000a6:6e:	a0(0x001000a6:6e) = a0(0x001000a2:fb) + a5(0x0010008a:17d)
+0x001000a8:14a:	r0x0020a9e8(0x001000a8:14a) = r0x0020a9e8(0x001000a2:149) [] i0x001000a8:71(free)
+0x001000a8:71:	*(ram,a0(0x001000a6:6e)) = #0x0:1
+0x001000b0:78:	a0(0x001000b0:78) = t1(0x00100066:f6)
+0x001000b4:145:	r0x0020a9e8(0x001000b4:145) = r0x0020a9e8(0x001000a8:14a)
+0x001000b4:7b:	return(#0x0) a0(0x001000b0:78)
+
+ [trace] FunctionEditor::simplifyBlocks exits

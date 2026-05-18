@@ -1,5 +1,6 @@
 ---
 title: Raw Pcode Tutorial
+description: Decompiler plugins process PCodeOps into higher level operations more easily interpreted in the Decompiler window.
 weight: 30
 ---
 
@@ -13,7 +14,7 @@ Here's a very simple vector copy function in its original assembly source:
 ```as
 .extern memcpy_i2
 memcpy_i2:
-    vsetivli zero,0x2,e8,mf8,ta,ma 
+    vsetivli zero,0x2,e8,mf8,ta,ma
     vle8.v   v1,(a1)
     vse8.v   v1,(a0)
     ret
@@ -63,7 +64,7 @@ The assembly source code is:
 
 ```as
 c.addi16sp sp,-0x160
-vsetivli   zero,0x4,e32,m1,ta,ma 
+vsetivli   zero,0x4,e32,m1,ta,ma
 vle32.v    v3,(a3)
 auipc      a4,0xe7
 addi       a4,a4,-0x65a
@@ -71,7 +72,7 @@ vsetivli   zero,0x2,e32,mf2,ta,ma
 vle32.v    v2,(a4)
 auipc      a5,0xe7
 addi       a5,a5,-0x662
-vsetivli   zero,0x8,e8,mf2,ta,ma 
+vsetivli   zero,0x8,e8,mf2,ta,ma
 vle8.v     v1,(a5)
 lw         a5,-0x5f4(s0)
 vsetivli   zero,0x10,e8,m1,ta,ma
@@ -86,7 +87,7 @@ vse8.v     v4,(a5)
 auipc      a4,0xd9
 flw        fa5,0x84(a4)
 addi       a5,s0,-0x274
-vsetivli   zero,0x4,e32,m1,ta,ma 
+vsetivli   zero,0x4,e32,m1,ta,ma
 vse32.v    v3,(a5)
 addi       a5,s0,-0x264
 vsetivli   zero,0x2,e32,mf2,ta,ma
@@ -94,7 +95,7 @@ vse32.v    v2,(a5)
 auipc      a1,0xdd
 addi       a1,a1,-0x500
 addi       a5,s0,-0x248
-vsetivli   zero,0x8,e8,mf2,ta,ma 
+vsetivli   zero,0x8,e8,mf2,ta,ma
 vse8.v     v1,(a5)
 sw         zero,-0x278(s0)
 fsw        fa5,-0x25c(s0)
@@ -115,7 +116,7 @@ long main(int argc,char *argv,void *allocator)
   undefined auVar3 [256];
   undefined auVar4 [256];
   undefined auVar5 [256];
-  
+
   vsetivli_e32m1tama(4);
   auVar4 = vle32_v(in_a3);
   vsetivli_e32mf2tama(2);
@@ -200,7 +201,8 @@ How do we interpret these printRaw descriptions?
     * `i` appears to indicate a store to RAM operation
     * `c` appears to refer to a register, with the offset to name binding set in a file like `riscv.table.sinc`.
 * varnodes like `r0x001d90d4:4(0x00100088:5d) = r0x001d90d4:4(0x00100084:5c) [] i0x00100088:50(free)`
-  *appear* to indicate a RAM variable that may hold a pre-existing value or may be rewritten by the `i0x00100088:50` varnode
+  *appear* to indicate a RAM variable that may hold a pre-existing value or may be rewritten by the `i0x00100088:50` varnode.
+  This may be an example of a `CPUI_INDIRECT` opcode, described as a "Copy with indirect effect".
 * note that some instructions have been deleted from this raw pcode listing - the floating point loads and stores
   for instance are gone.  Perhaps they were identified as dead code?
 
@@ -284,7 +286,7 @@ Notes:
 Therefore these pcode ops could be replaced with a single pcode op - *if* we were sure there were no descendents.
 We should also merge Basic Block 1 into Basic Block 2, as the branch instruction is to be absorbed.
 
-```text 
+```text
 0x00000048:XX vector_memcpy(a0(i), a1(i), a2(i))
 ```
 
@@ -310,3 +312,15 @@ strategy can be used.  The starting point will be a `vsetvli` instruction.
 5. Scan descendents of the three MULTIEQUAL/Phi opcodes, replacing any descendent varnodes with the input varnodes found in step 2.
    Move these three MULTIEQUAL/Phi opcodes to a deletion list.
 6. Delete all matched opcodes in the reverse order they are found.
+
+## Other PcodeOp patterns
+
+```text
+0x0002a604:48:  j{0x00002058,0x00002050}:10(0x0002a604:48) = CONCAT88(a1(free),a2(0x0002a5cc:11))
+```
+
+This appears to be a `CPUI_PIECE` PcodeOp generating a 16 byte concatenation of registers a1 and a2.
+* This pattern appears in a function epilog, where the decompiler has incorrectly guessed that the return
+  value is 16 bytes to be returned in registers a0 and a1.
+* The `a1(free)` varnode will throw a low level exception.  The a1 register was used as a temporary in a vector
+  loop, and not recognized as dead.

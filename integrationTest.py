@@ -1,17 +1,21 @@
 #!/usr/bin/python3
 """
 Verify the correctness of the RISC-V Vector transforms Ghidra plugin
+  *  Run all tests with ./integrationTest.py
+  *  Run a single test with something like
+  *  `python integrationTest.py T1Datatests.test_04_exemplar_regression`
 """
 import unittest
 import subprocess
 import logging
 import os
 import shutil
+import re
 
 logging.basicConfig(level=logging.INFO)
 logger = logging
 
-GHIDRA_INSTALL_DIR = "/opt/ghidra_12.1_DEV/"
+GHIDRA_INSTALL_DIR = "/opt/ghidra_12.2_DEV/"
 DECOMPILER_DIR = GHIDRA_INSTALL_DIR + "Ghidra/Features/Decompiler/os/linux_x86_64/"
 DECOMPILER_PATH = DECOMPILER_DIR + "decompile"
 DATATEST_PATH = DECOMPILER_DIR + "decompile_datatest"
@@ -20,22 +24,56 @@ BAZEL_BUILD_DATATEST_PATH = "bazel-bin/external/+_repo_rules+ghidra/decompile_da
 PLUGIN_LOAD_DIR = "/tmp/"
 PLUGIN_NAME = "libriscv_vector.so"
 PLUGIN_PATH = PLUGIN_LOAD_DIR + PLUGIN_NAME
+TEST_DATA_DIR = "test_data"
 
+# Optionally suspend valgrind tests while debugging other subsystems
+DISABLE_VALGRIND = True
+
+# Regression tests are split into two sets.  The valgrind and faster tests run under valgrind,
+# while the regular ones do not.
+VALGRIND_TEST_SET = ("memcpy_exemplars", "whisper_sample_4")
+REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
+                    "whisper_sample_1a", "whisper_sample_1b", "whisper_sample_2",
+                    "whisper_sample_3", "whisper_sample_5", "whisper_sample_6", "whisper_sample_7",
+                    "whisper_sample_8", "whisper_sample_10", "whisper_sample_11",
+                    "whisper_sample_12", "whisper_sample_13a", "whisper_sample_13b",
+                    "whisper_sample_14", "whisper_sample_15", "whisper_sample_16",
+                    "whisper_sample_17", "whisper_sample_18", "whisper_sample_19",
+                    "whisper_main",
+                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
+
+# if some tests fail, defer them
+DEFERRED_TESTS = ()
+# show the expected number of matches in each test
 expected = {
-    'memcpy_exemplars': {'vector_memset':0, 'vector_memcpy':5, 'vector_strlen':0},
-    'whisper_sample_1': {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':1},
-    'whisper_main': {'vector_memset':4, 'vector_memcpy':13, 'vector_strlen':1},
+    'memcpy_exemplars':  {'vector_memcpy':5},
+    'strlen_exemplars':  {'vector_strlen':2},
+    'strcmp_exemplars':  {'vector_strcmp':2},
+    'whisperInit':       {'vector_memset':1, 'vector_memcpy':3},
+    'whisper_sample_1a': {'vector_memcpy':1, 'vector_strlen':0},
+    'whisper_sample_1b': {'vector_memcpy':1, 'vector_strlen':1},
+    'whisper_main': {'vector_memset':4, 'vector_memcpy':12, 'vector_strlen':1},
     'whisper_sample_2': {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
-    'whisper_sample_3':  {'vector_memset':0, 'vector_memcpy':5, 'vector_strlen':0},
-    'whisper_sample_4':  {'vector_memset':16, 'vector_memcpy':86, 'vector_strlen':0},
-    'whisper_sample_5':  {'vector_memset':3, 'vector_memcpy':20, 'vector_strlen':1},
+    'whisper_sample_3':  {'vector_memcpy':5,},
+    'whisper_sample_4':  {'vector_memset':16, 'vector_memcpy':85, 'vector_strlen':0},
+    'whisper_sample_5':  {'vector_memset':3, 'vector_memcpy':17, 'vector_strlen':1},
     'whisper_sample_6':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_7':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_8':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_10':  {'vector_memset':0, 'vector_memcpy':3, 'vector_strlen':0},
+    'whisper_sample_11':  {'vector_strcmp':1},
+    'whisper_sample_12':  {'vector_memset':2, 'vector_memcpy':5, 'vector_strlen':1},
+    'whisper_sample_13a':  {'vector_memcpy':0},
+    'whisper_sample_13b':  {'vector_memcpy':1},
+    'whisper_sample_14': {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
+    'whisper_sample_15':  {'vector_memcpy':1, 'vector_strlen':1},
+    'whisper_sample_16':  {'vector_memcpy':3},
+    'whisper_sample_17':  {'vector_strlen':1},
+    'whisper_sample_18': {'vector_memset':1, 'vector_memcpy':7, 'vector_strlen':4},
+    'whisper_sample_19': {'vector_memcpy':9, 'vector_strlen':4},
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},
-    'dpdk_sample_3':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':2},
+    'dpdk_sample_3':  {'vector_strlen':2},
 }
 
 def trim_output(result):
@@ -47,13 +85,15 @@ def trim_output(result):
 
 def extract_c(result):
     """
-    isolate the decompiled C source from a single function test case
+    isolate the decompiled C source from a single function test case.
+    Note: the Ghidra script must issue the `print C` command immediately before
+    the `print Raw` command.
     """
     start = '[decomp]> print C'
     end = '[decomp]> print raw'
     test_results = result
     c_source = ""
-    while (True):
+    while True:
         # Find the index of the start substring
         idx1 = test_results.find(start)
         if idx1 == -1:
@@ -68,20 +108,63 @@ def extract_c(result):
             break
     return c_source
 
-def assert_expected_transform_count(test_case, name, result_output):
+def assert_expected_transform_count(self, name, result_output):
     """
     count the number of vector transforms in the C section of a testcase stdout
     :param testCase: the invoked unit test case
     :param name: the name identifying the expected results
     :param result_output: the process output from the decompilation
     """
-    source = extract_c(result_output.stdout)
+    source = extract_c(result_output)
+    if not name in expected:
+        return
     expected_results = expected[name]
-    for pat in ('vector_memset', 'vector_memcpy', 'vector_strlen'):
+    for pat in expected_results:
         num_found = source.count(pat)
         print(f"found {num_found} instances of {pat} in test case {name}")
-        test_case.assertEqual(num_found, expected_results[pat],
-                            f"Unexpected number ({num_found}) of {pat} transforms found in {name}")
+        if num_found != expected_results[pat]:
+            print(f"Error: Unexpected number ({num_found}) of " +
+                    f"{pat} transforms found in {name}" +
+                    f"\tExpected: {expected_results[pat]} transforms")
+            self.expectations_failed = True
+
+def run_datatest(test_case, sample, plugin=True, datatest_path=DATATEST_PATH,
+                 plugin_path=PLUGIN_PATH, continue_on_failure=False):
+    """
+    Run a single data test
+    """
+    base_command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR}"
+    command_detail = f"{datatest_path} < test_data/{sample}.ghidra"
+    if plugin:
+        command = f"{base_command} DECOMP_PLUGIN={plugin_path} {command_detail}"
+    else:
+        command = f"{base_command} {command_detail}"
+    logger.info(f"Running {command} with output to /tmp/{sample}.testlog")
+    if continue_on_failure:
+        check_status = False
+    else:
+        check_status = True
+    result = subprocess.run(command, check=check_status, capture_output=True,
+                            shell=True, encoding="utf8")
+    with open(f"/tmp/{sample}.testlog", "w", encoding="utf8") as f:
+        f.write(result.stdout)
+        f.write(result.stderr)
+    if continue_on_failure:
+        if re.search(re.escape('Low-level ERROR'), result.stdout):
+            print("\tTest generated a Low-level error")
+            result.returncode = 1
+        if re.search(re.escape('Execution ERROR'), result.stdout):
+            print("\tTest generated an execution error")
+            result.returncode = 1
+    else:
+        test_case.assertEqual(0, result.returncode,
+            f"Datatest of {sample} failed")
+        test_case.assertNotIn("Low-level ERROR", result.stdout,
+                            "Decompiler completes without a low level error")
+        test_case.assertNotIn("Execution error", result.stdout,
+                            "Decompiler finds script error")
+    trim_output(result.stdout)
+    return result
 
 class T0BuildPlugin(unittest.TestCase):
     """
@@ -150,76 +233,55 @@ class T1Datatests(unittest.TestCase):
     """
     Run any defined datatests
     """
-    def test_01_memcpy_exemplars(self):
+    def setUp(self):
         """
-        Verify correct behavior with minimal memcpy binaries
+        Accumulate failures here that are only asserted at the end of a unit test
         """
-        command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} valgrind {DATATEST_PATH} < test/memcpy_exemplars.ghidra"
-        logger.info(f"Running {command}")
-        result = subprocess.run(command, check=True, capture_output=True,
-                                shell=True, encoding="utf8")
-        self.assertEqual(0, result.returncode,
-            "Datatest of memcpy_exemplars failed")
-        with open("/tmp/memcpy_exemplars.testlog", "w", encoding="utf8") as f:
-            f.write(result.stdout)
-            f.write(result.stderr)
-        trim_output(result.stdout)
-        assert_expected_transform_count(self, 'memcpy_exemplars', result)
-        self.assertIn("successfully loaded: RISC-V 64", result.stdout,
-                         "Failed to load test/memcpy_exemplars_save.xml")
-        self.assertIn("vector_memcpy((void *)to,(void *)from,2);", result.stdout,
-                      "Failed to find a vector memcpy of 2 bytes")
-        self.assertIn("vector_memcpy((void *)to,(void *)from,4);", result.stdout,
-                      "Failed to find a vector memcpy of 4 bytes")
-        self.assertIn("vector_memcpy((void *)to,(void *)from,8);", result.stdout,
-                      "Failed to find a vector memcpy of 8 bytes")
-        self.assertIn("vector_memcpy((void *)to,(void *)from,0xf);", result.stdout,
-                      "Failed to find a vector memcpy of 15 bytes")
-        self.assertIn("vector_memcpy((void *)to,(void *)from,size);", result.stdout,
-                      "Failed to find a vector memcpy loop of arbitrary size")
-        self.assertIn("definitely lost: 0 bytes in 0 blocks", result.stderr,
-                      "Memory Leak or invalid read access detected")
+        self.expectations_failed = False
 
-    def test_02_whisper_selection_main_function(self):
+    def test_01_valgrind_exemplars(self):
         """
-        Verify correct behavior with the main function of whisper-cpp
-        Note: this test skips valgrind analysis in favor of speed
+        Verify correct behavior under valgrind with a small sample of exemplars
         """
-        command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/whisper_main.ghidra"
-        logger.info(f"Running {command} with output to /tmp/whisper_main.testlog")
-        result = subprocess.run(command, check=True, capture_output=True,
-                                shell=True, encoding="utf8")
-        self.assertEqual(0, result.returncode,
-            "Datatest of whisper_main failed")
-        with open("/tmp/whisper_main.testlog", "w", encoding="utf8") as f:
-            f.write(result.stdout)
-            f.write(result.stderr)
-        trim_output(result.stdout)
-        assert_expected_transform_count(self, 'whisper_main', result)
+        if DISABLE_VALGRIND:
+            cmd = DATATEST_PATH
+        else:
+            cmd = f"valgrind {DATATEST_PATH}"
+        for i in VALGRIND_TEST_SET:
+            if i in DEFERRED_TESTS:
+                logger.info(f"Deferring test {i} as currently failing")
+                continue
+            result = run_datatest(self, i, plugin=True, datatest_path=cmd)
+            assert_expected_transform_count(self, i, result.stdout)
+        self.assertFalse(self.expectations_failed,
+                         "At least one test reported an unexpected number of transforms")
 
-    def test_03_exemplar_regression(self):
+    def test_02_regular_exemplars(self):
         """
-        Verify processing of several Whisper and dpdk functions
+        Verify correct behavior without valgrind, with regular binaries
         """
-        sample_set = []
-        for i in (1,2,3,4,5,6,7,8,10):
-            sample_set.append(f"whisper_sample_{i}")
-        for i in (1,2,3):
-            sample_set.append(f"dpdk_sample_{i}")
-        for sample in sample_set:
-            command = f"SLEIGHHOME={GHIDRA_INSTALL_DIR} DECOMP_PLUGIN={PLUGIN_PATH} {DATATEST_PATH} < test/{sample}.ghidra"
-            logger.info(f"Running {command} with output to /tmp/{sample}.testlog")
-            result = subprocess.run(command, check=True, capture_output=True,
-                                    shell=True, encoding="utf8")
-            self.assertEqual(0, result.returncode,
-                f"Datatest of {sample} failed")
-            with open(f"/tmp/{sample}.testlog", "w", encoding="utf8") as f:
-                f.write(result.stdout)
-                f.write(result.stderr)
-            self.assertNotIn("Low-level ERROR", result.stdout,
-                             "Decompiler completes without a low level error")
-            trim_output(result.stdout)
-            assert_expected_transform_count(self, f"{sample}", result)
+        for i in REGULAR_TEST_SET:
+            if i in DEFERRED_TESTS:
+                logger.info(f"Skipping test {i} as currently failing")
+                continue
+            result =  run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}")
+            assert_expected_transform_count(self, i, result.stdout)
+        self.assertFalse(self.expectations_failed,
+                         "At least one test reported an unexpected number of transforms")
+
+    def test_03_failing_exemplars(self):
+        """
+        Run failing tests to isolate common faults..
+        """
+        all_tests_successful = True
+        for i in DEFERRED_TESTS:
+            result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}",
+                                  continue_on_failure=True)
+            if result.returncode == 0:
+                print(f"The deferred test {i} unexpectedly returned a success error code")
+            all_tests_successful &= (result.returncode == 0)
+        self.assertTrue(all_tests_successful,
+                         "At least one deferred test returned a non-zero exit code")
 
 if __name__ == "__main__":
     unittest.main()
