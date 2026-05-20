@@ -40,10 +40,11 @@ REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "whisper_sample_14", "whisper_sample_15", "whisper_sample_16",
                     "whisper_sample_17", "whisper_sample_18", "whisper_sample_19",
                     "whisper_main",
-                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
+                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3",
+                    "dpdk_sample_4", "dpdk_sample_5", "dpdk_sample_6")
 
 # if some tests fail, defer them
-DEFERRED_TESTS = ()
+DEFERRED_TESTS = ("dpdk_sample_4", "dpdk_sample_5", "dpdk_sample_6")
 # show the expected number of matches in each test
 expected = {
     'memcpy_exemplars':  {'vector_memcpy':5},

@@ -1,0 +1,7 @@
+restore test_data/dpdk_sample_6_save.xml
+map function 0x6fe368 nfp_net_get_eeprom
+parse line extern long nfp_net_get_eeprom(long param_1, long* param_2);
+load function nfp_net_get_eeprom
+decompile nfp_net_get_eeprom
+print C
+print raw

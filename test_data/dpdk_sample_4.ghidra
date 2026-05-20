@@ -1,0 +1,7 @@
+restore test_data/dpdk_sample_4_save.xml
+map function 0x2879b2 rte_vhost_notify_guest
+parse line extern void rte_vhost_notify_guest(ulong param_1, ulong param_2);
+load function rte_vhost_notify_guest
+decompile rte_vhost_notify_guest
+print C
+print raw
