@@ -1,0 +1,9 @@
+restore test_data/nfp_synthetic_save.xml
+map function 0x001001ee nfp_synthetic
+parse line extern long nfp_synthetic(long param_1, long* param_2);
+map function 0x00100200 nfp_net_get_port_mac_hwinfo
+parse line extern long nfp_net_get_port_mac_hwinfo(long param_1, long* param_2);
+load function nfp_synthetic
+decompile nfp_synthetic
+print C
+print raw
