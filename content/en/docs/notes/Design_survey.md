@@ -1,12 +1,25 @@
 ---
-title: General Transforms
-description: Survey DPDK for paths to the generalized vector loop transforms
+title: Design Survey
+description: Survey DPDK for priorities in networking and driver-centric analyses
 weight: 140
 ---
 
-What vectorized loop patterns would benefit most from Ghidra transforms?  Work to date has
-concentrated on well-known library functions like `memcpy`.  Modern compilers can transform
+What further Ghidra analyses and plugins would benefit most from processor-specific plugins?
+Work to date has concentrated on transforming common RISC-V vector instruction sequences into
+well-known library functions like `memcpy`.  Vector instructions are found in many other contexts,
+making for confusing decompiler outputs.  Modern compilers can transform
 general loops into vectorized sequences which have no direct and well-known library representation.
+
+The goal here is to take a sample binary, `dpdk-l3fwd`, and explore decompiler code that adds clarity to a reverse engineering
+exercise at reasonable cost.  Given a sample function from such a binary, the key questions are often:
+
+* Do I care enough about what this function does to understand its internals?
+* What additional tools might be helpful in deciding the function can be safely ignored?
+* What is the complexity and generality of those additional tools?
+
+There's a higher level question to be resolved too - what are the tradeoffs between decompiler correctness and decompiler generated
+insight?  Do we need the decompiler to faithfully show how all corner cases are handled, or just provide a sufficiently good approximation
+of the function's semantics to establish its relevance?
 
 Start with a survey of dpdk-l3fwd to see what patterns are most common.
 
@@ -35,7 +48,7 @@ The most common patterns - after removing known `vector_memcpy` and similar patt
 
 Let's examine a few of those.
 
-** vsetvli_e64m1tama, vid_v, vrsub_vx
+## vsetvli_e64m1tama, vid_v, vrsub_vx
 
 This is actually a prolog for a loop that copies 64 bit elements in reverse order.  The generated code implements the loop in several blocks:
 * if the number of elements is small (less than 14) or able to fit entirely within the vector register (after checking `vlenb`), then a simple scalar
@@ -171,7 +184,7 @@ do {
 
 This might be replaced by a vector_full_register copy with transposition function.
 
-** vsetvli_e8mf8tama, vle64_v, vse64_v
+## vsetvli_e8mf8tama, vle64_v, vse64_v
 
 ```c
 uint *puVar9;
@@ -200,7 +213,8 @@ That one is a little confusing.  The relevant source code is:
 ```
 
 The `e8mf8` term looks to be effectively the same as `e64m1`, since the `vle64` and `vse64` instructions will move 64 bit elements.
-That makes this essentially a variant of `vector_memcpy`, with the possibility of enforcing memory alignment rules.
+One difference is that the move is measured in bytes, not 64 bit elements.
+That makes this essentially a variant of `vector_memcpy`, with the possibility of enforcing 64 bit memory alignment rules.
 
 There are several similar vector sequences suggesting a pattern:
 
@@ -213,3 +227,85 @@ vsetvli_e8m1tama, vle8_v, vse8_v
 
 These may all be `std::ranges::copy(a, b.begin());` where the amount of data to copy is always specified in bytes, not elements, and any element
 alignment rules are preserved.
+
+## Design choices
+
+We assume that the Ghidra user will prefer the decompiler to display
+
+```c
+vector_memcpy(dest, src, size);
+```
+
+rather than:
+
+```as
+memcpy_v1:
+    vsetvli                        a3,size,e8,m1,ta,ma
+    vle8.v                         v1,(src)
+    c.sub                          size,a3
+    c.add                          dest,a3
+    vse8.v                         v1,(dest)
+    c.add                          src,a3
+    c.bnez                         size,memcpy_v1
+```
+
+That implicitly assumes:
+* The user is not interested in the case that source and destination sizes overlap, or that the compiler has determined
+  that this condition is not possible due to known memory layout data.
+* The compiler treats registers `a3`, `src`, `dest`, and `size` as pure temporary registers with no descendants.
+  Note that the plugin will avoid making this transform if the Ghidra decompiler can't verify that treatment.
+
+The user might alternatively want to see this rendered as:
+
+`std::ranges::copy(src, dest.begin());`
+
+The dpdk survey raises more options, with common patterns like
+
+```as
+LAB_ram_0043ca70:
+    vsetvli                        a5,t1,e8,mf8,ta,ma
+    vle64.v                        v1,(t5)
+    sub                            t1,t1,a5
+    sh3add                         t5,a5,t5
+    vse64.v                        v1,(a4)
+    sh3add                         a4,a5,a4
+    bne                            t1,zero,LAB_ram_0043ca70
+```
+
+This is very similar to a `vector_memcpy` sequence, with the added assumption that the elements are each 64 bits.
+Presumably the compiler wants to avoid making byte-level memory accesses when 64 bit accesses are requested, either for
+microarchitecture or performance reasons.
+
+The design decision here is whether to map all of these to the typeless `vector_memcpy` representation or to try and infer
+argument type information and pass that on to the decompiler.
+
+Since this is a research project, let's add an experimental set of transforms with inferred typing, roughly based on the `std::ranges`
+methods and/or `std::algorithms`.  The example above might be transformed into:
+
+```cpp
+void vector_ranges_copy(int64_t* srcBegin, int64_t* srcEnd, int64_t* dstBegin);
+...
+vector_ranges_copy(t5, t5+t1, a4);
+```
+
+The function `vector_ranges_copy` would be overloaded with multiple source type variants.
+
+### lambda applications
+
+If we want to pursue the C++ ranges or views representations, then the next step *could* be to find good early examples of
+the `std::ranges::transform` methods.  In C++ this could look something like:
+
+```cpp
+std::vector<Item> items = {{1}, {2}, {3}};
+std::vector<int> results(3);
+
+// Eagerly transform into the 'results' vector
+// Uses a projection to access '.value'
+std::ranges::transform(items, results.begin(),
+                        [](int v) { return v + 10; },
+                        &Item::value);
+```
+
+Are there common patterns like this we can start to look at?  Nothing obvious stands out, so defer this path for now.
+Instead, consider extending the survey code to generate hints for the user rather than transforms to manifest autonomously.
+The dpdk function `eth_xtats_get_by_id` looks like the kind of complex vector stanza that badly needs some hints.
