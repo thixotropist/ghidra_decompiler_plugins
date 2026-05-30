@@ -1,8 +1,8 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index e71bf7ad..a9cd6735 100644
+index 97c33cd9..24ee1a5d 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-@@ -639,6 +639,12 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
+@@ -640,6 +640,12 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
    parseProcessorConfig(store);
    newtrans->setDefaultFloatFormats(); // If no explicit formats registered, put in defaults
    parseCompilerConfig(store);
@@ -36,11 +36,11 @@ index ebd0e843..b8d50b4e 100644
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-index bf7103d9..d957a3cb 100644
+index aa154772..4e015acd 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-@@ -1246,6 +1246,12 @@ void BlockGraph::clear(void)
-   list.clear();
+@@ -1247,6 +1247,12 @@ void BlockGraph::clear(void)
+   clearAllFlags();
  }
  
 +void BlockGraph::removeComponentLink(FlowBlock* bl)
@@ -53,10 +53,10 @@ index bf7103d9..d957a3cb 100644
  
  {
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-index 1a27abbf..1629c6c3 100644
+index 1cae714e..783915a7 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-@@ -159,6 +159,7 @@ public:
+@@ -163,6 +163,7 @@ public:
    virtual ~FlowBlock(void) {}			///< Destructor
    int4 getIndex(void) const { return index; }	///< Get the index assigned to \b this block
    FlowBlock *getParent(void) { return parent; }	///< Get the parent FlowBlock of \b this
@@ -64,7 +64,7 @@ index 1a27abbf..1629c6c3 100644
    FlowBlock *getImmedDom(void) const { return immed_dom; }	///< Get the immediate dominator FlowBlock
    FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock
    const FlowBlock *getParent(void) const { return (const FlowBlock *) parent; }	///< Get the parent FlowBlock of \b this
-@@ -379,6 +380,7 @@ protected:
+@@ -386,6 +387,7 @@ protected:
  public:
    void clear(void);					///< Clear all component FlowBlock objects
    virtual ~BlockGraph(void) { clear(); }		///< Destructor
@@ -72,7 +72,7 @@ index 1a27abbf..1629c6c3 100644
    const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
    int4 getSize(void) const { return list.size(); }	///< Get the number of components
    FlowBlock *getBlock(int4 i) const { return list[i]; }	///< Get the i-th component
-@@ -550,6 +552,7 @@ class BlockGoto : public BlockGraph {
+@@ -564,6 +566,7 @@ class BlockGoto : public BlockGraph {
  public:
    BlockGoto(FlowBlock *bl) { gototarget = bl; gototype = f_goto_goto; }	///< Construct given target block
    FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target block of the goto
@@ -81,10 +81,10 @@ index 1a27abbf..1629c6c3 100644
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index f9e147e6..de444e8a 100644
+index 3512f713..1a0626d7 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -2350,7 +2350,6 @@ int4 ActionDefaultParams::apply(Funcdata &data)
+@@ -2390,7 +2390,6 @@ int4 ActionDefaultParams::apply(Funcdata &data)
  void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
  
  {
@@ -92,7 +92,7 @@ index f9e147e6..de444e8a 100644
    Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
    int4 valsize = vn->getSize();
    if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
-@@ -3064,11 +3063,6 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
+@@ -3143,11 +3142,6 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
      return -1;
    }
    if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
@@ -104,7 +104,7 @@ index f9e147e6..de444e8a 100644
  
    if (def->code() == CPUI_PTRSUB) { // A dereference
      Varnode *basevn = def->getIn(0);
-@@ -5436,7 +5430,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5572,7 +5566,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -113,7 +113,7 @@ index f9e147e6..de444e8a 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5725,6 +5719,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5861,6 +5855,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleBitFieldIn("bitfields"));
      actcleanup->addRule( new RulePullAbsorb("bitfields"));
      actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
@@ -357,7 +357,7 @@ index 00000000..92bde3eb
 +}
 +#endif /* __PLUGIN_MANAGER_HH__ */
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
-index 9fe8b78d..47a1b57f 100644
+index c9074bfa..67523dce 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
 @@ -477,7 +477,11 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
