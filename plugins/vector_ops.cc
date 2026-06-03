@@ -351,6 +351,78 @@ void VectorLoop::static_init()
                 loop.vectorOps.push_back(vOp);
                 loop.vLogicalOps.push_back(vOp);
         };
+    // instructions found in typed range copy sequences
+    opHandlers[riscvNameToGhidraId["vsetvli_e8mf8tama"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vsetvli_e8mf4tama"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vsetvli_e8mf2tama"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vle16_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vse16_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vle32_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vse32_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vle64_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vse64_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    // vector whole register loads and stores
+    opHandlers[riscvNameToGhidraId["vl1re8_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vl1re16_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vl1re32_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vl1re64_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vs1r_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
     fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
         "innerProduct", "unknown", "other"};
 }
