@@ -10,11 +10,11 @@ namespace ghidra
 {
 AddrSpace* csRegisterAddrSpace; ///< The non-standard Address space built to contain csreg definitions
 
-void riscv_sleigh_init(ghidra::Architecture* arch)
+void riscv_sleigh_init(ghidra::Architecture* thisArch)
 {
-    pLogger->info("Attempting arch->getSpaceByName(\"csreg\")");
+    pLogger->info("Attempting thisArch->getSpaceByName(\"csreg\")");
     pLogger->flush();
-    csRegisterAddrSpace = arch->getSpaceByName("csreg");
+    csRegisterAddrSpace = thisArch->getSpaceByName("csreg");
     if (csRegisterAddrSpace == nullptr)
     {
         pLogger->error("Unable to find csreg address space");
@@ -24,14 +24,14 @@ void riscv_sleigh_init(ghidra::Architecture* arch)
     pLogger->trace("csRegisterAddrSpace index is {0:d}", csRegisterAddrSpace->getIndex());
     pLogger->flush();
 }
-void riscv_sleigh_inspect(ghidra::Architecture* arch, std::stringstream& ss)
+void riscv_sleigh_inspect(ghidra::Architecture* thisArch, std::stringstream& ss)
 {
     ss << "Inspecting SLEIGH objects for this architecture" << std::endl;
     // show the Address space IDs
     ss << "Standard and SLA-specific Address spaces by index:" << std::endl;
-    for (int i = 0; i < arch->numSpaces(); i++)
+    for (int i = 0; i < thisArch->numSpaces(); i++)
     {
-        ss << "\t" << std::dec << i << " : " << arch->getSpace(i)->getName() << std::endl;
+        ss << "\t" << std::dec << i << " : " << thisArch->getSpace(i)->getName() << std::endl;
     }
 }
 }

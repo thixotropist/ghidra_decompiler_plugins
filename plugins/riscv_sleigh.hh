@@ -23,12 +23,12 @@ static const uintb vlRegisterIndex = 0x6100; /// The offset in csreg space given
 /**
  * @brief Initialize any global objects dependent upon SLEIGH
  */
-void riscv_sleigh_init(ghidra::Architecture* arch);
+void riscv_sleigh_init(ghidra::Architecture* thisArch);
 /**
  * @brief Inspect identifiers that may change with SLA file evolutions
  * @param arch The Architecture conveying these SLA file contents
  * @param ss A stringstream to receive the report
  */
-void riscv_sleigh_inspect(ghidra::Architecture* arch, std::stringstream& ss);
+void riscv_sleigh_inspect(ghidra::Architecture* thisArch, std::stringstream& ss);
 }
 #endif /* RISCV_SLEIGH_HH_ */

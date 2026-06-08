@@ -57,7 +57,8 @@ VectorMatcher::VectorMatcher(ghidra::Funcdata& fData, ghidra::PcodeOp* initialVs
     vNumElem = vsetOp->getIn(1);
     // determine if we have a loop and if so, where does it start and stop
     loopBlock = vsetOp->getParent();
-    loopModel.analyze(vsetOp);
+    loopModel.setVsetOp(vsetOp);
+    loopModel.analyze();
     // terminate construction if this vset op doesn't start a loop
     if (!loopModel.loopFound) return;
     // Follow dependencies of phi nodes within the loop to identify

@@ -257,7 +257,8 @@ void FunctionEditor::removeUnusedOps(FlowBlock* block)
     }
 }
 
-void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock, std::vector<FlowBlock*>* relatedBlocks)
+void FunctionEditor::simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock,
+    const std::vector<FlowBlock*>* relatedBlocks)
 {
     std::set<PcodeOp*> uniqueOpsToDelete(opsToDelete.begin(), opsToDelete.end());
     for (auto op: uniqueOpsToDelete)
@@ -378,7 +379,7 @@ void FunctionEditor::simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasi
     pLogger->trace("FunctionEditor::simplifyBlocks exits");
 }
 
-bool FunctionEditor::fixup(std::stringstream& ss)
+bool FunctionEditor::fixup(const std::stringstream& fixups)
 {
     bool fixupsPerformed = false;
     std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};

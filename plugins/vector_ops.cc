@@ -457,7 +457,7 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
 {
 }
 
-void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
+void VectorLoop::analyze()
 {
     examine_control_flow(vsetOp);
     // warn if this vset op doesn't start a loop
@@ -475,7 +475,7 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     // Identify key registers and vector operations within a loop,
     // checking for unexpected elements that may veto a match.
     // Begin modeling this as a potential vector function.
-    examine_loop_pcodeops(loopBlock);
+    examine_loop_pcodeops();
     // Identify common loop elements like vector loads, vector stores, and element counters
     collect_common_elements();
     // Identify vector and other instructions found immediately after the loop,
@@ -707,7 +707,7 @@ void VectorLoop::collect_phi_nodes()
     }
 }
 
-void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
+void VectorLoop::examine_loop_pcodeops()
 {
     std::stringstream ss;
     trace = ghidra::pLogger->should_log(spdlog::level::trace);
