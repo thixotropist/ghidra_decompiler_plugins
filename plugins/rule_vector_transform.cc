@@ -14,26 +14,26 @@
 
 namespace riscv_vector {
 
-RuleCsrRemoveHeritage::RuleCsrRemoveHeritage(const std::string &g) :
+RuleCsrAdjustments::RuleCsrAdjustments(const std::string &g) :
     ghidra::Rule(g, 0, "csrRemoveHeritage") {}
 
-ghidra::Rule* RuleCsrRemoveHeritage::clone(const ghidra::ActionGroupList &grouplist) const
+ghidra::Rule* RuleCsrAdjustments::clone(const ghidra::ActionGroupList &grouplist) const
 {
     if (!grouplist.contains(getGroup())) {
-        ghidra::pLogger->error("RuleCsrRemoveHeritage::clone failed for lack of a group");
+        ghidra::pLogger->error("RuleCsrAdjustments::clone failed for lack of a group");
         return (ghidra::Rule *)0;
     }
-    ghidra::pLogger->trace("Prepared a new RuleCsrRemoveHeritage for Action database");
+    ghidra::pLogger->trace("Prepared a new RuleCsrAdjustments for Action database");
     ghidra::pLogger->flush();
-    return new RuleCsrRemoveHeritage(getGroup());
+    return new RuleCsrAdjustments(getGroup());
 }
 
-void RuleCsrRemoveHeritage::getOpList(std::vector<ghidra::uint4> &oplist) const {
+void RuleCsrAdjustments::getOpList(std::vector<ghidra::uint4> &oplist) const {
     oplist.push_back(ghidra::CPUI_CALLOTHER);
 }
 
 static std::set<ghidra::intb> functions_processed;
-ghidra::int4 RuleCsrRemoveHeritage::applyOp(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data)
+ghidra::int4 RuleCsrAdjustments::applyOp(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data)
 {
     [[maybe_unused]] bool trace = ghidra::pLogger->should_log(spdlog::level::trace);
     // require one of several vset* instructions to begin this pattern,
@@ -46,11 +46,12 @@ ghidra::int4 RuleCsrRemoveHeritage::applyOp(ghidra::PcodeOp *firstOp, ghidra::Fu
     if (!(vsetImmediate || vsetRegister)) return ghidra::RETURN_NO_TRANSFORM;
     // we have a vsetivli or a vsetvli instruction
     ghidra::intb function_start = data.getAddress().getOffset();
-    if (functions_processed.find(function_start) != functions_processed.end())
+    // Never process a given function twice
+    if (functions_processed.contains(function_start))
         return ghidra::RETURN_NO_TRANSFORM;
     functions_processed.insert(function_start);
-    ActionPluginPrepare actPrep(ghidra::pLogger);
-    actPrep.purgeCsrHeritage(data);
+    ActionPluginPrepare actPrep(data, ghidra::pLogger);
+    actPrep.adjustCsrProcessing();
     return ghidra::RETURN_TRANSFORM_PERFORMED;
 }
 

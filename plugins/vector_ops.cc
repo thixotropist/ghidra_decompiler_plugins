@@ -351,6 +351,78 @@ void VectorLoop::static_init()
                 loop.vectorOps.push_back(vOp);
                 loop.vLogicalOps.push_back(vOp);
         };
+    // instructions found in typed range copy sequences
+    opHandlers[riscvNameToGhidraId["vsetvli_e8mf8tama"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vsetvli_e8mf4tama"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vsetvli_e8mf2tama"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vle16_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vse16_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vle32_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vse32_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vle64_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vse64_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    // vector whole register loads and stores
+    opHandlers[riscvNameToGhidraId["vl1re8_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vl1re16_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vl1re32_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vl1re64_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+            loop.vectorOps.push_back(vOp);
+        };
+    opHandlers[riscvNameToGhidraId["vs1r_v"]] =
+        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
+            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+            loop.vectorOps.push_back(vOp);
+        };
     fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
         "innerProduct", "unknown", "other"};
 }
@@ -385,7 +457,7 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
 {
 }
 
-void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
+void VectorLoop::analyze()
 {
     examine_control_flow(vsetOp);
     // warn if this vset op doesn't start a loop
@@ -403,7 +475,7 @@ void VectorLoop::analyze(ghidra::PcodeOp* vsetOp)
     // Identify key registers and vector operations within a loop,
     // checking for unexpected elements that may veto a match.
     // Begin modeling this as a potential vector function.
-    examine_loop_pcodeops(loopBlock);
+    examine_loop_pcodeops();
     // Identify common loop elements like vector loads, vector stores, and element counters
     collect_common_elements();
     // Identify vector and other instructions found immediately after the loop,
@@ -635,7 +707,7 @@ void VectorLoop::collect_phi_nodes()
     }
 }
 
-void VectorLoop::examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock)
+void VectorLoop::examine_loop_pcodeops()
 {
     std::stringstream ss;
     trace = ghidra::pLogger->should_log(spdlog::level::trace);

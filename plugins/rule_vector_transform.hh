@@ -21,15 +21,15 @@ namespace riscv_vector
  * @details This should apply just once in any function referencing vector operations.  It would
  * be better as an Action than as a Rule.  It should run before the vector transform rule.
  */
-class RuleCsrRemoveHeritage : public ghidra::Rule
+class RuleCsrAdjustments : public ghidra::Rule
 {
     public:
     /**
-     * @brief Construct a new Rule CSR Remove Heritage object
+     * @brief Construct a new Rule CSR Adjustment object
      *
      * @param g the name of an existing Ghidra rule group
      */
-    explicit RuleCsrRemoveHeritage(const std::string &g); ///< Constructor
+    explicit RuleCsrAdjustments(const std::string &g); ///< Constructor
     /**
      * @brief Allow the ActionDatabase to clone this rule
      *

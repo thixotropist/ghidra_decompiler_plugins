@@ -143,6 +143,7 @@ extern "C" int plugin_init(void *context)
 
     // handle any static initializers
     riscv_vector::VectorLoop::static_init();
+    riscv_vector::ActionPluginPrepare::static_init();
     pLogger->info("Plugin RISC-V Vector support initialized");
     pLogger->flush();
     return 0;
@@ -164,7 +165,7 @@ extern "C" int plugin_getrules(std::vector<Rule*>& rules)
         pLogger->trace("{0:s}", ss.str());
     }
     pLogger->trace("Adding a new Rules to pluginrules");
-    rules.push_back(new riscv_vector::RuleCsrRemoveHeritage("pluginrules"));
+    rules.push_back(new riscv_vector::RuleCsrAdjustments("pluginrules"));
     rules.push_back(new riscv_vector::RuleVectorTransform("pluginrules"));
     pLogger->flush();
     return 1;

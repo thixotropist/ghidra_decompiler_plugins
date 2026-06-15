@@ -258,10 +258,17 @@ class VectorLoop
      */
     static void static_init();
     /**
-     * @brief Analyze the loop to collect traits useful in matching and transforms
-     * @param vsetOp The vsetvli or vsetivli instruction found at the top of the loop
+     * @brief Set the VsetOp object
+     * @param thisVsetOp The vsetvli or vsetivli instruction found at the top of the loop
      */
-    void analyze(ghidra::PcodeOp* vsetOp);
+    void setVsetOp(ghidra::PcodeOp* thisVsetOp)
+    {
+      vsetOp = thisVsetOp;
+    }
+    /**
+     * @brief Analyze the loop to collect traits useful in matching and transforms
+     */
+    void analyze();
     /**
      * @brief log this model to the current logfile
      */
@@ -311,9 +318,8 @@ class VectorLoop
     void clean_csr_phi_nodes();
     /**
      * @brief Examine pcode ops within a loop to locate key vector operations.
-     * @param loopBlock The Ghidra block containing the trigger vset instruction
      */
-    void examine_loop_pcodeops(const ghidra::BlockBasic* loopBlock);
+    void examine_loop_pcodeops();
     /**
      * @brief Identify common loop elements like vector loads, vector stores, and element counters
      */

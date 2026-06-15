@@ -68,7 +68,6 @@ bool sameRegister(const Varnode* a, const Varnode* b);
 
 /**
  * @brief Methods to edit a Ghidra function's data, for instance to remove Do ... While wrappers.
- *
  */
 class FunctionEditor
 {
@@ -113,13 +112,14 @@ class FunctionEditor
      * @param epilogBlock an optional epilog block to be purged of unused ops
      * @param relatedBlocks prolog and other blocks to be purged of unused ops
      */
-    void simplifyBlocks(std::vector<PcodeOp*> opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock, std::vector<FlowBlock*>* relatedBlocks);
+    void simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, BlockBasic* loopBlock, BlockBasic* epilogBlock,
+      const std::vector<FlowBlock*>* relatedBlocks);
     /**
      * @brief Scan the entire function for - and correct if possible - any remaining errors left by less-than-perfect transforms
-     * @param ss The stringstream to collect notifications of any changes
+     * @param fixups The stringstream to collect notifications of any changes
      * @returns True if any fixups were necessary
      */
-    bool fixup(std::stringstream& ss);
+    bool fixup(const std::stringstream& fixups);
   private:
     Funcdata& data;       ///<@ Ghidra function data
     std::stringstream ss; ///<@ string buffer to collect printRaw output

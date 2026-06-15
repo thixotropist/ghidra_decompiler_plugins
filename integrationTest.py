@@ -40,10 +40,11 @@ REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "whisper_sample_14", "whisper_sample_15", "whisper_sample_16",
                     "whisper_sample_17", "whisper_sample_18", "whisper_sample_19",
                     "whisper_main",
-                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3")
+                    "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3",
+                    "dpdk_sample_4", "dpdk_sample_5", "dpdk_sample_6")
 
 # if some tests fail, defer them
-DEFERRED_TESTS = ()
+DEFERRED_TESTS = ("dpdk_sample_5", "dpdk_sample_6")
 # show the expected number of matches in each test
 expected = {
     'memcpy_exemplars':  {'vector_memcpy':5},
@@ -52,7 +53,7 @@ expected = {
     'whisperInit':       {'vector_memset':1, 'vector_memcpy':3},
     'whisper_sample_1a': {'vector_memcpy':1, 'vector_strlen':0},
     'whisper_sample_1b': {'vector_memcpy':1, 'vector_strlen':1},
-    'whisper_main': {'vector_memset':4, 'vector_memcpy':12, 'vector_strlen':1},
+    'whisper_main': {'vector_memset':4, 'vector_memcpy':13, 'vector_strlen':1},
     'whisper_sample_2': {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_3':  {'vector_memcpy':5,},
     'whisper_sample_4':  {'vector_memset':16, 'vector_memcpy':85, 'vector_strlen':0},
@@ -62,14 +63,14 @@ expected = {
     'whisper_sample_8':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_10':  {'vector_memset':0, 'vector_memcpy':3, 'vector_strlen':0},
     'whisper_sample_11':  {'vector_strcmp':1},
-    'whisper_sample_12':  {'vector_memset':2, 'vector_memcpy':5, 'vector_strlen':1},
+    'whisper_sample_12':  {'vector_memset':2, 'vector_memcpy':6, 'vector_strlen':1},
     'whisper_sample_13a':  {'vector_memcpy':0},
     'whisper_sample_13b':  {'vector_memcpy':1},
     'whisper_sample_14': {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'whisper_sample_15':  {'vector_memcpy':1, 'vector_strlen':1},
     'whisper_sample_16':  {'vector_memcpy':3},
     'whisper_sample_17':  {'vector_strlen':1},
-    'whisper_sample_18': {'vector_memset':1, 'vector_memcpy':7, 'vector_strlen':4},
+    'whisper_sample_18': {'vector_memset':1, 'vector_memcpy':8, 'vector_strlen':4},
     'whisper_sample_19': {'vector_memcpy':9, 'vector_strlen':4},
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},

@@ -1,0 +1,11 @@
+restore test_data/dpdk_sample_5_save.xml
+map function 0x22f3ec rte_swx_ctl_meter_profile_delete
+parse line extern long rte_swx_ctl_meter_profile_delete(long param_1, char* param_2);
+map function 0xfa9d0 strnlen
+parse line extern long strnlen(char*, long);
+map function 0xfaad0 free
+parse line extern void free(void*);
+load function rte_swx_ctl_meter_profile_delete
+decompile rte_swx_ctl_meter_profile_delete
+print C
+print raw
