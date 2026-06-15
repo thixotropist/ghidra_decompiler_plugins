@@ -1,7 +1,7 @@
 
 module(
     name = "decompiler_plugins",
-    version = "0.5.2",
+    version = "0.5.3",
 )
 # Use the spdlog module for C++ logging support
 bazel_dep(name = "spdlog", version = "1.15.2")
@@ -14,7 +14,7 @@ git_repository(
     name = "ghidra",
     remote = "git@github.com:thixotropist/ghidra.git",
     # This commit should be within the "isa_ext" branch
-    commit = "8164ab1e70e05336f68a10d3f7f5de0acb86eeed",
+    commit = "08d62e52ede2bfe2768ab6fd5e14026389ed5e80",
     build_file = "//:BUILD.ghidra",
     patches = ["ghidra.pat"],
     patch_strip = 1,

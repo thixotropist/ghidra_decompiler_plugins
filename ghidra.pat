@@ -1,5 +1,5 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index 97c33cd9..24ee1a5d 100644
+index 97c33cd9f8..24ee1a5d8d 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 @@ -640,6 +640,12 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
@@ -16,7 +16,7 @@ index 97c33cd9..24ee1a5d 100644
    buildAction(store);
  }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
-index ebd0e843..b8d50b4e 100644
+index ebd0e84343..b8d50b4e17 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
 @@ -33,6 +33,7 @@
@@ -36,7 +36,7 @@ index ebd0e843..b8d50b4e 100644
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-index aa154772..4e015acd 100644
+index aa154772f7..4e015acd7d 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
 @@ -1247,6 +1247,12 @@ void BlockGraph::clear(void)
@@ -53,7 +53,7 @@ index aa154772..4e015acd 100644
  
  {
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-index 1cae714e..783915a7 100644
+index 1cae714ed7..783915a7f5 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 @@ -163,6 +163,7 @@ public:
@@ -81,30 +81,10 @@ index 1cae714e..783915a7 100644
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index 3512f713..1a0626d7 100644
+index 3512f71359..f07c66f825 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -2390,7 +2390,6 @@ int4 ActionDefaultParams::apply(Funcdata &data)
- void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
- 
- {
--  if (op->doesSpecialPrinting()) return;
-   Datatype *ptrtype = op->getIn(1)->getHighTypeReadFacing(op);
-   int4 valsize = vn->getSize();
-   if ((ptrtype->getMetatype()!=TYPE_PTR)|| (((TypePointer *)ptrtype)->getPtrTo()->getSize() != valsize)) {
-@@ -3143,11 +3142,6 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
-     return -1;
-   }
-   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
--  if (def->code() == CPUI_INSERT) {
--    PcodeOp *storeOp = def->getOut()->loneDescend();
--    if (storeOp == (PcodeOp *)0 || storeOp->code() != CPUI_STORE)
--      return -1;		// INSERT output is explicit unless it is immediately used by STORE
--  }
- 
-   if (def->code() == CPUI_PTRSUB) { // A dereference
-     Varnode *basevn = def->getIn(0);
-@@ -5572,7 +5566,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5572,7 +5572,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -113,7 +93,7 @@ index 3512f713..1a0626d7 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5861,6 +5855,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5861,6 +5861,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleBitFieldIn("bitfields"));
      actcleanup->addRule( new RulePullAbsorb("bitfields"));
      actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
@@ -127,7 +107,7 @@ index 3512f713..1a0626d7 100644
  
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 new file mode 100644
-index 00000000..59c593fa
+index 0000000000..59c593fadb
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 @@ -0,0 +1,119 @@
@@ -253,7 +233,7 @@ index 00000000..59c593fa
 \ No newline at end of file
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
 new file mode 100644
-index 00000000..92bde3eb
+index 0000000000..92bde3ebbf
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
 @@ -0,0 +1,99 @@
@@ -357,7 +337,7 @@ index 00000000..92bde3eb
 +}
 +#endif /* __PLUGIN_MANAGER_HH__ */
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
-index c9074bfa..67523dce 100644
+index c9074bfa6c..67523dced8 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
 @@ -477,7 +477,11 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
@@ -373,15 +353,3 @@ index c9074bfa..67523dce 100644
    }
    builtinmap[i] = res;
    return res;
-diff --git a/MODULE.bazel b/MODULE.bazel
-new file mode 100644
-index 00000000..00bb1836
---- /dev/null
-+++ b/MODULE.bazel
-@@ -0,0 +1,6 @@
-+###############################################################################
-+# Bazel now uses Bzlmod by default to manage external dependencies.
-+# Please consider migrating your external dependencies from WORKSPACE to MODULE.bazel.
-+#
-+# For more details, please check https://github.com/bazelbuild/bazel/issues/18958
-+###############################################################################

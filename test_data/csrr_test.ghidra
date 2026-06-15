@@ -1,0 +1,16 @@
+# The csrr_test binary shows the dpdk function acl_merge_trie in the native failing form
+# and as a patched binary with csrr r%,vlenb replaced with li r%, 0x20
+
+restore test_data/csrr_test_save.xml
+map function 0x100000 acl_merge_trie_fail
+parse line extern long acl_merge_trie_fail(void *param_1,void *param_2,void *param_3,long param_4,void **param_5);
+map function 0x100426 acl_merge_trie_patched
+parse line extern long acl_merge_trie_patched(void *param_1,void *param_2,void *param_3,long param_4,void **param_5);
+load function acl_merge_trie_fail
+decompile acl_merge_trie_fail
+print C
+print raw
+load function acl_merge_trie_patched
+decompile acl_merge_trie_patched
+print C
+print raw

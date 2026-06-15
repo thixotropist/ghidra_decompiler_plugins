@@ -141,3 +141,46 @@ Inspect the source code to learn:
 * a Varnode is considered 'free' if its flags show that it is never written and never an input
 * The VarnodeBank defines a setInput(Varnode*) method that modifies an existing Varnode into an input varnode
 * It is not clear how one creates a new Varnode with the input flag set.
+
+## CSR adjustments to the stack pointer
+
+Compilers sometimes have to save vector registers on the stack, especially when vector operations coincide with
+function calls.  To do that they need to know the *runtime* size of a vector register so that stack space can be allocated.
+They do this with a `csrr r%,vlenb` instruction followed by a subtraction to the stack pointer. This can complicate
+subsequent reads of stack variables, as a matching addition to the stack pointer offset is needed.  Ghidra has no knowledge of the
+`vlenb` register values and does not track the count of variable-length register save areas allocated on a per-block basis.
+
+The disassembly annotated with the generated PCode can look like this:
+
+```as
+00100020  csrr  t0,vlenb
+00100024  sub   sp,sp,t0    ; u0x10000075(0x00100024:67a) = - c0x0c22(i)
+
+
+0010024a  csrr  a4,vlenb
+0010024e  addi  a3,a4,0xa0  ;
+00100252  add   s10,sp,a3   ; u0x10000265(0x00100252:a49) = c0x0c22(0x00100230:6d8) + u0x10000075(0x00100024:67a)
+                            ; u0x1000040d(0x00100252:a7e) = sp(i) -> #0xffffffffffffff70
+                            ; s10(0x00100252:a7f) = u0x1000040d(0x00100252:a7e) + u0x10000265(0x00100252:a49)(*#0x1)
+00100256  addi  a3,a4,0x90
+0010025a  add   s0,sp,a3    ; u0x1000026d(0x0010025a:a4a) = c0x0c22(0x00100230:6d8) + u0x10000075(0x00100024:67a)
+                            ; u0x10000425(0x0010025a:a81) = sp(i) -> #0xffffffffffffff60
+                            ; s0(0x0010025a:a82) = u0x10000425(0x0010025a:a81) + u0x1000026d(0x0010025a:a4a)(*#0x1)
+```
+
+The decompilation of these lines shows the odd behavior:
+
+```c
+// 0x00100020
+lVar10 = -vlenb;
+// 0x0010024a
+lVar21 = vlenb + lVar10;
+lVar11 = vlenb + lVar10;
+// 0x0010028e
+auVar26 = vle32_v(auStack_a0 + lVar11);
+// 0x0x001002b2
+vse32_v(auVar25,auStack_90 + lVar21);
+```
+
+Since we know that `vlenb` is a constant set at runtime, it follows that `lVar21` and `lVar11` are both equal to zero.
+The cleanup may be as simple as changing all references to `c0x0c22` into references to a new constant `Varnode`.

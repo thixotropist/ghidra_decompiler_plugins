@@ -1,4 +1,5 @@
 #include "riscv_sleigh.hh"
+#include "riscv_csr.hh"
 #include "riscv.hh"
 
 /**
@@ -20,7 +21,6 @@ void riscv_sleigh_init(ghidra::Architecture* thisArch)
         pLogger->error("Unable to find csreg address space");
         pLogger->flush();
     }
-    pLogger->trace("Identified vl register offset as 0x{0:x}", vlRegisterIndex);
     pLogger->trace("csRegisterAddrSpace index is {0:d}", csRegisterAddrSpace->getIndex());
     pLogger->flush();
 }

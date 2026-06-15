@@ -116,7 +116,7 @@ class FunctionEditor
       const std::vector<FlowBlock*>* relatedBlocks);
     /**
      * @brief Scan the entire function for - and correct if possible - any remaining errors left by less-than-perfect transforms
-     * @param ss The stringstream to collect notifications of any changes
+     * @param fixups The stringstream to collect notifications of any changes
      * @returns True if any fixups were necessary
      */
     bool fixup(const std::stringstream& fixups);
