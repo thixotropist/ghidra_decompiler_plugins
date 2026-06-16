@@ -1,23 +1,16 @@
-#include <ranges>
+#include "spdlog/spdlog.h"
 
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/types.h"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/type.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/op.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/address.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/space.hh"
-#include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
+#include "Ghidra/Features/Decompiler/src/decompile/cpp/action.hh"
 
-#include "inspector.hh"
-#include "riscv_csr.hh"
+#include "riscv.hh"
 #include "riscv_sleigh.hh"
+#include "action_prepare.hh"
 
 namespace riscv_vector
 {
-ActionPluginPrepare::ActionPluginPrepare(ghidra::Funcdata& thisData, std::shared_ptr<spdlog::logger> myLogger) :
-    data(thisData),
-    logger(myLogger)
-{
-    logger->info("Initializing ActionPluginPrepare");
-}
 
 // static class objects
 ghidra::Varnode* ActionPluginPrepare::vlenb_constant_vn;
@@ -29,9 +22,9 @@ void ActionPluginPrepare::static_init()
     // Force VLENB to a constant value
     replacement_values.insert({{vlenbRegisterOffset, 32}});
 }
-
-void ActionPluginPrepare::adjustCsrProcessing()
+ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
 {
+    ghidra::pLogger->trace("Applying ActionPluginPrepare");
     std::stringstream ss;
 
     if (ghidra::inspector->audit_varnodes)
@@ -60,12 +53,13 @@ void ActionPluginPrepare::adjustCsrProcessing()
                 op->printRaw(ss);
                 ghidra::pLogger->trace("\t0x{0:x}: [{1:d}] {2:s}", addr, opcode_as_int, ss.str());
                 ss.str("");
-                logger->info("\t\t ↑↑↑ Removing this opcode");
+                ghidra::pLogger->info("\t\t ↑↑↑ Removing this opcode");
                 ss.str("");
                 op->getOut()->printInfo(ss);
-                logger->info("\t\t\tinfo: {0:s}", ss.str());
+                ghidra::pLogger->info("\t\t\tinfo: {0:s}", ss.str());
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                 opsToDelete.push_back(modifiableOp);
+                count++;
                 continue;
             }
         }
@@ -78,10 +72,10 @@ void ActionPluginPrepare::adjustCsrProcessing()
             if (addrSpace == ghidra::csRegisterAddrSpace)
             {
                 op->printRaw(ss);
-                logger->info("\t\t  Examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
+                ghidra::pLogger->info("\t\t  Examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
                 ss.str("");
                 vn->printInfo(ss);
-                logger->info("\t\t\t{0:s}", ss.str());
+                ghidra::pLogger->info("\t\t\t{0:s}", ss.str());
                 ss.str("");
                 ghidra::intb offset = vn->getAddr().getOffset();
                 if (offset == vlenbRegisterOffset)
@@ -95,10 +89,11 @@ void ActionPluginPrepare::adjustCsrProcessing()
                     data.opUnsetInput(modifiableOp, slot);
                     data.opSetInput(modifiableOp, vlenb_constant_vn, slot);
                     op->printRaw(ss);
-                    logger->info("\t\t  Replaced slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
+                    ghidra::pLogger->info("\t\t  Replaced slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
                     ss.str("");
-                    logger->info("\t\t\t{0:s}", ss.str());
+                    ghidra::pLogger->info("\t\t\t{0:s}", ss.str());
                     ss.str("");
+                    count++;
                     continue;
                 }
             }
@@ -121,15 +116,16 @@ void ActionPluginPrepare::adjustCsrProcessing()
             if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace) && vn->isFree())
             {
                 vn->printRaw(ss);
-                logger->info("Changing Varnode {0:s} from free to input", ss.str());
+                ghidra::pLogger->info("Changing Varnode {0:s} from free to input", ss.str());
                 ss.str("");
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                 data.opUnsetInput(modifiableOp, slot);
                 ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
                 ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
                 data.opSetInput(modifiableOp, newVn, slot);
+                count++;
                 op->printRaw(ss);
-                logger->info("\tnew PcodeOp is {0:s}", ss.str());
+                ghidra::pLogger->info("\tnew PcodeOp is {0:s}", ss.str());
                 ss.str("");
             }
         }
@@ -141,6 +137,7 @@ void ActionPluginPrepare::adjustCsrProcessing()
         ghidra::inspector->auditVarnodes(data, outFile);
         outFile.close();
     }
-    logger->flush();
+    ghidra::pLogger->flush();
+    return 0;
 }
 }

@@ -13,7 +13,6 @@
 
 #include "inspector.hh"
 #include "riscv.hh"
-#include "riscv_csr.hh"
 
 /**
  * @file framework.hh

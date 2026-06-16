@@ -254,6 +254,7 @@ by the plugins.
 * ActionSpacebase
 * ActionNonzeroMask
 * ActionInferTypes
+* **Plugin Manager loads user Actions at this point**
 * [stackstall](#stackstall)
 * ActionRedundBranch
 * ActionBlockStructure
@@ -412,7 +413,7 @@ by the plugins.
 * RuleDoubleLoad
 * RuleDoubleStore
 * RuleDoubleIn
-RuleDoubleOut
+* RuleDoubleOut
 * **extra_pool_rules inserted here (not currently used?)**
 
 ### oppool2
@@ -444,4 +445,4 @@ RuleDoubleOut
 * RuleSplitStore
 * RuleStringCopy
 * RuleStringStore
-* **Plugin Manager loads user rules at this point**
+* **Plugin Manager loads user Rules at this point**

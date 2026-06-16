@@ -1,8 +1,8 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index 97c33cd9f8..24ee1a5d8d 100644
+index 97c33cd9f8..d2f7711eaf 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-@@ -640,6 +640,12 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
+@@ -640,6 +640,13 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
    parseProcessorConfig(store);
    newtrans->setDefaultFloatFormats(); // If no explicit formats registered, put in defaults
    parseCompilerConfig(store);
@@ -11,6 +11,7 @@ index 97c33cd9f8..24ee1a5d8d 100644
 +  // pcode ops defined before pm.initRules is called.
 +  pm.loadPlugin();
 +  pm.initPlugin(this);
++  pm.initActions(this);
 +  pm.initRules(this);
    // Action stuff will go here
    buildAction(store);
@@ -81,7 +82,7 @@ index 1cae714ed7..783915a7f5 100644
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index 3512f71359..f07c66f825 100644
+index 3512f71359..af6596a3a3 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 @@ -5572,7 +5572,7 @@ void ActionDatabase::buildDefaultGroups(void)
@@ -93,7 +94,19 @@ index 3512f71359..f07c66f825 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5861,6 +5861,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5653,6 +5653,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+       actmainloop->addAction( new ActionNonzeroMask("analysis") );
+       actmainloop->addAction( new ActionInferTypes("typerecovery") );
+       actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
++      if(conf->pm.loaded) {
++      for (std::vector<Action*>::iterator it = conf->pm.actions.begin(); it != conf->pm.actions.end(); ++it) {
++        actmainloop->addAction(*it);
++      }
++    }
+       actstackstall = new ActionGroup(Action::rule_repeatapply,"stackstall");
+       {
+ 	actprop = new ActionPool(Action::rule_repeatapply,"oppool1");
+@@ -5861,6 +5866,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleBitFieldIn("bitfields"));
      actcleanup->addRule( new RulePullAbsorb("bitfields"));
      actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
@@ -107,10 +120,10 @@ index 3512f71359..f07c66f825 100644
  
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 new file mode 100644
-index 0000000000..59c593fadb
+index 0000000000..d805b72f8a
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,129 @@
 +#include <iostream>
 +#include "spdlog/spdlog.h"
 +#include "spdlog/sinks/basic_file_sink.h"
@@ -121,6 +134,7 @@ index 0000000000..59c593fadb
 +{
 +extern "C" {
 +    typedef int (*plugin_init_func)(Architecture* arch); ///< A plugin initializer
++    typedef int (*plugin_getactions_func)(std::vector<Action*>& new_actions); ///< Fetches plugin rules
 +    typedef int (*plugin_getrules_func)(std::vector<Rule*>& new_rules); ///< Fetches plugin rules
 +    typedef DatatypeUserOp* (*plugin_registerBuiltin_func)(Architecture* arch, int4 i); ///<@brief Register a new builtin
 +    typedef void (*plugin_cleanup_func)(); ///<@brief release any heap resources
@@ -179,6 +193,15 @@ index 0000000000..59c593fadb
 +    return initialization_result;
 +}
 +
++int PluginManager::initActions(const Architecture* arch) {
++    if (!loaded) return 0;
++    // TODO: verify that this architecture is compatible with RISCV vector instructions
++    plugin_getactions_func f_getactions =  reinterpret_cast<plugin_getactions_func>(dlsym(handle, "plugin_getactions"));
++    f_getactions(actions);
++    logger->trace("Now have {0:d} plugin actions ready", rules.size());
++    return 0;
++}
++
 +int PluginManager::initRules(const Architecture* arch) {
 +    if (!loaded) return 0;
 +    // TODO: verify that this architecture is compatible with RISCV vector instructions
@@ -233,10 +256,10 @@ index 0000000000..59c593fadb
 \ No newline at end of file
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
 new file mode 100644
-index 0000000000..92bde3ebbf
+index 0000000000..cc00677529
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
-@@ -0,0 +1,99 @@
+@@ -0,0 +1,112 @@
 +/* ###
 + * IP: GHIDRA
 + *
@@ -280,9 +303,15 @@ index 0000000000..92bde3ebbf
 + */
 +class PluginManager {
 +public:
++    /// @brief The plugin handle for resolving symbols
 +    void* handle;
++    /// @brief True if a plugin has been located and loaded
 +    bool loaded;
++    /// @brief Plugin-supplied Actions to run
++    std::vector<Action*> actions;
++    /// @brief Plugin-supplied Rules to run 
 +    std::vector<Rule*> rules;
++    /// @brief The overall architecture context for this decompilation
 +    Architecture* architecture;
 +    PluginManager() : handle(nullptr), loaded(false) {};
 +    ~PluginManager();
@@ -308,6 +337,13 @@ index 0000000000..92bde3ebbf
 +     * @return int 0 on success.
 +     */
 +    int initPlugin(Architecture* arch);
++
++    /**
++     * @brief Make available plugin-specific actions
++     *
++     * @return int zero on success
++     */
++    int initActions(const Architecture* arch);
 +
 +    /**
 +     * @brief Make available plugin-specific rules

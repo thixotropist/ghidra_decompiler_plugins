@@ -57,15 +57,15 @@ common RISCV-64 vector instruction sequences into `vector_memcpy`, `vector_strle
 
 ## Quickstart
 
-Adding new Actions to the Ghidra decompiler can take some trial and error, so we want to avoid having to rebuild
+Adding new Rules and Actions to the Ghidra decompiler can take some trial and error, so we want to avoid having to rebuild
 all of Ghidra on each test iteration.  The decompiler stands as a separate C++ executable Feature within Ghidra.
 That executable can easily be patched to enable run-time plugins.  Therefore a fairly simple development workflow
 can be:
 
-1. Install a Ghidra distribution binary tarball.  For example, we install Ghidra /opt/ghidra_12.1_DEV from the
-   `isa_ext` branch of https://github.com/thixotropist/ghidra.  This branch includes support for RISCV vector
+1. Install a Ghidra distribution binary tarball.  For example, we install Ghidra /opt/ghidra_12.2_DEV from the
+   `isa_ext` branch tip of https://github.com/thixotropist/ghidra.  This branch includes support for RISCV vector
    instruction set extensions.  The distribution's Ghidra decompiler gets installed at
-   `/opt/ghidra_12.1_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompiler`.
+   `/opt/ghidra_12.2_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompiler`.
 2. Acquire Ghidra distribution sources via http or git to get the decompiler sources, patch a simple plugin manager into
    those sources, and rebuild the decompiler.  The rebuilt decompiler will export all linkage symbols for access by
    a plugin.
@@ -82,7 +82,7 @@ can be:
 $ bazel build -c opt @ghidra//:decompile
 
 # replace the unpatched decompiler with our modified decompiler
-$ cp -f bazel-bin/external/+_repo_rules+ghidra/decompile /opt/ghidra_12.1_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
+$ cp -f bazel-bin/external/+_repo_rules+ghidra/decompile /opt/ghidra_12.2_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
 
 # build a decompiler plugin that can recognize vectorization of memcpy and memset invocations
 $ bazel build -c dbg plugins:riscv_vector
@@ -118,7 +118,6 @@ What works:
 
 What's pending:
 
-* Refactor to identify common code, adding reusable helper functions to process transforms spanning three or more FlowBlocks.
 * We need a general model for vector instruction stanzas implementing loops over arrays of structures.  This *may* lead
   to `vector_map` transforms similar to `std::transform` where the scalar operation is a lambda expression.
 * Examine the transforms made in the `whisper.cpp` binary to survey for effectiveness of the current plugin.

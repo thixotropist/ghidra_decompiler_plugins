@@ -22,8 +22,8 @@
 
 #include "riscv.hh"
 #include "inspector.hh"
+#include "action_prepare.hh"
 #include "rule_vector_transform.hh"
-#include "riscv_csr.hh"
 #include "riscv_sleigh.hh"
 #include "vector_ops.hh"
 
@@ -100,6 +100,8 @@ AddrSpace* uniqueAddrSpace; ///< The address space holding internal temporaries
 AddrSpace* ramAddrSpace; ///< The address space for static RAM variables
 AddrSpace* stackAddrSpace; ///< The address space for stack variables
 std::shared_ptr<spdlog::logger> pLogger; ///< An SPDLOG logger usable by this plugin
+bool trace;                              ///< logger level trace is enabled
+bool info;                               ///< logger level info is enabled
 std::shared_ptr<Inspector> inspector; ///< Inspector collects probes into Ghidra decompiler internals
 
 /**
@@ -115,6 +117,8 @@ extern "C" int plugin_init(void *context)
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
     pLogger->set_level(spdlog::level::warn);
+    trace = pLogger->should_log(spdlog::level::trace);
+    info = pLogger->should_log(spdlog::level::info);
     pLogger->info("Logging system initialized");
     inspector = std::make_shared<Inspector>(pLogger);
     // log levels are trace, debug, info, warn, error and critical.
@@ -148,14 +152,14 @@ extern "C" int plugin_init(void *context)
     pLogger->flush();
     return 0;
 }
+
 /**
- * @brief Make new plugin Rules available for the main decompiler
+ * @brief Make new plugin Actions available for the main decompiler
  */
-extern "C" int plugin_getrules(std::vector<Rule*>& rules)
+extern "C" int plugin_getactions(std::vector<Action*>& actions)
 {
-    bool trace = pLogger->should_log(spdlog::level::trace);
-    pLogger->info("Inspecting sleigh-dependencies");
-    pLogger->flush();
+    pLogger->trace("Adding new Actions to pluginrules");
+    actions.push_back(new riscv_vector::ActionPluginPrepare("pluginrules"));
     // load definitions specific to a given SLEIGH definition file
     ghidra::riscv_sleigh_init(arch);
     if (trace)
@@ -164,8 +168,16 @@ extern "C" int plugin_getrules(std::vector<Rule*>& rules)
         ghidra::riscv_sleigh_inspect(arch, ss);
         pLogger->trace("{0:s}", ss.str());
     }
-    pLogger->trace("Adding a new Rules to pluginrules");
-    rules.push_back(new riscv_vector::RuleCsrAdjustments("pluginrules"));
+    return 1;
+}
+
+/**
+ * @brief Make new plugin Rules available for the main decompiler
+ */
+extern "C" int plugin_getrules(std::vector<Rule*>& rules)
+{
+    pLogger->info("Inspecting sleigh-dependencies");
+    pLogger->trace("Adding new Rules to pluginrules");
     rules.push_back(new riscv_vector::RuleVectorTransform("pluginrules"));
     pLogger->flush();
     return 1;

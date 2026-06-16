@@ -33,7 +33,6 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/varnode.hh"
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/funcdata.hh"
 
-#include "riscv_csr.hh"
 #include "framework.hh"
 
 /**

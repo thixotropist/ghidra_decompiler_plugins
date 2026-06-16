@@ -25,7 +25,6 @@
 
 #include "framework.hh"
 #include "riscv.hh"
-#include "riscv_csr.hh"
 #include "vector_matcher.hh"
 #include "vector_ops.hh"
 
