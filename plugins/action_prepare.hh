@@ -14,7 +14,6 @@ namespace riscv_vector
  * @file action_prepare.hh
  *
  * @brief Provide an Action to adjust CSR values and heritage
- *
  */
 class ActionPluginPrepare : public ghidra::Action {
   public:
@@ -37,7 +36,9 @@ class ActionPluginPrepare : public ghidra::Action {
 
     explicit ActionPluginPrepare(const std::string &g) : ghidra::Action(0,"pluginrules",g) {}       ///< Constructor
     static void static_init(); ///< Static initialization
-    virtual void reset(ghidra::Funcdata &data) {}
+    virtual void reset(ghidra::Funcdata &data) {
+      vlenb_constant_vn = nullptr;
+    }
     virtual ghidra::Action *clone(const ghidra::ActionGroupList &grouplist) const {
         if (!grouplist.contains(getGroup())) return (Action *)0;
         return new ActionPluginPrepare(getGroup());

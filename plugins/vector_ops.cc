@@ -902,13 +902,21 @@ void VectorLoop::collect_common_elements()
     }
 
     // Collect the loop source contexts for each vector load
+    std::stringstream ss;
     for (auto vop: vLoadOps)
     {
+        if (vop->result == nullptr)
+        {
+            vop->op->printRaw(ss);
+            ghidra::pLogger->warn("Failed to collect source register from a vector load operation: {0:s}",
+                ss.str());
+            ss.str("");
+            continue;
+        }
         VectorOperand* vOperand = new VectorOperand(VectorOperand::load);
         vOperand->vRegister = vop->result;
         vOperand->vector_register = vOperand->vRegister->getOffset();
         vOperand->pRegister = vop->arg0;
-        std::stringstream ss;
         if (trace)
         {
             vOperand->pRegister->printRaw(ss);

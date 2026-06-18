@@ -1,0 +1,7 @@
+restore test_data/dpdk_sample_7_save.xml
+map function 0x2d2af0 rte_efd_update
+parse line extern long rte_efd_update(long param_1, ulong param_2, void* param_3, ulong param_4);
+load function rte_efd_update
+decompile rte_efd_update
+print C
+print raw
