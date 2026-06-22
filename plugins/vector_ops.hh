@@ -290,7 +290,6 @@ class VectorLoop
     ghidra::intb vsAddrReg;                ///< vector store scalar pointer register
     ghidra::intb vsAddrIncrReg;            ///< vector store scalar pointer increment register
     ghidra::intb elementCounterReg;        ///< loop element counter register
-    bool trace; ///< is trace logging enabled?
     /**
      * @brief Invoke a vector instruction (user PcodeOp) handler to update the VectorLoop model.
      * @details This handler triggers on user PcodeOps when iterating through a vector loop.
@@ -359,11 +358,8 @@ class VectorEpilogProcessor
     VectorEpilogProcessor(ghidra::Funcdata& dataParam, VectorLoop& loopModelParam) :
       data(dataParam),
       loopModel(loopModelParam),
-      resultFilter(REGISTER_VARNODE_ONLY),
-      trace(false)
-    {
-      trace = ghidra::pLogger->should_log(spdlog::level::trace);
-    }
+      resultFilter(REGISTER_VARNODE_ONLY)
+    {}
     /// @brief Filter to use when generating result candidates
     enum ResultFilter {
       REGISTER_VARNODE_ONLY,   ///< The result Varnode must reference a real register
@@ -391,7 +387,6 @@ class VectorEpilogProcessor
   private:
     std::set<ghidra::Varnode*> stopSet;
     ResultFilter resultFilter;
-    bool trace;
     std::stringstream ss; ///< buffer for log messages
     const int MAX_DEPENDENCY_DEPTH = 12; ///< maximum number of links in a Varnode dependency chain
     const int EPILOG_SEARCH_DEPTH = 16; ///< maximum distance, in bytes, from the of loop to result PcodeOP

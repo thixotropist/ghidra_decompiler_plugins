@@ -133,3 +133,49 @@ Inspection suggests:
 * the survey occasionally shows ' ' as an epilog operation.  That is a coding error easily addressed.
 * there are at least four instances of `LMUL > 1` and `vlseg*` instructions.  This *might* be a case where vector registers are grouped.  In this case it is more
   likely to be some sort of widening operation that does not modify vector registers other than the ones named as output registers.  More study is needed here.
+
+
+## DataPlane Development Kit Survey
+
+Our largest full-binary exemplar `dpdk-l3fwd-O2` makes a good survey target, showing likely places for improvement and possible bugs.
+This executable has 24K functions and 2.6M instructions.  Export the entire program as C and look for issues to prioritize:
+
+### timeouts
+
+One function `cn20k_cpt_fill_inst.constprop.0.isra.0` at 0x007a5242 fails to decompile due to a timeout.  Ghidra reports this 68 KByte function as
+decompiling to 14K lines of C code.  The timeout appears to apply only in bulk export - the decompilation appears fine in the Ghidra GUI.
+
+Take no action on this, other than to look for simple optimizations of plugin code.
+
+### Low-level errors
+
+Several functions throw `Low-level Error: Free varnode has multiple descendants`:
+
+* `rte_swx_ctl_meter_profile_delete`  -- a known bug in Ghidra, with a PR pending.  Captured as integration test `dpdk_sample_5`.
+* `nfp_net_get_eeprom`  -- a known bug in Ghidra, with a PR pending.  Captured as integration test `dpdk_sample_6`.
+* `vhost_vdpa_get_config` -- a known bug in Ghidra, with a PR pending.
+* `iavf_get_qos_cap` -- a known bug in Ghidra, with a PR pending.
+* `virtio_init_device` - similar to the above bug, but slightly different context
+* `eal_memalloc_mem_event_callback_unregister` - error occurs in epilog of a `vector_strcmp` sequence
+* `eal_memalloc_mem_alloc_validator_unregister` - error occurs in epilog of a `vector_strcmp` sequence
+* `get_event_config` - error occurs in epilog of a `vector_strlen` sequence
+* `cdx_vfio_find_and_unmap_resource.isra.0` - error occurs in epilog of a `vector_strcmp` sequence
+* `virtio_crypto_pkt_tx_burst` - ??
+
+The next step is to create a new test case out of `get_event_config` to drive epilog evolution.  This is now `dpdk_sample_8` and
+added to the integration test.
+
+### Search for common loop patterns
+
+A reduction loop is a good candidate for the next development cycle.  How are vector reduction operators used in this app?
+
+| vector op | count |
+| :------- | ---: |
+| vredor_vs | 99 |
+| vredsum_vs | 27 |
+| vredxor_vs | 6 |
+| vredmaxu_vs | 3 |
+| vredand_vs | 1 |
+
+So perhaps a logical `or` reduction loop would make a good development test case?  No - most of these vector reduction instructions
+occur in non-loop contexts.  Perhaps reduction loops are less likely with `-O2` optimization.

@@ -452,8 +452,7 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     vsReg(0),
     vsAddrReg(0),
     vsAddrIncrReg(0),
-    elementCounterReg(0),
-    trace(traceParam)
+    elementCounterReg(0)
 {
 }
 
@@ -615,7 +614,7 @@ void VectorLoop::collect_phi_nodes()
                 continue;
             const ghidra::AddrSpace* spaceId = op->getOut()->getAddr().getSpace();
             if ((spaceId == ghidra::ramAddrSpace) || (spaceId == ghidra::stackAddrSpace)) continue;
-            if (trace)
+            if (ghidra::trace)
             {
                 op->printRaw(ss);
                 ghidra::pLogger->trace("  Analysis of Phi node: {0:s}", ss.str());
@@ -676,7 +675,7 @@ void VectorLoop::collect_phi_nodes()
         }
     }
     // log the Phi mappings
-    if (trace)
+    if (ghidra::trace)
     {
         for (auto const& [key, val] : registerPhiMapping)
         {
@@ -710,7 +709,6 @@ void VectorLoop::collect_phi_nodes()
 void VectorLoop::examine_loop_pcodeops()
 {
     std::stringstream ss;
-    trace = ghidra::pLogger->should_log(spdlog::level::trace);
     std::list<ghidra::PcodeOp*>::const_iterator it = loopBlock->beginOp();
     std::list<ghidra::PcodeOp*>::const_iterator lastOp = loopBlock->endOp();
     bool analysisFailed = false;
@@ -720,7 +718,7 @@ void VectorLoop::examine_loop_pcodeops()
         ghidra::PcodeOp* op = *it;
         ++it;
         ghidra::intb opOffset = op->getAddr().getOffset();
-        if (trace)
+        if (ghidra::trace)
         {
             op->printRaw(ss);
             ghidra::pLogger->trace("  PcodeOp at 0x{0:x}: {1:s}",  opOffset, ss.str());
@@ -917,7 +915,7 @@ void VectorLoop::collect_common_elements()
         vOperand->vRegister = vop->result;
         vOperand->vector_register = vOperand->vRegister->getOffset();
         vOperand->pRegister = vop->arg0;
-        if (trace)
+        if (ghidra::trace)
         {
             vOperand->pRegister->printRaw(ss);
             ghidra::pLogger->trace("Searching for Phi node referencing {0:s}", ss.str());
@@ -938,8 +936,7 @@ void VectorLoop::collect_common_elements()
         vOperand->vRegister = vop->arg0;
         vOperand->pRegister = vop->arg1;
         // search for a Phi node referencing this register
-        std::stringstream ss;
-        if (trace)
+        if (ghidra::trace)
         {
             vOperand->pRegister->printRaw(ss);
             ghidra::pLogger->trace("Searching for Phi node referencing {0:s}", ss.str());
@@ -1205,10 +1202,10 @@ void VectorEpilogProcessor::getIntersectionVector(std::vector<ghidra::Varnode*>&
     }
 
     ghidra::inspector->collectDependencies(s1DepSet, root1, stopSet, MAX_DEPENDENCY_DEPTH);
-    if (trace) traceDependencies(s1DepSet, "intersection set root1");
+    if (ghidra::trace) traceDependencies(s1DepSet, "intersection set root1");
     ghidra::inspector->collectDependencies(s2DepSet, root2, stopSet,
         MAX_DEPENDENCY_DEPTH);
-        if (trace) traceDependencies(s2DepSet, "intersection set root2");
+        if (ghidra::trace) traceDependencies(s2DepSet, "intersection set root2");
     // Now compute the intersection, finding common dependencies of our two sources
     std::vector<ghidra::Varnode*> intersection_vector;
     std::set_intersection(
@@ -1226,6 +1223,6 @@ void VectorEpilogProcessor::getIntersectionVector(std::vector<ghidra::Varnode*>&
     std::copy_if(intersection_vector.begin(), intersection_vector.end(),
                  std::back_inserter(results),
                  myFilter);
-    if (trace) traceResultCandidates(results, "\tPotential result Varnodes after sorting and filtering: ");
+    if (ghidra::trace) traceResultCandidates(results, "\tPotential result Varnodes after sorting and filtering: ");
 }
 }

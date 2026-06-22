@@ -20,6 +20,8 @@
  */
 namespace ghidra{
 extern std::shared_ptr<spdlog::logger> pLogger; ///< SPDLOG plugin logger
+extern bool trace;                              ///< logger level trace is enabled
+extern bool info;                               ///< logger level info is enabled
 
 /**
  * @brief Insert a CALLOTHER pcodeop invoking a user-defined datatyped builtin op with three parameters and void output

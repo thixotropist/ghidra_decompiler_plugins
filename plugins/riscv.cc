@@ -31,6 +31,8 @@ static const bool DO_SURVEY = false;  ///< survey the loaded architecture
 static const bool SURVEY_USERPCODEOPS = false;  ///< show user pcode ops by name and index
 static const int MAX_USER_PCODES = 10000;  ///< limit the number of user pcode ops shown
 
+static const spdlog::level::level_enum LOG_LEVEL = spdlog::level::trace; ///< default log level to use
+
 namespace riscv_vector
 {
 int transformCountNonLoop; /// Maximum number of non-loop transforms to complete
@@ -116,7 +118,7 @@ extern "C" int plugin_init(void *context)
     std::string logFile = "/tmp/ghidraRiscvLogger_" + std::to_string(getpid()) + ".log";
     pLogger = spdlog::basic_logger_mt("riscv_vector", logFile);
     // log levels are trace, debug, info, warn, error and critical.
-    pLogger->set_level(spdlog::level::warn);
+    pLogger->set_level(LOG_LEVEL);
     trace = pLogger->should_log(spdlog::level::trace);
     info = pLogger->should_log(spdlog::level::info);
     pLogger->info("Logging system initialized");

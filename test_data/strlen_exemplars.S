@@ -12,14 +12,14 @@
 strlen:
     c.li        a3,0x0
     c.mv        a5,a0
-LAB_ram_000209d2:
+0:
     vsetvli     a2,zero,e8,m1,ta,ma
     c.add       a5,a3
     vle8ff.v    v1,(a5)
     vmseq.vi    v1,v1,0x0
     csrr        a3,vl
     vfirst.m    a6,v1
-    blt         a6,zero,LAB_ram_000209d2
+    blt         a6,zero,0b
     c.add       a5,a6
     c.sub       a5,a0
     c.mv        a0,a5
@@ -94,6 +94,27 @@ strlen_var3:
     c.sub      a5,a0
     c.addi     a5,0x1
     c.mv       a0,a5
+    ret
+
+# a similar function with a different epilog, returning the address
+# of the last character in the string
+.global strend
+.type strend, %function
+strend:
+    c.li        a3,0x0
+    c.mv        a5,a0
+0:
+    vsetvli     a2,zero,e8,m1,ta,ma
+    c.add       a5,a3
+    vle8ff.v    v1,(a5)
+    vmseq.vi    v1,v1,0x0
+    csrr        a3,vl
+    vfirst.m    a6,v1
+    blt         a6,zero,0b
+    c.add       a5,a6
+    c.li        a1,1
+    c.sub       a5,a1
+    c.mv        a0,a5
     ret
 .global other_function
 .type other_function, %function

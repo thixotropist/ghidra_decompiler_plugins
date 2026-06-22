@@ -36,13 +36,20 @@ class ActionPluginPrepare : public ghidra::Action {
 
     explicit ActionPluginPrepare(const std::string &g) : ghidra::Action(0,"pluginrules",g) {}       ///< Constructor
     static void static_init(); ///< Static initialization
+    /// @brief Prepare for another function, removing any function-specific static data
     virtual void reset(ghidra::Funcdata &data) {
       vlenb_constant_vn = nullptr;
     }
+    /// @brief Clone this Action for repeated use
+    /// @param grouplist The group in which this Action is found
+    /// @return The cloned Action
     virtual ghidra::Action *clone(const ghidra::ActionGroupList &grouplist) const {
         if (!grouplist.contains(getGroup())) return (Action *)0;
         return new ActionPluginPrepare(getGroup());
     }
+    /// @brief Apply this action on the entire function
+    /// @param data The function context to act upon
+    /// @return 0 on success
     virtual ghidra::int4 apply(ghidra::Funcdata &data);
   private:
     /// @brief map of constant CSRs to their replacement values

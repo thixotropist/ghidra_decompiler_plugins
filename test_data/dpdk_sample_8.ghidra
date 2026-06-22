@@ -1,0 +1,11 @@
+restore test_data/dpdk_sample_8_save.xml
+map function 0x36546c get_event_config
+parse line extern long get_event_config(undefined8 param_1,long param_2);
+map function 0x104a70 ctype_b_loc
+parse line extern void* ctype_b_loc(void);
+map function 0x104590 free
+parse line extern void free(void*);
+load function get_event_config
+decompile get_event_config
+print C
+print raw

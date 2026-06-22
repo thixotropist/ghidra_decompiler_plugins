@@ -44,7 +44,7 @@ REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "dpdk_sample_4", "dpdk_sample_5", "dpdk_sample_6", "dpdk_sample_7")
 
 # if some tests fail, defer them
-DEFERRED_TESTS = ("dpdk_sample_5", "dpdk_sample_6")
+DEFERRED_TESTS = ("dpdk_sample_5", "dpdk_sample_6", "dpdk_sample_8")
 # show the expected number of matches in each test
 expected = {
     'memcpy_exemplars':  {'vector_memcpy':5},

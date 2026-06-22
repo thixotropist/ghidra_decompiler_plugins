@@ -295,31 +295,41 @@ void FunctionEditor::simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, Bl
                     Varnode* vn = op->getIn(slot);
                     if (vn->isFree() && (vn->getAddr().getSpace() == registerAddrSpace))
                     {
-                        op->printRaw(ss);
                         if (op->numInput() == 2)
                         {
                             int goodSlot;
                             if (slot == 0) goodSlot = 1;
                             else goodSlot = 0;
-                            pLogger->info("\tPreparing to replace slot {1:d} from PcodeOp {0:s} via duplication",
-                                ss.str(), slot);
-                            ss.str("");
-                            pLogger->flush();
+                            if (ghidra::info)
+                            {
+                                op->printRaw(ss);
+                                pLogger->info("\tPreparing to replace slot {1:d} from PcodeOp {0:s} via duplication",
+                                    ss.str(), slot);
+                                ss.str("");
+                                pLogger->flush();
+                            }
                             data.opUnsetInput(op, slot);
                             data.opSetInput (op, op->getIn(goodSlot), slot);
                             pLogger->flush();
                         }
                         else {
-                            pLogger->info("\tPreparing to remove slot {1:d} from MULTIEQUAL PcodeOp {0:s}",
-                            ss.str(), slot);
+                            if (ghidra::info)
+                            {
+                                pLogger->info("\tPreparing to remove slot {1:d} from MULTIEQUAL PcodeOp {0:s}",
+                                    ss.str(), slot);
+                                ss.str("");
+                            }
                             data.opRemoveInput(op, slot);
                             slot--;
+
+                        }
+                        if (ghidra::info)
+                        {
+                            op->printRaw(ss);
+                            pLogger->info("\t\tResulting PcodeOp is {0:s}",
+                                ss.str());
                             ss.str("");
                         }
-                        op->printRaw(ss);
-                        pLogger->info("\t\tResulting PcodeOp is {0:s}",
-                            ss.str());
-                        ss.str("");
                         opFixed = true;
                     }
                 }
@@ -331,12 +341,15 @@ void FunctionEditor::simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, Bl
                     Varnode* vn = op->getIn(slot);
                     if (vn->isFree())
                     {
-                        op->printRaw(ss);
-                        pLogger->info("\tPreparing to remove slot {1:d} from CALL PcodeOp {0:s}",
+                        if (ghidra::info)
+                        {
+                            op->printRaw(ss);
+                            pLogger->info("\tPreparing to remove slot {1:d} from CALL PcodeOp {0:s}",
                                 ss.str(), slot);
+                            ss.str("");
+                        }
                         data.opRemoveInput(op, slot);
                         opFixed = true;
-                        ss.str("");
                         slot--;
                     }
                 }
@@ -357,7 +370,7 @@ void FunctionEditor::simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, Bl
             ss.str("");
         }
     }
-    if (pLogger->should_log(spdlog::level::trace))
+    if (ghidra::trace)
     {
         data.printRaw(ss);
         pLogger->trace("Final function Pcode after transform:\n{0:s}", ss.str());
@@ -366,8 +379,11 @@ void FunctionEditor::simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, Bl
     if (inspector->audit_multiequals)
     {
         inspector->auditMultiequals(data, ss);
-        pLogger->trace("Multiequal audit results:\n{0:s}", ss.str());
-        ss.str("");
+        if (ghidra::trace)
+        {
+            pLogger->trace("Multiequal audit results:\n{0:s}", ss.str());
+            ss.str("");
+        }
     }
     bool fixupsNeeded = fixup(ss);
     if (fixupsNeeded)

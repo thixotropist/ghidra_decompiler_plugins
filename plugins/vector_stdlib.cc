@@ -51,7 +51,7 @@ int VectorMatcher::transformMemcpy()
 {
     std::stringstream ss;
     std::vector<ghidra::PcodeOp*> opsToDelete; // accumulate ops we are sure to delete in any transform
-    if (info)
+    if (ghidra::info)
         ghidra::inspector->log("before memcpy transform, ", loopBlock);
     if (loopModel.unresolvedDependencies(loopModel.terminationBranchOp))
     {
@@ -71,7 +71,7 @@ int VectorMatcher::transformMemcpy()
     data.opSetInput(newVectorOp, loopModel.vSourceOperands[0]->pExternal, 2);
     data.opSetInput(newVectorOp, loopModel.numElements, 3);
 
-    if (trace)
+    if (ghidra::trace)
     {
         newVectorOp->printRaw(ss);
         ghidra::pLogger->info("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
@@ -107,7 +107,7 @@ int VectorMatcher::transformStrlen()
     std::vector<ghidra::PcodeOp*> opsToDelete; // accumulate ops we are sure to delete in any transform
     ghidra::Varnode* resultVn = nullptr;
     ghidra::PcodeOp* result = nullptr;
-    if (info)
+    if (ghidra::info)
         ghidra::inspector->log("before strlen transform, ", loopBlock);
     // first identify the result Varnode as the register-typed varnode descending
     // from both the source load address pointer and the termination comparison operation.
@@ -154,14 +154,14 @@ int VectorMatcher::transformStrlen()
     data.opSetInput(newVectorOp, data.newConstant(4, VECTOR_STRLEN), 0);
     data.opSetInput(newVectorOp, loopModel.vSourceOperands[0]->pExternal, 1);
     ghidra::Varnode* vectorResultVarnode = data.newVarnodeOut(resultVn->getSize(), resultVn->getAddr(), newVectorOp);
-    if (trace)
+    if (ghidra::trace)
     {
         newVectorOp->printRaw(ss);
         ghidra::pLogger->trace("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
         ss.str("");
     }
     data.opInsertEnd(newVectorOp, loopBlock);
-    if (trace) ghidra::inspector->log("Vector loop block after inserting vector_strlen is", loopBlock);
+    if (ghidra::trace) ghidra::inspector->log("Vector loop block after inserting vector_strlen is", loopBlock);
     // replace old result with new result
     std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVn->beginDescend(), resultVn->endDescend());
     for (auto op: resultSet)
@@ -211,7 +211,7 @@ int VectorMatcher::transformStrcmp()
     std::vector<ghidra::PcodeOp*> opsToDelete;
     ghidra::Varnode* firstArg = nullptr;  // the first argument to the vector_strcmp call
     ghidra::Varnode* secondArg = nullptr; // the second argument to the vector_strcmp call
-    if (info)
+    if (ghidra::info)
         ghidra::inspector->log("before strcmp transform, ", loopBlock);
     // Step 1: find the intersection of the two source operands pointer dependency set.
     // They should intersect twice - once in the loop termination's comparison condition, which we want to ignore,
@@ -307,7 +307,7 @@ int VectorMatcher::transformStrcmp()
     ss << ")";
     ghidra::pLogger->trace("Preparing transform: {0:s}", ss.str());
     ss.str("");
-    if (trace)
+    if (ghidra::trace)
     {
         newVectorOp->printRaw(ss);
         ghidra::pLogger->trace("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
@@ -315,7 +315,7 @@ int VectorMatcher::transformStrcmp()
     }
     data.opInsertEnd(newVectorOp, loopBlock);
     data.opInsertAfter(invertResultOp, newVectorOp);
-    if (trace) ghidra::inspector->log( "Vector loop block after inserting vector_strcmp", loopBlock);
+    if (ghidra::trace) ghidra::inspector->log( "Vector loop block after inserting vector_strcmp", loopBlock);
     // replace old result with new result
     std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVn->beginDescend(), resultVn->endDescend());
     for (auto op: resultSet)

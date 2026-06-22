@@ -43,8 +43,6 @@ class VectorMatcher {
     ghidra::Varnode* vLoad;          ///< Varnode used by a vector load instruction
     ghidra::Varnode* vLoadImm;       ///< Varnode used by a vector load immediate instruction
     ghidra::Varnode* vStore;         ///< Varnode used by a vector store instruction
-    const bool trace;        ///< true if logger would process loglevel=trace
-    const bool info;         ///< true if logger would process loglevel=info
     /**
      * @brief Construct a new VectorMatcher object, populating pcodeOpSelection with PcodeOps potentially implementing a vector stanza or loop
      * @param fData Function context

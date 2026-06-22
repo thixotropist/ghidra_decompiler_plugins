@@ -49,14 +49,17 @@ ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
             {
                 // treat all CSR ops as non-heritaged
                 ghidra::intb addr = op->getAddr().getOffset();
-                int opcode_as_int = opcode;
-                op->printRaw(ss);
-                ghidra::pLogger->trace("\t0x{0:x}: [{1:d}] {2:s}", addr, opcode_as_int, ss.str());
-                ss.str("");
-                ghidra::pLogger->info("\t\t ↑↑↑ Removing this opcode");
-                ss.str("");
-                op->getOut()->printInfo(ss);
-                ghidra::pLogger->info("\t\t\tinfo: {0:s}", ss.str());
+                if (ghidra::info)
+                {
+                    int opcode_as_int = opcode;
+                    op->printRaw(ss);
+                    ghidra::pLogger->info("\t0x{0:x}: [{1:d}] {2:s}", addr, opcode_as_int, ss.str());
+                    ghidra::pLogger->info("\t\t ↑↑↑ Removing this opcode");
+                    ss.str("");
+                    op->getOut()->printInfo(ss);
+                    ghidra::pLogger->info("\t\t\tinfo: {0:s}", ss.str());
+                    ss.str("");
+                }
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                 opsToDelete.push_back(modifiableOp);
                 count++;
@@ -71,12 +74,15 @@ ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
             const ghidra::AddrSpace* addrSpace = vn->getAddr().getSpace();
             if (addrSpace == ghidra::csRegisterAddrSpace)
             {
-                op->printRaw(ss);
-                ghidra::pLogger->info("\t\t  Examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
-                ss.str("");
-                vn->printInfo(ss);
-                ghidra::pLogger->info("\t\t\t{0:s}", ss.str());
-                ss.str("");
+                if (ghidra::trace)
+                {
+                    op->printRaw(ss);
+                    ghidra::pLogger->trace("\t\t  Examining slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
+                    ss.str("");
+                    vn->printInfo(ss);
+                    ghidra::pLogger->trace("\t\t\t{0:s}", ss.str());
+                    ss.str("");
+                }
                 ghidra::intb offset = vn->getAddr().getOffset();
                 if (offset == vlenbRegisterOffset)
                 {
@@ -88,11 +94,14 @@ ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
                     ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                     data.opUnsetInput(modifiableOp, slot);
                     data.opSetInput(modifiableOp, vlenb_constant_vn, slot);
-                    op->printRaw(ss);
-                    ghidra::pLogger->info("\t\t  Replaced slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
-                    ss.str("");
-                    ghidra::pLogger->info("\t\t\t{0:s}", ss.str());
-                    ss.str("");
+                    if (ghidra::info)
+                    {
+                        op->printRaw(ss);
+                        ghidra::pLogger->info("\t\t  Replaced slot {0:d} of PcodeOp: {1:s}", slot, ss.str());
+                        ss.str("");
+                        ghidra::pLogger->info("\t\t\t{0:s}", ss.str());
+                        ss.str("");
+                    }
                     count++;
                     continue;
                 }
@@ -115,18 +124,24 @@ ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
             const ghidra::Varnode* vn = op->getIn(slot);
             if ((vn->getAddr().getSpace() == ghidra::csRegisterAddrSpace) && vn->isFree())
             {
-                vn->printRaw(ss);
-                ghidra::pLogger->info("Changing Varnode {0:s} from free to input", ss.str());
-                ss.str("");
+                if (ghidra::info)
+                {
+                    vn->printRaw(ss);
+                    ghidra::pLogger->info("Changing Varnode {0:s} from free to input", ss.str());
+                    ss.str("");
+                }
                 ghidra::PcodeOp* modifiableOp = const_cast<ghidra::PcodeOp*>(op);
                 data.opUnsetInput(modifiableOp, slot);
                 ghidra::Varnode* modifiableVn = const_cast<ghidra::Varnode*>(vn);
                 ghidra::Varnode* newVn = data.setInputVarnode(modifiableVn);
                 data.opSetInput(modifiableOp, newVn, slot);
                 count++;
-                op->printRaw(ss);
-                ghidra::pLogger->info("\tnew PcodeOp is {0:s}", ss.str());
-                ss.str("");
+                if (ghidra::info)
+                {
+                    op->printRaw(ss);
+                    ghidra::pLogger->info("\tnew PcodeOp is {0:s}", ss.str());
+                    ss.str("");
+                }
             }
         }
     }

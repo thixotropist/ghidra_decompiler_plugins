@@ -21,7 +21,7 @@ namespace riscv_vector
 {
 
 VectorMatcher::VectorMatcher(ghidra::Funcdata& fData, ghidra::PcodeOp* initialVsetOp) :
-    loopModel(fData, ghidra::pLogger->should_log(spdlog::level::trace)),
+    loopModel(fData, ghidra::trace),
     data(fData),
     functionEditor(data),
     codeSpace(nullptr),
@@ -35,9 +35,7 @@ VectorMatcher::VectorMatcher(ghidra::Funcdata& fData, ghidra::PcodeOp* initialVs
     vNumPerLoop(nullptr),
     vLoad(nullptr),
     vLoadImm(nullptr),
-    vStore(nullptr),
-    trace(ghidra::pLogger->should_log(spdlog::level::trace)),
-    info(ghidra::pLogger->should_log(spdlog::level::info))
+    vStore(nullptr)
 {
     if (vsetOp == nullptr) return;
     // get basic info on the vsetop trigger
@@ -125,7 +123,7 @@ void VectorMatcher::collect_loop_registers()
     // For all Phi nodes affected by the loop determine the output register and its dependencies.
     for (auto op : opsToVisit)
     {
-        if (trace)
+        if (ghidra::trace)
         {
             op->printRaw(ss);
             ghidra::pLogger->trace("Examining context of: {0:s}", ss.str());
@@ -136,7 +134,7 @@ void VectorMatcher::collect_loop_registers()
         bool opIsVoid = (resultVn == nullptr);
         ghidra::intb offset = op->getAddr().getOffset();
         bool isInsideLoop = (offset >= loopModel.firstAddr) && (offset <= loopModel.lastAddr);
-        if (info && !opIsVoid)
+        if (ghidra::info && !opIsVoid)
         {
             std::string regName;
             ghidra::getRegisterName(resultVn, &regName);
@@ -196,7 +194,7 @@ void VectorMatcher::collect_loop_registers()
                                       vectorStoreRegisterVn->getOffset(), vLoopStoreVn->getOffset());
                 }
             }
-            if (info && (resultVn != nullptr))
+            if (ghidra::info && (resultVn != nullptr))
             {
                 resultVn->printRaw(ss);
                 ghidra::pLogger->trace("  inloop dependency: {0:s}", ss.str());
@@ -206,7 +204,7 @@ void VectorMatcher::collect_loop_registers()
             // Add new dependent ops to visit if this op has a known result *and* this op is inside the loop
             for (ghidra::PcodeOp *descendentOp: std::ranges::subrange{resultVn->beginDescend(), resultVn->endDescend()})
             {
-                if (trace)
+                if (ghidra::trace)
                 {
                     descendentOp->printRaw(ss);
                     ghidra::pLogger->trace("\t\tDescendent op: {0:s}", ss.str());
@@ -223,7 +221,7 @@ void VectorMatcher::collect_loop_registers()
             dependentVarnodesOutsideLoop.push_back(resultVn);
             if (std::find(externalDependentOps.begin(), externalDependentOps.end(), op) == externalDependentOps.end())
                 externalDependentOps.push_back(op);
-            if ((resultVn != nullptr) && info)
+            if ((resultVn != nullptr) && ghidra::info)
             {
                 resultVn->printRaw(ss);
                 ghidra::pLogger->trace("  exterior dependency to fix: {0:s}", ss.str());
@@ -236,7 +234,7 @@ void VectorMatcher::collect_loop_registers()
     // find the Phi node defining the loop registers
     for (auto op: loopModel.phiNodesAffectedByLoop)
     {
-        if (trace)
+        if (ghidra::trace)
         {
             op->printRaw(ss);
             ghidra::pLogger->trace("Checking PcodeOp for dependencies: {0:s}", ss.str());
@@ -248,7 +246,7 @@ void VectorMatcher::collect_loop_registers()
         ghidra::pLogger->trace("Searching for loop variables referring to register {0:s}", regName);
         if ((vectorNumElemVn != nullptr) && (!vectorNumElemVn->isConstant()) && (regOffset == vectorNumElemVn->getOffset()))
         {
-            if (trace)
+            if (ghidra::trace)
             {
                 op->getOut()->printRaw(ss);
                 ghidra::pLogger->trace("\tvNumElem identified as {0:s}", ss.str());
@@ -258,7 +256,7 @@ void VectorMatcher::collect_loop_registers()
         }
         else if ((vectorLoadAddrVn != nullptr) && (regOffset == vectorLoadAddrVn->getOffset()))
         {
-            if (trace)
+            if (ghidra::trace)
             {
                 op->getOut()->printRaw(ss);
                 ghidra::pLogger->trace("\tvLoadVn identified as {0:s}", ss.str());
@@ -268,7 +266,7 @@ void VectorMatcher::collect_loop_registers()
         }
         else if ((vectorStoreAddrVn != nullptr) && regOffset == vectorStoreAddrVn->getOffset())
         {
-            if (trace)
+            if (ghidra::trace)
             {
                 op->getOut()->printRaw(ss);
                 ghidra::pLogger->trace("\tvStoreVn identified as {0:s}", ss.str());
