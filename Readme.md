@@ -3,7 +3,7 @@
 >Note: This project is one of [several](https://github.com/thixotropist) projects exploring Ghidra tools to make
 >      analysis of RISC-V AI-enhanced applications easier.
 
-The bulk of this project's documentation is structured as a Hugo + Docsys static web site,
+The bulk of this project's documentation is sourced under `content` and published/deployed as a Hugo + Docsys [static web site](https://thixotropist.github.io/ghidra_decompiler_plugins/),
 with source material collected under `content/en`. Local browsing is enabled with `hugo serve`.  Plugin code choices are
 mostly documented as inline Doxygen comments, as they are likely to evolve along with the code they describe.
 

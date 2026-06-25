@@ -46,15 +46,41 @@ instructions within the loop.
 The existing code recognizes the instructions following the loop end as possible epilog instructions:
 
 ```text
+Possible Epilog Pcode: a5(0x0010001e:d) = a5(0x00100008:4) + a6(0x00100016:a)
 Possible Epilog Pcode: u0x10000000(0x00100020:18) = a0(i) * #0xffffffffffffffff
-Possible Epilog Pcode: u0x10000008(0x00100020:1a) = u0x10000000(0x00100020:18) + a6(0x00100016:a)
-Possible Epilog Pcode: a5(0x00100020:e) = a5(0x00100008:4) + u0x10000008(0x00100020:1a)(*#0x1)
+Possible Epilog Pcode: a5(0x00100020:e) = a5(0x0010001e:d) + u0x10000000(0x00100020:18)
 Possible Epilog Pcode: a0(0x00100022:f) = a5(0x00100020:e)
 Possible Epilog Pcode: return(#0x0) a0(0x00100022:f)
 ```
 
-It then looks for the intersection of two descendant sets: the vector load address register `a5` and the `vfirst` result `a6`.  The intersection is `a5(0x00100020:e)`, which is then
-identified as the `vector_strlen` result Varnode.
+It then traces the descendants of the vector load source register (as root1) and those of the comparison register a6 (as root2):
+
+```text
+
+intersection set root1: a5(0x00100020:e), a5(0x00100008:4), a6(0x00100016:a), a5(0x0010001e:d), v1(0x0010000e:8), u0x00004200:1(0x0010001a:b), a0(0x00100022:f), a5(0x00100004:15), v1(0x0010000a:6),
+intersection set root2: a5(0x00100020:e), a5(0x0010001e:d), u0x00004200:1(0x0010001a:b), a0(0x00100022:f),
+```
+
+The epilog processing code then determines the intersection of these two sets, after excluding any in-loop Varnodes.  The first such intersection Varnode in the register space is taken as the result Varnode:
+
+```text
+Checking for in-loop definition: u0x00004200:1(0x0010001a:b)
+        addressInLoop = true
+        blockIsLoopblock = true
+Checking for in-loop definition: a5(0x0010001e:d)
+        addressInLoop = false
+        blockIsLoopblock = false
+Checking for in-loop definition: a5(0x00100020:e)
+        addressInLoop = false
+        blockIsLoopblock = false
+Checking for in-loop definition: a0(0x00100022:f)
+        addressInLoop = false
+        blockIsLoopblock = false
+        Potential result Varnodes after sorting and filtering: : a5(0x0010001e:d), a5(0x00100020:e), a0(0x00100022:f),
+Selecting as the result Varnode a5(0x0010001e:d)
+```
+
+Which is wrong - the correct result Varnode is `a5(0x00100020:e)`.
 
 A slightly different function has the same prolog and loop structure, but with a variant epilog:
 
@@ -88,8 +114,44 @@ long strend(long param_1)
 }
 ```
 
+```text
+Possible Epilog Pcode: a5(0x001000d8:d) = a5(0x001000c2:4) + a6(0x001000d0:a)
+Possible Epilog Pcode: a5(0x001000dc:10) = a5(0x001000d8:d) + #0xffffffffffffffff
+Possible Epilog Pcode: a0(0x001000de:11) = a5(0x001000dc:10)
+Possible Epilog Pcode: return(#0x0) a0(0x001000de:11)
+       intersection set root1: a5(0x001000be:17), a5(0x001000d8:d), a5(0x001000c2:4), u0x00004200:1(0x001000d4:b), v1(0x001000c4:6), a0(0x001000de:11), a5(0x001000dc:10), v1(0x001000c8:8), a6(0x001000d0:a),
+       intersection set root2: a5(0x001000d8:d), u0x00004200:1(0x001000d4:b), a0(0x001000de:11), a5(0x001000dc:10),
+       Checking for in-loop definition: u0x00004200:1(0x001000d4:b)
+               addressInLoop = true
+               blockIsLoopblock = true
+       Checking for in-loop definition: a5(0x001000d8:d)
+               addressInLoop = false
+               blockIsLoopblock = false
+       Checking for in-loop definition: a5(0x001000dc:10)
+               addressInLoop = false
+               blockIsLoopblock = false
+       Checking for in-loop definition: a0(0x001000de:11)
+               addressInLoop = false
+               blockIsLoopblock = false
+               Potential result Varnodes after sorting and filtering: : a5(0x001000d8:d), a5(0x001000dc:10), a0(0x001000de:11),
+       Selecting as the result Varnode a5(0x001000d8:d)
+```
+
+This result is also incorrect.  The epilog should transform - if the transformation is attempted at all - into something like
+
+```text
+u0x001000d8:8 = vector_strlen(a5(0x001000c2:4))
+a5(0x001000d8:xx) = u0x001000d8:8 + a5(0x001000c2:4)
+a5(0x001000dc:10) = a5(0x001000d8:xx) + #0xffffffffffffffff
+a0(0x001000de:11) = a5(0x001000dc:10)
+```
+
 ### Code overview
 
 The existing code commits to *attempting* a `vector_strlen` transformation based on what it finds within the loop.  It commits to *executing*
 a `vector_strlen` transformation once it has identified a result Varnode and the loop-external Varnode providing the string address.  The code
 can abort the transform for several reasons, such as failure to find the string address Varnode or dependencies found for loop-local Varnodes.
+
+## Path forward
+
+We need surveys of strlen and strcmp epilog sequences, hopefully leading up to a better set of filters for the result candidates.

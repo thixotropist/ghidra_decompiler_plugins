@@ -122,9 +122,12 @@ int VectorMatcher::transformStrlen()
         return TRANSFORM_ROLLED_BACK;
     }
     resultVn = resultsVector[0];
-    resultVn->printRaw(ss);
-    ghidra::pLogger->trace("\tSelecting as the result Varnode {0:s}", ss.str());
-    ss.str("");
+    if (ghidra::trace)
+    {
+        resultVn->printRaw(ss);
+        ghidra::pLogger->trace("\tSelecting as the result Varnode {0:s}", ss.str());
+        ss.str("");
+    }
     result = resultVn->getDef();
 
     ghidra::Varnode* sourceVn = loopModel.vSourceOperands[0]->pExternal;
@@ -135,16 +138,28 @@ int VectorMatcher::transformStrlen()
         return TRANSFORM_ROLLED_BACK;
     }
     sourceVn->printRaw(ss);
-    ghidra::pLogger->trace("\tSelecting as the source Varnode {0:s}", ss.str());
-    ss.str("");
-
+    if (ghidra::trace)
+    {
+        ghidra::pLogger->trace("\tSelecting as the source Varnode {0:s}", ss.str());
+        ss.str("");
+    }
     if (loopModel.unresolvedDependencies(result))
     {
         ghidra::pLogger->warn("Unable to complete transform due to one or more references to a loop-local Varnode");
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
+
+    /*
+    if (! epiProc.verify())
+    {
+        ghidra::pLogger->warn("Unable to complete transform due to unhandled epilog");
+        ghidra::pLogger->flush();
+        return TRANSFORM_ROLLED_BACK;
+    }
+    */
     data.getArch()->userops.registerBuiltin(VECTOR_STRLEN);
+
 
     // Note: after this point pcode changes are irreversible
 
