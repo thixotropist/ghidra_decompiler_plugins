@@ -81,6 +81,17 @@ static const ghidra::uint4 VECTOR_STRNCMP = 0x11000006;
 
 extern std::ofstream reportFile;
 
+// Define epilog survey report infrastructure
+
+/// @brief True if we need to collect epilog sequences from potential vector_strlen sequences
+static const bool COLLECT_STRLEN_SAMPLES = true;
+/// @brief File stream for vector_strlen sequence collections
+extern std::ofstream strlenSampleFile;
+/// @brief True if we need to collect epilog sequences from potential vector_strcmp sequences
+static const bool COLLECT_STRCMP_SAMPLES = true;
+/// @brief File stream for vector_strcmp sequence collections
+extern std::ofstream strcmpSampleFile;
+
 /**
  * @brief Group RISC-V user pcodes according to their generic roles
  * in common vector sequences

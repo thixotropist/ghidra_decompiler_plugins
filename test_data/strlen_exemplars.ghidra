@@ -3,12 +3,20 @@ map function 0x100000 strlen_base
 map function 0x101000 no_return
 // mark the function named 'no_return' with the 'noreturn' option
 option noreturn no_return
+// decompile the simplest strlen baseline
 load function strlen_base
 decompile strlen_base
 print C
 print raw
+// decompile a variant
 map function 0x100026 strlen_var1
 load function strlen_var1
 decompile strlen_var1
+print C
+print raw
+// decompile a similar function with a different epilog and return type
+map function 0x1000ba strend
+load function strend
+decompile strend
 print C
 print raw

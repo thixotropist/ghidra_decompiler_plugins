@@ -1,5 +1,5 @@
 baseURL = 'ghidra_decompiler_plugins'
-languageCode = 'en-us'
+locale = 'en-us'
 title = 'Enabling user-specific ghidra decompiler plugins'
 
 # Language settings

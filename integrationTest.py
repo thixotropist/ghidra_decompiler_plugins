@@ -74,7 +74,9 @@ expected = {
     'whisper_sample_19': {'vector_memcpy':9, 'vector_strlen':4},
     'dpdk_sample_1':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
     'dpdk_sample_2':  {'vector_memset':0, 'vector_memcpy':1, 'vector_strlen':0},
-    'dpdk_sample_3':  {'vector_strlen':2},
+    'dpdk_sample_3':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':2},
+    'dpdk_sample_4':  {'vector_memset':0, 'vector_memcpy':0, 'vector_strlen':0},
+    'dpdk_sample_7':  {'vector_memset':0, 'vector_memcpy':4, 'vector_strlen':0},
 }
 
 def trim_output(result):

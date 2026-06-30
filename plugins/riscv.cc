@@ -92,6 +92,8 @@ const RiscvUserPcode* RiscvUserPcode::getUserPcode(const ghidra::PcodeOp& op)
 std::map<int, riscv_vector::RiscvUserPcode*> riscvPcodeMap;      /// lookup a user pcode given Ghidra's sleigh index
 std::map<std::string, ghidra::uintb> riscvNameToGhidraId;
 std::ofstream reportFile; /// A file holding summary data for each possible vector stanza
+std::ofstream strlenSampleFile;
+std::ofstream strcmpSampleFile;
 
 }
 namespace ghidra
@@ -125,9 +127,20 @@ extern "C" int plugin_init(void *context)
     inspector = std::make_shared<Inspector>(pLogger);
     // log levels are trace, debug, info, warn, error and critical.
     pLogger->info("Ghidra inspector initialized");
-    std::string summariesFilename = "/tmp/riscv_summaries_" + std::to_string(getpid()) + ".txt";
+    std::string pidAsString = std::to_string(getpid());
+    std::string summariesFilename = "/tmp/riscv_summaries_" + pidAsString + ".txt";
     riscv_vector::reportFile.open(summariesFilename);
     riscv_vector::reportFile << "RISC-V Summary Report" << std::endl;
+    if (riscv_vector::COLLECT_STRLEN_SAMPLES)
+    {
+        std::string fn = "/tmp/vector_strlen_summaries_" + pidAsString + ".txt";
+        riscv_vector::strlenSampleFile.open(fn);
+    }
+    if (riscv_vector::COLLECT_STRCMP_SAMPLES)
+    {
+        std::string fn = "/tmp/vector_strcmp_summaries_" + pidAsString + ".txt";
+        riscv_vector::strcmpSampleFile.open(fn);
+    }
     riscv_vector::transformCountNonLoop = 0;
     riscv_vector::transformCountLoop = 0;
     pLogger->info("Maximum number of vector transforms:\tloop: 0x{0:x}, non-loop: 0x{1:x})",
@@ -259,5 +272,9 @@ extern "C" void plugin_exit()
     riscv_vector::riscvPcodeMap.clear();
     pLogger->flush();
     riscv_vector::reportFile.close();
+    if (riscv_vector::COLLECT_STRLEN_SAMPLES)
+        riscv_vector::strlenSampleFile.close();
+    if (riscv_vector::COLLECT_STRCMP_SAMPLES)
+        riscv_vector::strcmpSampleFile.close();
 }
 }

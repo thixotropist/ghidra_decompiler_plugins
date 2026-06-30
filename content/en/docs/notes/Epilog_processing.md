@@ -20,6 +20,8 @@ The possible solutions include:
 
 ### Examples
 
+>Note: The examples here show earlier results *before* a better heuristic was identified and installed.
+
 The simplest `vector_strlen` epilog pattern can be just 4 bytes long:
 
 ```as
@@ -56,7 +58,6 @@ Possible Epilog Pcode: return(#0x0) a0(0x00100022:f)
 It then traces the descendants of the vector load source register (as root1) and those of the comparison register a6 (as root2):
 
 ```text
-
 intersection set root1: a5(0x00100020:e), a5(0x00100008:4), a6(0x00100016:a), a5(0x0010001e:d), v1(0x0010000e:8), u0x00004200:1(0x0010001a:b), a0(0x00100022:f), a5(0x00100004:15), v1(0x0010000a:6),
 intersection set root2: a5(0x00100020:e), a5(0x0010001e:d), u0x00004200:1(0x0010001a:b), a0(0x00100022:f),
 ```
@@ -155,3 +156,77 @@ can abort the transform for several reasons, such as failure to find the string 
 ## Path forward
 
 We need surveys of strlen and strcmp epilog sequences, hopefully leading up to a better set of filters for the result candidates.
+
+With basic survey code in place, we need a more structured epilog handling approach.
+
+The first `vector_strlen` example produced this epilog:
+
+```text
+a5(0x0010001e:d) = a5(0x00100008:4) + a6(0x00100016:a)
+u0x10000000(0x00100020:18) = a0(i) * #0xffffffffffffffff
+a5(0x00100020:e) = a5(0x0010001e:d) + u0x10000000(0x00100020:18)
+```
+
+The first element in the intersection set was `a5(0x0010001e:d)`.  The true result was `a5(0x00100020:e)`.
+Valid epilog patterns include:
+
+* `a5 = a5 + a6; u0 = a0 * -1; a5 = a5 + u0;`
+* `u0 = a0 * -1; a5 = a5 + a6; a5 = a5 + u0;`
+* `u0 = -a0 ; a5 = a5 + a6; a5 = a5 + u0;`
+* `u0 = a0 ; a5 = a5 + a6; a5 = a5 - u0;`
+* etc.
+
+That's unmanageable, with too many variations and orderings.
+
+Let's examine the potential intersection candidates again:
+
+```text
+a5(0x0010001e:d), a5(0x00100020:e), a0(0x00100022:f)
+```
+
+We need to see both an addition and a subtraction, so perhaps the simplest selector is to take the second addition/subtraction
+operation from the result list if it holds more than one potential result.
+
+Rough heuristics are in place, so run the integration test to check for divergence:
+
+```text
+Error: Unexpected number (0) of vector_strlen transforms found in whisper_sample_5	Expected: 1 transforms
+Error: Unexpected number (0) of vector_strlen transforms found in whisper_sample_17	Expected: 1 transforms
+Error: Unexpected number (2) of vector_strlen transforms found in whisper_sample_18	Expected: 4 transforms
+Error: Unexpected number (1) of vector_strlen transforms found in whisper_sample_19	Expected: 4 transforms
+```
+
+Examine these four divergences individually, to see if we can modify heuristics or alter the correct number of transforms.
+
+### whisper_sample_5
+
+Log extracts:
+
+```text
+Analyzing potential vector loop stanza at 0xb9946 in pid:tid 873464:873464
+Beginning loop pcode analysis
+  PcodeOp at 0xb9946: a5(0x000b9946:1102) = a0(0x000b993c:109) ? a5(0x000b994a:10f)
+  PcodeOp at 0xb9946: a3(0x000b9946:1019) = a3(0x000b9944:10d) ? c0x0c20(i)
+  PcodeOp at 0xb9946: vsetvli_e8m1tama(#0x0)
+  PcodeOp at 0xb994a: a5(0x000b994a:10f) = a5(0x000b9946:1102) + a3(0x000b9946:1019)(*#0x1)
+  PcodeOp at 0xb994c: v1(0x000b994c:111) = vle8ff_v(a5(0x000b994a:10f))
+  PcodeOp at 0xb9950: v1(0x000b9950:113) = vmseq_vi(v1(0x000b994c:111),#0x0)
+  PcodeOp at 0xb9958: a1(0x000b9958:115) = vfirst_m(v1(0x000b9950:113))
+  PcodeOp at 0xb995c: u0x00004200:1(0x000b995c:116) = a1(0x000b9958:115) < #0x0
+  PcodeOp at 0xb995c: goto Block_9:0x000b9946 if (u0x00004200:1(0x000b995c:116) != 0) else Block_10:0x000b9960
+...
+Possible Epilog Pcode:
+ u0x1000017d(0x000b9966:1334) = a0(0x000b993c:109) * #0xffffffffffffffff
+ u0x10000415(0x000b9966:23e6) = u0x1000017d(0x000b9966:1334) + a1(0x000b9958:115)
+ a5(0x000b9966:11c) = a5(0x000b994a:10f) + u0x10000415(0x000b9966:23e6)(*#0x1)
+ a5:4(0x000b996a:10a3) = SUB84(a5(0x000b9966:11c),#0x0:4)
+ s6:4(0x000b996a:11dd) = SUB84(s6(0x000b991e:11f0),#0x0:4)
+ u0x0001fc00:4(0x000b996a:11d) = a5:4(0x000b996a:10a3) + s6:4(0x000b996a:11dd)
+...
+Potential result Varnodes after sorting and filtering: : a5(0x000b9966:11c), a5:4(0x000b996a:10a3)
+Unable to find resultVn, abandon strlen transform
+```
+
+The problem here is we are only considering PcodeOps in the register space, not in the temporary space.
+Fix that with a more comprehensive filter and see that the integration tests pass - except for those waiting for upstream
+fixes.

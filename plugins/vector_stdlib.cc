@@ -12,6 +12,7 @@
 #include <set>
 #include <algorithm>
 #include <iterator>
+#include <ranges>
 
 #include "spdlog/spdlog.h"
 
@@ -30,6 +31,17 @@
 
 namespace riscv_vector
 {
+
+/**
+ * @brief The epilog to a vector+strlen loop can show significant variation.
+ *        Try to capture the variants with this enumeration
+ */
+enum StrlenEpilogType
+{
+    STRLEN,    ///< a simple strlen epilog with two integer opcodes
+    STREND,    ///< a variant that returns a pointer to the last character in the string
+    NOMATCH    ///< unrecognized epilog
+};
 
 bool VectorMatcher::isMemcpy()
 {
@@ -105,13 +117,15 @@ int VectorMatcher::transformStrlen()
 {
     std::stringstream ss;
     std::vector<ghidra::PcodeOp*> opsToDelete; // accumulate ops we are sure to delete in any transform
-    ghidra::Varnode* resultVn = nullptr;
-    ghidra::PcodeOp* result = nullptr;
+    const ghidra::PcodeOp* result = nullptr;
+    const ghidra::Varnode* resultVn = nullptr;
+    ghidra::Varnode* sourceVn = loopModel.vSourceOperands[0]->pExternal;
     if (ghidra::info)
         ghidra::inspector->log("before strlen transform, ", loopBlock);
     // first identify the result Varnode as the register-typed varnode descending
     // from both the source load address pointer and the termination comparison operation.
-    // we want the first such descendent found in the epilog
+    // we want the first such descendent found in the epilog following at least two
+    // integer additions or subtractions
     VectorEpilogProcessor epiProc(data, loopModel);
     std::vector<ghidra::Varnode*> resultsVector;
     epiProc.getIntersectionVector(resultsVector, loopModel.vSourceOperands[0]->pRegister, loopModel.comparisonVarnode);
@@ -121,7 +135,103 @@ int VectorMatcher::transformStrlen()
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
-    resultVn = resultsVector[0];
+    // assume this is a valid vector_strlen with a normal epilog
+    StrlenEpilogType epiType = STRLEN;
+    // if there is only one candidate, use it.
+    if (resultsVector.size() == 1)
+    {
+        // only one candidate, probably due to preceding temporaries
+        resultVn = resultsVector[0];
+    }
+    else
+    {
+        // the strlen epilog involves two integer additions or one integer addition and one subtraction
+        // Use the first intersection result Varnode candidate that is or follows the second such op
+        int addSubtractCount = 0;
+        for (auto op: loopModel.epilogPcodes)
+        {
+            ghidra::OpCode opcode = op->code();
+            if (ghidra::trace)
+            {
+                ghidra::inspector->log("Examine epilog pcode as a possible result", op);
+                ghidra::pLogger->trace("\topcode = {0:d}", static_cast<int>(opcode));
+            }
+            bool addOrSub =
+                (opcode == ghidra::CPUI_INT_ADD) ||
+                (opcode == ghidra::CPUI_PTRADD) ||
+                (opcode == ghidra::CPUI_INT_SUB) ||
+                (opcode == ghidra::CPUI_PTRSUB);
+            if (!addOrSub) continue;
+            addSubtractCount++;
+            if ((addSubtractCount >= 2) &&
+                (std::find(resultsVector.begin(), resultsVector.end(), op->getOut()) != resultsVector.end()))
+            {
+                ghidra::inspector->log("Confirm epilog pcode as the definitive result", op);
+                // if the op adds a constant - probably -1 - then it is likely a string end transform
+                // and is not currently handled
+                const ghidra::Varnode* arg0 =  op->getIn(0);
+                const ghidra::Varnode* arg1 =  op->getIn(1);
+                if (arg0->isConstant() || arg1->isConstant())
+                {
+                    // probable, assuming the constant is -1
+                    ghidra::pLogger->info("Epilog specialization for vector_strlen not yet implemented");
+                    epiType = STREND;
+                    break;
+                }
+                resultVn = op->getOut();
+                break;
+            }
+        }
+    }
+    // Survey epilog structures to see if we need more special case handling
+    if (COLLECT_STRLEN_SAMPLES)
+    {
+        strlenSampleFile << "Loop start address: 0x" << std::hex <<
+            loopModel.firstAddr << std::endl << std::dec;
+        strlenSampleFile << "Source Varnode: ";
+        sourceVn->printRaw(strlenSampleFile);
+        strlenSampleFile << std::endl;
+        strlenSampleFile << "Loop instructions:" << std::endl;
+        std::ranges::subrange viewOps{loopBlock->beginOp(), loopBlock->endOp()};
+        for (auto op: viewOps)
+        {
+            strlenSampleFile << "\t";
+            op->printRaw(strlenSampleFile);
+            strlenSampleFile << std::endl;
+        }
+        const ghidra::PcodeOp* epiOp = loopBlock->lastOp()->nextOp();
+        const int EPILOG_SEARCH_DEPTH = 6;
+        int opCount = 0;
+        strlenSampleFile << "Epilog instructions:" << std::endl;
+        while ((opCount < EPILOG_SEARCH_DEPTH) && (epiOp != nullptr))
+        {
+            strlenSampleFile << "\t";
+            epiOp->printRaw(strlenSampleFile);
+            strlenSampleFile << std::endl;
+            epiOp = epiOp->nextOp();
+            ++opCount;
+        }
+        strlenSampleFile << "Results Vector: ";
+        for (auto vn: resultsVector)
+        {
+            vn->printRaw(strlenSampleFile);
+            strlenSampleFile << ", ";
+        }
+        strlenSampleFile << std::endl << "********************************" << std::endl;
+    }
+    // verify that we have all we need for a completed transform
+    if (resultVn == nullptr)
+    {
+        ghidra::pLogger->info("Unable to find resultVn, abandon strlen transform");
+        ghidra::pLogger->flush();
+        return TRANSFORM_ROLLED_BACK;
+    }
+    if (epiType == STREND)
+    {
+        ghidra::pLogger->warn("Vector string end method not implemented, abandon transform");
+        ghidra::pLogger->flush();
+        return TRANSFORM_ROLLED_BACK;
+    }
     if (ghidra::trace)
     {
         resultVn->printRaw(ss);
@@ -130,36 +240,27 @@ int VectorMatcher::transformStrlen()
     }
     result = resultVn->getDef();
 
-    ghidra::Varnode* sourceVn = loopModel.vSourceOperands[0]->pExternal;
     if (sourceVn == nullptr)
     {
         ghidra::pLogger->warn("Failed to locate the strlen source operand - abandon transform");
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
-    sourceVn->printRaw(ss);
     if (ghidra::trace)
     {
+        sourceVn->printRaw(ss);
         ghidra::pLogger->trace("\tSelecting as the source Varnode {0:s}", ss.str());
         ss.str("");
     }
+    // a loop scratch register might be tentatively assigned to a later function call
     if (loopModel.unresolvedDependencies(result))
     {
         ghidra::pLogger->warn("Unable to complete transform due to one or more references to a loop-local Varnode");
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
-
-    /*
-    if (! epiProc.verify())
-    {
-        ghidra::pLogger->warn("Unable to complete transform due to unhandled epilog");
-        ghidra::pLogger->flush();
-        return TRANSFORM_ROLLED_BACK;
-    }
-    */
+    // make sure vector_strlen is registered
     data.getArch()->userops.registerBuiltin(VECTOR_STRLEN);
-
 
     // Note: after this point pcode changes are irreversible
 
@@ -193,12 +294,13 @@ int VectorMatcher::transformStrlen()
         }
     }
     // Delete enough common dependencies to make other Varnodes unused
-    opsToDelete.push_back(result);
+    ghidra::PcodeOp* modifiableResult = const_cast<ghidra::PcodeOp*>(result);
+    opsToDelete.push_back(modifiableResult);
     std::copy(std::begin(loopModel.loopOps), std::end(loopModel.loopOps),
         std::back_inserter(opsToDelete));
     std::copy(std::begin(loopModel.phiNodesAffectedByLoop), std::end(loopModel.phiNodesAffectedByLoop),
         std::back_inserter(opsToDelete));
-    ghidra::BlockBasic* epilogBlock = result->getParent();
+    ghidra::BlockBasic* epilogBlock = modifiableResult->getParent();
     functionEditor.simplifyBlocks(opsToDelete, loopBlock, epilogBlock, &loopModel.relatedBlocks);
     ghidra::pLogger->flush();
     return TRANSFORM_COMPLETED;

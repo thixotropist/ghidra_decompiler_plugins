@@ -11,6 +11,12 @@
       00c257a71842e34507fe03cd0a003a95
       330555418280
     </bytechunk>
+    <bytechunk space="ram" offset="0x1000ba" readonly="true">
+                    8146aa875776
+      000cb69787800703d7301062f32600c2
+      57a81842e34508fec29785458d8f3e85
+      8280
+  </bytechunk>
   </binaryimage>
   <coretypes>
     <type name="code" size="1" metatype="code" id="0xe000000000000001"/>
