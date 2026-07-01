@@ -31,7 +31,7 @@ static const bool DO_SURVEY = false;  ///< survey the loaded architecture
 static const bool SURVEY_USERPCODEOPS = false;  ///< show user pcode ops by name and index
 static const int MAX_USER_PCODES = 10000;  ///< limit the number of user pcode ops shown
 
-static const spdlog::level::level_enum LOG_LEVEL = spdlog::level::trace; ///< default log level to use
+static const spdlog::level::level_enum LOG_LEVEL = spdlog::level::warn; ///< default log level to use
 
 namespace riscv_vector
 {

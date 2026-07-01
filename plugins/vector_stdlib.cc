@@ -125,13 +125,13 @@ int VectorMatcher::transformStrlen()
     // first identify the result Varnode as the register-typed varnode descending
     // from both the source load address pointer and the termination comparison operation.
     // we want the first such descendent found in the epilog following at least two
-    // integer additions or subtractions
+    // integer/pointer additions or subtractions
     VectorEpilogProcessor epiProc(data, loopModel);
     std::vector<ghidra::Varnode*> resultsVector;
     epiProc.getIntersectionVector(resultsVector, loopModel.vSourceOperands[0]->pRegister, loopModel.comparisonVarnode);
     if ((resultsVector.size() == 0) || (resultsVector[0] == nullptr))
     {
-        ghidra::pLogger->info("Unable to find resultVn, abandon strlen transform");
+        ghidra::pLogger->info("Unable to find resultVn candidates, abandon strlen transform");
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
@@ -166,7 +166,8 @@ int VectorMatcher::transformStrlen()
             if ((addSubtractCount >= 2) &&
                 (std::find(resultsVector.begin(), resultsVector.end(), op->getOut()) != resultsVector.end()))
             {
-                ghidra::inspector->log("Confirm epilog pcode as the definitive result", op);
+                if (ghidra::info)
+                    ghidra::inspector->log("Confirm epilog pcode as the definitive result", op);
                 // if the op adds a constant - probably -1 - then it is likely a string end transform
                 // and is not currently handled
                 const ghidra::Varnode* arg0 =  op->getIn(0);
@@ -174,8 +175,9 @@ int VectorMatcher::transformStrlen()
                 if (arg0->isConstant() || arg1->isConstant())
                 {
                     // probable, assuming the constant is -1
-                    ghidra::pLogger->info("Epilog specialization for vector_strlen not yet implemented");
+                    ghidra::pLogger->trace("epilog type is STREND");
                     epiType = STREND;
+                    resultVn = op->getOut();
                     break;
                 }
                 resultVn = op->getOut();
@@ -226,12 +228,6 @@ int VectorMatcher::transformStrlen()
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
-    if (epiType == STREND)
-    {
-        ghidra::pLogger->warn("Vector string end method not implemented, abandon transform");
-        ghidra::pLogger->flush();
-        return TRANSFORM_ROLLED_BACK;
-    }
     if (ghidra::trace)
     {
         resultVn->printRaw(ss);
@@ -252,14 +248,16 @@ int VectorMatcher::transformStrlen()
         ghidra::pLogger->trace("\tSelecting as the source Varnode {0:s}", ss.str());
         ss.str("");
     }
-    // a loop scratch register might be tentatively assigned to a later function call
+    // A loop scratch register might be tentatively assigned to a later function call.
+    // If so, defer this transform until the user manually trims that function cal
+    // signature to not reference that register.
     if (loopModel.unresolvedDependencies(result))
     {
         ghidra::pLogger->warn("Unable to complete transform due to one or more references to a loop-local Varnode");
         ghidra::pLogger->flush();
         return TRANSFORM_ROLLED_BACK;
     }
-    // make sure vector_strlen is registered
+    // make sure vector_strlen typed user op is registered
     data.getArch()->userops.registerBuiltin(VECTOR_STRLEN);
 
     // Note: after this point pcode changes are irreversible
@@ -269,14 +267,41 @@ int VectorMatcher::transformStrlen()
     data.opSetOpcode(newVectorOp, ghidra::CPUI_CALLOTHER);
     data.opSetInput(newVectorOp, data.newConstant(4, VECTOR_STRLEN), 0);
     data.opSetInput(newVectorOp, loopModel.vSourceOperands[0]->pExternal, 1);
-    ghidra::Varnode* vectorResultVarnode = data.newVarnodeOut(resultVn->getSize(), resultVn->getAddr(), newVectorOp);
+    ghidra::Varnode* vectorResultVarnode;
+    ghidra::Varnode* tmpResultVarnode = data.newVarnodeOut(resultVn->getSize(), resultVn->getAddr(), newVectorOp);
     if (ghidra::trace)
-    {
-        newVectorOp->printRaw(ss);
-        ghidra::pLogger->trace("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
-        ss.str("");
-    }
+        {
+            newVectorOp->printRaw(ss);
+            ghidra::pLogger->trace("\tInserting a new vector operation\n\t\t{0:s}", ss.str());
+            ss.str("");
+        }
     data.opInsertEnd(newVectorOp, loopBlock);
+    // If this is a simple vector_strlen epilog we have our result
+    if (epiType == STRLEN)
+    {
+        vectorResultVarnode = tmpResultVarnode;
+    }
+    else if(epiType == STREND)
+    {
+        // if the epilog returns a pointer to the last character of the string, we need two more ops
+        // add the string pointer into the result to get a pointer to the trailing null
+        ghidra::PcodeOp *newEpiOp1 = data.newOp(2, loopBlock->getStop());
+        data.opSetOpcode(newEpiOp1, ghidra::CPUI_INT_ADD);
+        data.opSetInput(newEpiOp1, tmpResultVarnode, 0);
+        data.opSetInput(newEpiOp1, loopModel.vSourceOperands[0]->pExternal, 1);
+        ghidra::Varnode* ptrVarnode = data.newVarnodeOut(resultVn->getSize(), resultVn->getAddr(), newEpiOp1);
+        data.opInsertEnd(newEpiOp1, loopBlock);
+        if (ghidra::trace) ghidra::inspector->log("Pointer Adjustment epilog op1 is ", newEpiOp1);
+         // subtract 1 from the result to get a pointer to the last actual character
+        ghidra::PcodeOp *newEpiOp2 = data.newOp(2, loopBlock->getStop());
+        data.opSetOpcode(newEpiOp2, ghidra::CPUI_INT_SUB);
+        data.opSetInput(newEpiOp2, ptrVarnode, 0);
+        data.opSetInput(newEpiOp2, data.newConstant(4, -1), 1);
+        vectorResultVarnode = data.newVarnodeOut(resultVn->getSize(), resultVn->getAddr(), newEpiOp2);
+        data.opInsertEnd(newEpiOp2, loopBlock);
+        if (ghidra::trace) ghidra::inspector->log("Pointer Adjustment epilog op1=2 is ", newEpiOp2);
+    }
+    ghidra::pLogger->flush();
     if (ghidra::trace) ghidra::inspector->log("Vector loop block after inserting vector_strlen is", loopBlock);
     // replace old result with new result
     std::vector<ghidra::PcodeOp*> resultSet = std::vector(resultVn->beginDescend(), resultVn->endDescend());
@@ -328,6 +353,7 @@ int VectorMatcher::transformStrcmp()
     std::vector<ghidra::PcodeOp*> opsToDelete;
     ghidra::Varnode* firstArg = nullptr;  // the first argument to the vector_strcmp call
     ghidra::Varnode* secondArg = nullptr; // the second argument to the vector_strcmp call
+    ghidra::Varnode* sourceVn = loopModel.vSourceOperands[0]->pExternal;
     if (ghidra::info)
         ghidra::inspector->log("before strcmp transform, ", loopBlock);
     // Step 1: find the intersection of the two source operands pointer dependency set.
@@ -352,6 +378,43 @@ int VectorMatcher::transformStrcmp()
     }
     ghidra::Varnode* resultVn = resultsVector[0];
     ghidra::PcodeOp* result = resultVn->getDef();
+
+    // Survey epilog structures to see if we need more special case handling
+    if (COLLECT_STRCMP_SAMPLES)
+    {
+        strcmpSampleFile << "Loop start address: 0x" << std::hex <<
+            loopModel.firstAddr << std::endl << std::dec;
+        strcmpSampleFile << "Source Varnode: ";
+        sourceVn->printRaw(strcmpSampleFile);
+        strcmpSampleFile << std::endl;
+        strcmpSampleFile << "Loop instructions:" << std::endl;
+        std::ranges::subrange viewOps{loopBlock->beginOp(), loopBlock->endOp()};
+        for (auto op: viewOps)
+        {
+            strcmpSampleFile << "\t";
+            op->printRaw(strcmpSampleFile);
+            strcmpSampleFile << std::endl;
+        }
+        const ghidra::PcodeOp* epiOp = loopBlock->lastOp()->nextOp();
+        const int EPILOG_SEARCH_DEPTH = 6;
+        int opCount = 0;
+        strcmpSampleFile << "Epilog instructions:" << std::endl;
+        while ((opCount < EPILOG_SEARCH_DEPTH) && (epiOp != nullptr))
+        {
+            strcmpSampleFile << "\t";
+            epiOp->printRaw(strcmpSampleFile);
+            strcmpSampleFile << std::endl;
+            epiOp = epiOp->nextOp();
+            ++opCount;
+        }
+        strcmpSampleFile << "Results Vector: ";
+        for (auto vn: resultsVector)
+        {
+            vn->printRaw(strcmpSampleFile);
+            strcmpSampleFile << ", ";
+        }
+        strcmpSampleFile << std::endl << "********************************" << std::endl;
+    }
     bool comparisonInverted = false;
     result->printRaw(ss);
     ghidra::pLogger->info("strcmp result operation located: {0:s}", ss.str());

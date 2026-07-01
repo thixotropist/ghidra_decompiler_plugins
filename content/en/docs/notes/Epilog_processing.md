@@ -230,3 +230,17 @@ Unable to find resultVn, abandon strlen transform
 The problem here is we are only considering PcodeOps in the register space, not in the temporary space.
 Fix that with a more comprehensive filter and see that the integration tests pass - except for those waiting for upstream
 fixes.
+
+## Handle variant epilogs
+
+Add some code to handle the vector_strlen epilog specific to the `strend` function example above.  This
+code recognizes the compiler optimizations and now decompiles to:
+
+```c
+long strend(long param_1)
+{
+  undefined8 uVar1;
+  uVar1 = vector_strlen((char *)param_1);
+  return (uVar1 + param_1) - 0xffffffffffffffff;
+}
+```

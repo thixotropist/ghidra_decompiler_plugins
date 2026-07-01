@@ -48,7 +48,7 @@ DEFERRED_TESTS = ("dpdk_sample_5", "dpdk_sample_6", "dpdk_sample_8")
 # show the expected number of matches in each test
 expected = {
     'memcpy_exemplars':  {'vector_memcpy':5},
-    'strlen_exemplars':  {'vector_strlen':2},
+    'strlen_exemplars':  {'vector_strlen':3},
     'strcmp_exemplars':  {'vector_strcmp':2},
     'whisperInit':       {'vector_memset':1, 'vector_memcpy':3},
     'whisper_sample_1a': {'vector_memcpy':1, 'vector_strlen':0},
