@@ -148,6 +148,7 @@ int VectorMatcher::transformStrlen()
         // the strlen epilog involves two integer additions or one integer addition and one subtraction
         // Use the first intersection result Varnode candidate that is or follows the second such op
         int addSubtractCount = 0;
+        bool foundDecrement = false;
         for (auto op: loopModel.epilogPcodes)
         {
             ghidra::OpCode opcode = op->code();
@@ -163,16 +164,23 @@ int VectorMatcher::transformStrlen()
                 (opcode == ghidra::CPUI_PTRSUB);
             if (!addOrSub) continue;
             addSubtractCount++;
+            // if the op adds a constant - probably -1 - then it is likely a string end transform
+            // and is not currently handled
+            const ghidra::Varnode* arg0 =  op->getIn(0);
+            const ghidra::Varnode* arg1 =  op->getIn(1);
+            foundDecrement |=  arg0->isConstant() || arg1->isConstant();
             if ((addSubtractCount >= 2) &&
                 (std::find(resultsVector.begin(), resultsVector.end(), op->getOut()) != resultsVector.end()))
             {
                 if (ghidra::info)
+                {
                     ghidra::inspector->log("Confirm epilog pcode as the definitive result", op);
-                // if the op adds a constant - probably -1 - then it is likely a string end transform
-                // and is not currently handled
-                const ghidra::Varnode* arg0 =  op->getIn(0);
-                const ghidra::Varnode* arg1 =  op->getIn(1);
-                if (arg0->isConstant() || arg1->isConstant())
+                    const ghidra::Varnode* opResult = op->getOut();
+                    opResult->printInfo(ss);
+                    ghidra::pLogger->trace("Result type of the existing result is {0:s}", ss.str());
+                    ss.str("");
+                }
+                if (foundDecrement)
                 {
                     // probable, assuming the constant is -1
                     ghidra::pLogger->trace("epilog type is STREND");

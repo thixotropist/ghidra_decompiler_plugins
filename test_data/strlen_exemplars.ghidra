@@ -16,6 +16,7 @@ print C
 print raw
 // decompile a similar function with a different epilog and return type
 map function 0x1000ba strend
+parse line extern char* strend(char* s);
 load function strend
 decompile strend
 print C
