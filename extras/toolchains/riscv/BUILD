@@ -1,5 +1,6 @@
-load(":gcc/cc_toolchain_config.bzl", "cc_toolchain_config")
+load("@rules_cc//cc/toolchains:cc_toolchain.bzl", "cc_toolchain")
 load("//:variables.bzl", "OUTPUT_BASE")
+load(":gcc/cc_toolchain_config.bzl", "cc_toolchain_config")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -47,6 +48,7 @@ filegroup(
             "@gcc_riscv_suite//:compiler_files",
         ],
 )
+
 # The toolchain configuration uses a slightly customized rule allowing for
 # multiple machine architecture toolchain definitions
 cc_toolchain_config(
@@ -57,11 +59,11 @@ cc_toolchain_config(
 cc_toolchain(
     name = "riscv64-rva23-gcc",
     all_files = ":gcc_riscv64_compiler_files",
+    ar_files = ":gcc_riscv64_compiler_files",
+    as_files = ":gcc_riscv64_compiler_files",
     compiler_files = ":gcc_riscv64_compiler_files",
     dwp_files = ":empty",
     linker_files = ":gcc_riscv64_compiler_files",
-    as_files = ":gcc_riscv64_compiler_files",
-    ar_files = ":gcc_riscv64_compiler_files",
     objcopy_files = ":gcc_riscv64_compiler_files",
     strip_files = ":gcc_riscv64_compiler_files",
     supports_param_files = 0,

@@ -19,8 +19,8 @@ GHIDRA_INSTALL_DIR = "/opt/ghidra_12.2_DEV/"
 DECOMPILER_DIR = GHIDRA_INSTALL_DIR + "Ghidra/Features/Decompiler/os/linux_x86_64/"
 DECOMPILER_PATH = DECOMPILER_DIR + "decompile"
 DATATEST_PATH = DECOMPILER_DIR + "decompile_datatest"
-BAZEL_BUILD_DECOMPILER_PATH = "bazel-bin/external/+_repo_rules+ghidra/decompile"
-BAZEL_BUILD_DATATEST_PATH = "bazel-bin/external/+_repo_rules+ghidra/decompile_datatest"
+BAZEL_BUILD_DECOMPILER_PATH = "bazel-bin/external/+git_repository+ghidra/decompile"
+BAZEL_BUILD_DATATEST_PATH = "bazel-bin/external/+git_repository+ghidra/decompile_datatest"
 PLUGIN_LOAD_DIR = "/tmp/"
 PLUGIN_NAME = "libriscv_vector.so"
 PLUGIN_PATH = PLUGIN_LOAD_DIR + PLUGIN_NAME
@@ -189,23 +189,23 @@ class T0BuildPlugin(unittest.TestCase):
                     "unable to clean previous decompiler executable files")
 
         # build the decompiler executable used by Ghidra
-        command = "bazel build -c opt @ghidra//:decompile"
+        command = "bazelisk build -c opt @ghidra//:decompile"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True,
                                 shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
-            "bazel build of the Ghidra decompiler failed")
+            "bazelisk build of the Ghidra decompiler failed")
         result = shutil.copy(BAZEL_BUILD_DECOMPILER_PATH, DECOMPILER_PATH)
         self.assertEqual(result, DECOMPILER_PATH,
                          "Unable to install the decompiler executable")
 
         # build the decompiler datatest executable
-        command = "bazel build -c dbg @ghidra//:decompile_datatest"
+        command = "bazelisk build -c dbg @ghidra//:decompile_datatest"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True,
                                 shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
-            "bazel build of the Ghidra decompiler data_test failed")
+            "bazelisk build of the Ghidra decompiler data_test failed")
         result = shutil.copy(BAZEL_BUILD_DATATEST_PATH, DATATEST_PATH)
         self.assertEqual(result, DATATEST_PATH,
                          "Unable to install the decompiler datatest executable")
@@ -222,12 +222,12 @@ class T0BuildPlugin(unittest.TestCase):
         self.assertEqual(0, result.returncode,
             "unable to clean previous decompiler plugin")
         logger.info("Building and installing the plugin")
-        command = "bazel build -c dbg plugins:riscv_vector"
+        command = "bazelisk build -c dbg plugins:riscv_vector"
         logger.info(f"Running {command}")
         result = subprocess.run(command, check=True, capture_output=True,
                                 shell=True, encoding="utf8")
         self.assertEqual(0, result.returncode,
-            "bazel build of the RISC-V vector transform plugin failed")
+            "bazelisk build of the RISC-V vector transform plugin failed")
         result = shutil.copy(f"bazel-bin/plugins/{PLUGIN_NAME}", "/tmp")
         self.assertEqual(result, PLUGIN_PATH,
                          "Unable to install the decompiler plugin")

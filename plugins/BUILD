@@ -1,30 +1,32 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 cc_library(
     name = "riscv_vector",
     srcs = [
-        "action_prepare.hh",
         "action_prepare.cc",
-        "framework.hh",
+        "action_prepare.hh",
         "framework.cc",
-        "inspector.hh",
+        "framework.hh",
         "inspector.cc",
-        "riscv.hh",
+        "inspector.hh",
         "riscv.cc",
-        "riscv_sleigh.hh",
+        "riscv.hh",
         "riscv_sleigh.cc",
-        "rule_vector_transform.hh",
+        "riscv_sleigh.hh",
         "rule_vector_transform.cc",
-        "vector_matcher.hh",
+        "rule_vector_transform.hh",
         "vector_matcher.cc",
-        "vector_ops.hh",
+        "vector_matcher.hh",
         "vector_ops.cc",
+        "vector_ops.hh",
         "vector_stdlib.cc",
     ],
     copts = [
         "-Wno-sign-compare",
-        "-std=c++20"
+        "-std=c++20",
     ],
     deps = [
         "@ghidra//:decomp_lib",
-        "@spdlog//:spdlog",
+        "@spdlog",
     ],
 )

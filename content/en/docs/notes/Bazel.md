@@ -5,7 +5,11 @@ weight: 80
 ---
 
 The Bazel environment may need tuning when deployed.  This project's development host currently uses Bazel
-release 8.5.0, and is expected to move to release 9.x shortly.
+release 9.1.1, and is expected to track the Bazel development tip fairly closely.  `bazelisk` is used on the command line
+where `bazel` might be expected - `bazelisk` consults the `.bazelversion` file to choose the current version to download and run.
+
+>Note: The Bazel development team is currently refactoring Bazel modules used in support of crosscompiler environments.
+>      This refactoring is the primary driver for closely tracking the Bazel development tip.
 
 Most Bazel environment parameters are set in the top level file `.bazelrc`.  This file currently contains:
 

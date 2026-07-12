@@ -4,6 +4,9 @@
 #  * decompile_unittest - a decompiler unit test framework
 #  * decompile_datatest - a decompiler console used in data tests and plugin development
 
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 # decompiler source file location in the imported Ghidra release tar file
 SRCDIR = "Ghidra/Features/Decompiler/src/decompile/cpp/"
 
@@ -169,7 +172,6 @@ DECOMP_HDRS = [
 # Note: only those headers declared under `hdrs` will be visible to plugin builds.
 cc_library(
     name = "decomp_lib",
-    visibility = ["//visibility:public"],
     srcs = [SRCDIR + f + ".cc" for f in DECOMP_CPP_FILES],
     hdrs = [SRCDIR + f + ".hh" for f in DECOMP_HDRS] + [
         SRCDIR + "types.h",
@@ -178,6 +180,7 @@ cc_library(
         "-Wall",
         "-Wno-sign-compare",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "@spdlog",
     ],

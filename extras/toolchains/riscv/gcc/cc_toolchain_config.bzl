@@ -10,6 +10,8 @@ load(
     "tool_path",
     "with_feature_set",
 )
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@rules_cc//cc/toolchains:cc_toolchain_config_info.bzl", "CcToolchainConfigInfo")
 
 # Paths are user dependent - we need the path to Bazel's OUTPUT_BASE
 load("//:variables.bzl", "OUTPUT_BASE")
