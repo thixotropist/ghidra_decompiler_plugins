@@ -12,7 +12,8 @@ namespace riscv_vector
 {
 /**
  * @file action_prepare.hh
- *
+ */
+/**
  * @brief Provide an Action to adjust CSR values and heritage
  */
 class ActionPluginPrepare : public ghidra::Action {
@@ -33,7 +34,8 @@ class ActionPluginPrepare : public ghidra::Action {
     static const ghidra::uintb vlRegisterOffset = VL_ADDR * CSR_WORDSIZE;
     /// @brief The offset in csreg space given to the "vlenb" register
     static const ghidra::uintb vlenbRegisterOffset = VLENB_ADDR * CSR_WORDSIZE;
-
+    /// @brief @brief constructor
+    /// @param g The group name associated with this Action
     explicit ActionPluginPrepare(const std::string &g) : ghidra::Action(0,"pluginrules",g) {}       ///< Constructor
     static void static_init(); ///< Static initialization
     /// @brief Prepare for another function, removing any function-specific static data

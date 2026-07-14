@@ -15,6 +15,8 @@ namespace riscv_vector
 {
 /**
  * @file rule_vector_transform.hh
+ */
+/**
  * @brief A Rule collecting individual vector instructions into vector_* function invocations
  */
 class RuleVectorTransform : public ghidra::Rule

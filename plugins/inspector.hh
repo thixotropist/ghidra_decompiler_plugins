@@ -74,13 +74,13 @@ class Inspector
      * @param data The Funcdata context for this function
      * @param ss The stringstream to receive the audit
      */
-    static void auditVarnodes(const ghidra::Funcdata& data, std::ofstream& ss);
+    static void auditVarnodes(const Funcdata& data, std::ofstream& ss);
     /**
      * @brief Audit the Funcdata BlockGraph to check for consistency errors
      * @param data The Funcdata context for this function
      * @param ss The stringstream to receive the audit
      */
-    static void auditBlockGraph(const ghidra::Funcdata& data, std::ofstream& ss);
+    static void auditBlockGraph(const Funcdata& data, std::ofstream& ss);
     /**
      * @brief MULTIEQUAL PcodeOps have a complex relationship with a function's Blocks.
      *        Capture some of those rules here to prevent low-level errors.
@@ -88,7 +88,7 @@ class Inspector
      * @param ss The stringstream to receive the audit
      * @todo: Move the processor-dependent corrective code out of this inspector class
      */
-    static void auditMultiequals(const ghidra::Funcdata& data, std::stringstream& ss);
+    static void auditMultiequals(const Funcdata& data, std::stringstream& ss);
     /**
      * @brief Do we want to audit Varnode data structures for consistency?
      */
@@ -108,7 +108,7 @@ class Inspector
    * @param ss The stringstream to receive the audit
    * @param level indentation level to use
    */
-    static void auditBlockGraph(const ghidra::FlowBlock* bl, std::ofstream& ss, int level);
+    static void auditBlockGraph(const FlowBlock* bl, std::ofstream& ss, int level);
     std::shared_ptr<spdlog::logger> logger;     ///< the SPDLOG logger to use for output
     bool logBlockStructure = true;             ///< if true, log full blocks during any blockgraph edits
 };
