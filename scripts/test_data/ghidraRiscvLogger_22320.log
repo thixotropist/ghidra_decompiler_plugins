@@ -1,0 +1,895 @@
+[2026-07-17 11:24:12.177] [riscv_vector] [error] RuleVectorTransform::clone failed for lack of a group
+[2026-07-17 11:24:14.572] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b25c
+[2026-07-17 11:24:14.573] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b2a6
+[2026-07-17 11:24:14.573] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b2fe
+[2026-07-17 11:24:14.574] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b376
+[2026-07-17 11:24:14.574] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b3ea
+[2026-07-17 11:24:14.576] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b25c
+[2026-07-17 11:24:14.576] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b2a6
+[2026-07-17 11:24:14.577] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b2fe
+[2026-07-17 11:24:14.577] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b376
+[2026-07-17 11:24:14.577] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x10b3ea
+[2026-07-17 11:24:14.694] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x00112fd6:85)	referencing pcodeOp: u0x10000070:4(0x00112ff0:233) = SUB84(a5(0x00112fd6:85),#0x0:4)
+[2026-07-17 11:24:14.694] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x00112fd6:85)	referencing pcodeOp: u0x10000070:4(0x00112ff0:233) = SUB84(a5(0x00112fd6:85),#0x0:4)
+[2026-07-17 11:24:14.694] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x00112fe4:8b)	referencing pcodeOp: u0x10000074:4(0x00112ff0:234) = SUB84(a3(0x00112fe4:8b),#0x0:4)
+[2026-07-17 11:24:14.694] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:14.695] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x00112fd6:85)	referencing pcodeOp: u0x10000070:4(0x00112ff0:233) = SUB84(a5(0x00112fd6:85),#0x0:4)
+[2026-07-17 11:24:14.695] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x00112fd6:85)	referencing pcodeOp: u0x10000070:4(0x00112ff0:233) = SUB84(a5(0x00112fd6:85),#0x0:4)
+[2026-07-17 11:24:14.695] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x00112fe4:8b)	referencing pcodeOp: u0x10000074:4(0x00112ff0:234) = SUB84(a3(0x00112fe4:8b),#0x0:4)
+[2026-07-17 11:24:14.695] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:15.906] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1546c6
+[2026-07-17 11:24:15.906] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:15.906] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:15.906] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x001546f8:17f)
+[2026-07-17 11:24:15.906] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: s5(0x00154712:18c)
+[2026-07-17 11:24:15.907] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1546c6
+[2026-07-17 11:24:15.907] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:15.907] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:15.907] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x001546f8:17f)
+[2026-07-17 11:24:15.907] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: s5(0x00154712:18c)
+[2026-07-17 11:24:16.557] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0017a940:ab)	referencing pcodeOp: call nrte_spinlock_lock(free)(s2(0x0017a978:c7),a1(0x0017a960:b7),a2(0x0017a940:ab))
+[2026-07-17 11:24:16.557] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0017a960:b7)	referencing pcodeOp: call nrte_spinlock_lock(free)(s2(0x0017a978:c7),a1(0x0017a960:b7),a2(0x0017a940:ab))
+[2026-07-17 11:24:16.557] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:16.557] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0017a940:ab)	referencing pcodeOp: call nrte_spinlock_lock(free)(s2(0x0017a978:c7),a1(0x0017a960:b7),a2(0x0017a940:ab))
+[2026-07-17 11:24:16.557] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0017a960:b7)	referencing pcodeOp: call nrte_spinlock_lock(free)(s2(0x0017a978:c7),a1(0x0017a960:b7),a2(0x0017a940:ab))
+[2026-07-17 11:24:16.557] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:16.810] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x186f6c
+[2026-07-17 11:24:16.810] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:16.810] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x00186f92:3d2)
+[2026-07-17 11:24:16.810] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x00186f9e:3d7)
+[2026-07-17 11:24:16.811] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x186f6c
+[2026-07-17 11:24:16.811] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:16.811] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x00186f92:3d2)
+[2026-07-17 11:24:16.811] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x00186f9e:3d7)
+[2026-07-17 11:24:17.697] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x001b7b92:50)	referencing pcodeOp: a0(0x001b7be0:89) = call nrte_event_dev_close(free)(u0x00005d00:1(0x001b7bd8:80),a1(0x001b7b92:50))
+[2026-07-17 11:24:17.697] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:17.697] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x001b7b92:50)	referencing pcodeOp: a0(0x001b7be0:89) = call nrte_event_dev_close(free)(u0x00005d00:1(0x001b7bd8:80),a1(0x001b7b92:50))
+[2026-07-17 11:24:17.697] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:17.706] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1b8716
+[2026-07-17 11:24:17.706] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1b8716
+[2026-07-17 11:24:17.706] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1b8716
+[2026-07-17 11:24:17.706] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1b8716
+[2026-07-17 11:24:17.712] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1b8a78
+[2026-07-17 11:24:17.712] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1b8a78
+[2026-07-17 11:24:17.736] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1ba564
+[2026-07-17 11:24:17.736] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1ba564
+[2026-07-17 11:24:17.754] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1bbe32
+[2026-07-17 11:24:17.754] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:17.754] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(0x001bbe72:35)
+[2026-07-17 11:24:17.754] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1bbe32
+[2026-07-17 11:24:17.754] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:17.754] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(0x001bbe72:35)
+[2026-07-17 11:24:19.051] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1fc372
+[2026-07-17 11:24:19.052] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1fc372
+[2026-07-17 11:24:19.056] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1fc870
+[2026-07-17 11:24:19.056] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1fc870
+[2026-07-17 11:24:19.112] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1fe3de
+[2026-07-17 11:24:19.112] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x1fe3de
+[2026-07-17 11:24:19.568] [riscv_vector] [error] PcodeOps with free Varnodes still exist - decompiler will abort:
+[2026-07-17 11:24:19.568] [riscv_vector] [warning] 	Pcode at 0x223ba2:88  a6(0x00223ba2:88) = a6(free) + t3(free)(*#0x1)
+[2026-07-17 11:24:19.569] [riscv_vector] [warning] 	Pcode at 0x223ba4:89  a7(0x00223ba4:89) = a7(free) + t3(free)
+[2026-07-17 11:24:19.659] [riscv_vector] [error] PcodeOps with free Varnodes still exist - decompiler will abort:
+[2026-07-17 11:24:19.659] [riscv_vector] [warning] 	Pcode at 0x22942e:1d  a4(0x0022942e:1d) = a4(free) + t3(free)
+[2026-07-17 11:24:19.659] [riscv_vector] [warning] 	Pcode at 0x229430:1e  a6(0x00229430:1e) = a6(free) + t3(free)
+[2026-07-17 11:24:19.668] [riscv_vector] [error] PcodeOps with free Varnodes still exist - decompiler will abort:
+[2026-07-17 11:24:19.668] [riscv_vector] [warning] 	Pcode at 0x2296c2:42  a3(0x002296c2:42) = a3(free) + a6(free)
+[2026-07-17 11:24:19.668] [riscv_vector] [warning] 	Pcode at 0x2296c4:43  a4(0x002296c4:43) = a4(free) + a6(free)(*#0x1)
+[2026-07-17 11:24:19.679] [riscv_vector] [error] PcodeOps with free Varnodes still exist - decompiler will abort:
+[2026-07-17 11:24:19.679] [riscv_vector] [warning] 	Pcode at 0x229a16:4a  a4(0x00229a16:4a) = a4(free) + t3(free)(*#0x1)
+[2026-07-17 11:24:19.679] [riscv_vector] [warning] 	Pcode at 0x229a14:49  a6(0x00229a14:49) = a6(free) + t3(free)
+[2026-07-17 11:24:19.690] [riscv_vector] [error] PcodeOps with free Varnodes still exist - decompiler will abort:
+[2026-07-17 11:24:19.690] [riscv_vector] [warning] 	Pcode at 0x229d84:50  a6(0x00229d84:50) = a6(free) + t1(free)
+[2026-07-17 11:24:19.690] [riscv_vector] [warning] 	Pcode at 0x229d86:51  a4(0x00229d86:51) = a4(free) + t1(free)(*#0x1)
+[2026-07-17 11:24:23.687] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x22c186
+[2026-07-17 11:24:23.911] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x22cb84
+[2026-07-17 11:24:24.565] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x22c186
+[2026-07-17 11:24:24.566] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x22cb84
+[2026-07-17 11:24:26.017] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0030f134:c4)	referencing pcodeOp: a0(0x0030f22c:141) = call n__tls_get_addr(free)(u0x10000106(0x0030f22c:756),a1(0x0030f134:c4),a2(0x0030f13a:c7))
+[2026-07-17 11:24:26.017] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0030f13a:c7)	referencing pcodeOp: a0(0x0030f22c:141) = call n__tls_get_addr(free)(u0x10000106(0x0030f22c:756),a1(0x0030f134:c4),a2(0x0030f13a:c7))
+[2026-07-17 11:24:26.017] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:26.017] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0030f134:c4)	referencing pcodeOp: a0(0x0030f22c:141) = call n__tls_get_addr(free)(u0x10000106(0x0030f22c:756),a1(0x0030f134:c4),a2(0x0030f13a:c7))
+[2026-07-17 11:24:26.017] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0030f13a:c7)	referencing pcodeOp: a0(0x0030f22c:141) = call n__tls_get_addr(free)(u0x10000106(0x0030f22c:756),a1(0x0030f134:c4),a2(0x0030f13a:c7))
+[2026-07-17 11:24:26.017] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:26.686] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0032dd6a:ef)	referencing pcodeOp: a1(0x0032dd72:6db) = a1(0x0032de5e:6c9) ? a1(0x0032dcd8:6d7) ? a1(0x0032dd6a:ef)
+[2026-07-17 11:24:26.686] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:26.687] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0032dd6a:ef)	referencing pcodeOp: a1(0x0032dd72:6db) = a1(0x0032de5e:6c9) ? a1(0x0032dcd8:6d7) ? a1(0x0032dd6a:ef)
+[2026-07-17 11:24:26.687] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:26.715] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x32f742
+[2026-07-17 11:24:26.716] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x32f7b6
+[2026-07-17 11:24:26.716] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x32f742
+[2026-07-17 11:24:26.716] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x32f7b6
+[2026-07-17 11:24:26.728] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x32fd42
+[2026-07-17 11:24:26.729] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x32fd42
+[2026-07-17 11:24:26.751] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x330462
+[2026-07-17 11:24:26.752] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x330462
+[2026-07-17 11:24:26.785] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x332286
+[2026-07-17 11:24:26.785] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x332286
+[2026-07-17 11:24:26.869] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x335ff6
+[2026-07-17 11:24:26.870] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x335ff6
+[2026-07-17 11:24:26.966] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00336d4a:2c2)	referencing pcodeOp: a0(0x00336d7a:969) = a0(0x00336d4a:2c2) ? a0(0x00336d20:2ac)
+[2026-07-17 11:24:26.966] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:26.966] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00336d4a:2c2)	referencing pcodeOp: a0(0x00336d7a:969) = a0(0x00336d4a:2c2) ? a0(0x00336d20:2ac)
+[2026-07-17 11:24:26.966] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:27.130] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0033e51c:3f)	referencing pcodeOp: call nrte_devargs_reset(free)(a1(0x0033e4ce:d8),a1(0x0033e4d2:17),a2(0x0033e51c:3f))
+[2026-07-17 11:24:27.130] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:32.587] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x003edefc:135)	referencing pcodeOp: a3(0x003edf22:42c) = a3(0x003edefc:135) ? a3(0x003edfd4:64c)
+[2026-07-17 11:24:32.587] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:32.588] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x003edefc:135)	referencing pcodeOp: a3(0x003edf22:42c) = a3(0x003edefc:135) ? a3(0x003edfd4:64c)
+[2026-07-17 11:24:32.588] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:32.662] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x003f1588:135)	referencing pcodeOp: a0(0x003f159a:145) = call nrte_memzone_lookup(free)(s0(0x003f1592:43c),a1(0x003f1588:135),a2(0x003f158e:138))
+[2026-07-17 11:24:32.662] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x003f158e:138)	referencing pcodeOp: a0(0x003f159a:145) = call nrte_memzone_lookup(free)(s0(0x003f1592:43c),a1(0x003f1588:135),a2(0x003f158e:138))
+[2026-07-17 11:24:32.663] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:32.664] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x003f1588:135)	referencing pcodeOp: a0(0x003f159a:145) = call nrte_memzone_lookup(free)(s0(0x003f1592:43c),a1(0x003f1588:135),a2(0x003f158e:138))
+[2026-07-17 11:24:32.664] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x003f158e:138)	referencing pcodeOp: a0(0x003f159a:145) = call nrte_memzone_lookup(free)(s0(0x003f1592:43c),a1(0x003f1588:135),a2(0x003f158e:138))
+[2026-07-17 11:24:32.664] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:33.297] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x40a5a6
+[2026-07-17 11:24:33.297] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0040a5d2:c41)
+[2026-07-17 11:24:33.297] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0040a61c:112)	referencing pcodeOp: a0(0x0040a63a:12f) = call n__tls_get_addr(free)(u0x100001df(0x0040a63a:c2d),a1(0x0040a57a:759),a2(0x0040a61c:112))
+[2026-07-17 11:24:33.297] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:33.297] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x40a698
+[2026-07-17 11:24:33.297] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0040a6c6:c4f)
+[2026-07-17 11:24:33.298] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0040a702:1b6)	referencing pcodeOp: a1(0x0040a7d6:751) = a1(0x0040a702:1b6) ? a1(0x0040a57a:759)
+[2026-07-17 11:24:33.298] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:33.299] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x40a5a6
+[2026-07-17 11:24:33.299] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0040a5d2:c41)
+[2026-07-17 11:24:33.299] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0040a61c:112)	referencing pcodeOp: a0(0x0040a63a:12f) = call n__tls_get_addr(free)(u0x100001df(0x0040a63a:c2d),a1(0x0040a57a:759),a2(0x0040a61c:112))
+[2026-07-17 11:24:33.299] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:33.299] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x40a698
+[2026-07-17 11:24:33.299] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0040a6c6:c4f)
+[2026-07-17 11:24:33.300] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0040a702:1b6)	referencing pcodeOp: a1(0x0040a7d6:751) = a1(0x0040a702:1b6) ? a1(0x0040a57a:759)
+[2026-07-17 11:24:33.300] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:33.554] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x418ed4
+[2026-07-17 11:24:33.554] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x00418f04:787)
+[2026-07-17 11:24:33.555] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x418ed4
+[2026-07-17 11:24:33.555] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x00418f04:787)
+[2026-07-17 11:24:33.821] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x42527c
+[2026-07-17 11:24:33.821] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x42527c
+[2026-07-17 11:24:34.330] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x00442904:116)	referencing pcodeOp: call nrte_free(free)(a0(0x004427fc:3c),#0x0,a2(0x00442904:116))
+[2026-07-17 11:24:34.330] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:34.330] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x00442904:116)	referencing pcodeOp: call nrte_free(free)(a0(0x004427fc:3c),#0x0,a2(0x00442904:116))
+[2026-07-17 11:24:34.330] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:34.945] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a6(0x00461c6e:1e)	referencing pcodeOp: call nrte_log(free)(#0x4,a1(0x00461cc6:63),u0x1000003c(0x00461ce0:12c),u0x1000004c(0x00461ce0:12e),a3(i),a5(0x00461c9c:46),a6(0x00461c6e:1e),a7(0x00461c80:25))
+[2026-07-17 11:24:34.945] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a7(0x00461c80:25)	referencing pcodeOp: call nrte_log(free)(#0x4,a1(0x00461cc6:63),u0x1000003c(0x00461ce0:12c),u0x1000004c(0x00461ce0:12e),a3(i),a5(0x00461c9c:46),a6(0x00461c6e:1e),a7(0x00461c80:25))
+[2026-07-17 11:24:34.945] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:34.946] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a6(0x00461c6e:1e)	referencing pcodeOp: call nrte_log(free)(#0x4,a1(0x00461cc6:63),u0x1000003c(0x00461ce0:12c),u0x1000004c(0x00461ce0:12e),a3(i),a5(0x00461c9c:46),a6(0x00461c6e:1e),a7(0x00461c80:25))
+[2026-07-17 11:24:34.946] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a7(0x00461c80:25)	referencing pcodeOp: call nrte_log(free)(#0x4,a1(0x00461cc6:63),u0x1000003c(0x00461ce0:12c),u0x1000004c(0x00461ce0:12e),a3(i),a5(0x00461c9c:46),a6(0x00461c6e:1e),a7(0x00461c80:25))
+[2026-07-17 11:24:34.946] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:35.128] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x467986
+[2026-07-17 11:24:35.129] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x467986
+[2026-07-17 11:24:36.269] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a1446
+[2026-07-17 11:24:36.269] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a1446
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a9a44
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x004a9a26:1d2)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004a9ab6:1e4)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a9a44
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x004a9a26:1d2)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004a9ab6:1e4)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a9a44
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x004a9a26:1d2)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004a9ab6:1e4)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a9a44
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x004a9a26:1d2)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004a9ab6:1e4)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a9a44
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x004a9a26:1d2)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004a9ab6:1e4)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4a9a44
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x004a9a26:1d2)
+[2026-07-17 11:24:36.364] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004a9ab6:1e4)
+[2026-07-17 11:24:36.757] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4bbde6
+[2026-07-17 11:24:36.757] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:36.757] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: u0x1000001a(0x004bbde2:e9)
+[2026-07-17 11:24:36.757] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4bbde6
+[2026-07-17 11:24:36.757] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:36.757] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: u0x1000001a(0x004bbde2:e9)
+[2026-07-17 11:24:36.921] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4c196c
+[2026-07-17 11:24:36.921] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4c196c
+[2026-07-17 11:24:37.395] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x004d6344:98)	referencing pcodeOp: a0(0x004d635c:a6) = call nt4_seeprom_wp(free)(s2(0x004d62ae:1e),#0x0,a2(0x004d634e:9c),#0x0,a4(0x004d6344:98),a5(0x004d6354:9f))
+[2026-07-17 11:24:37.395] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x004d634e:9c)	referencing pcodeOp: a0(0x004d635c:a6) = call nt4_seeprom_wp(free)(s2(0x004d62ae:1e),#0x0,a2(0x004d634e:9c),#0x0,a4(0x004d6344:98),a5(0x004d6354:9f))
+[2026-07-17 11:24:37.395] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x004d6354:9f)	referencing pcodeOp: a0(0x004d635c:a6) = call nt4_seeprom_wp(free)(s2(0x004d62ae:1e),#0x0,a2(0x004d634e:9c),#0x0,a4(0x004d6344:98),a5(0x004d6354:9f))
+[2026-07-17 11:24:37.395] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:37.396] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x004d6344:98)	referencing pcodeOp: a0(0x004d635c:a6) = call nt4_seeprom_wp(free)(s2(0x004d62ae:1e),#0x0,a2(0x004d634e:9c),#0x0,a4(0x004d6344:98),a5(0x004d6354:9f))
+[2026-07-17 11:24:37.396] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x004d634e:9c)	referencing pcodeOp: a0(0x004d635c:a6) = call nt4_seeprom_wp(free)(s2(0x004d62ae:1e),#0x0,a2(0x004d634e:9c),#0x0,a4(0x004d6344:98),a5(0x004d6354:9f))
+[2026-07-17 11:24:37.396] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x004d6354:9f)	referencing pcodeOp: a0(0x004d635c:a6) = call nt4_seeprom_wp(free)(s2(0x004d62ae:1e),#0x0,a2(0x004d634e:9c),#0x0,a4(0x004d6344:98),a5(0x004d6354:9f))
+[2026-07-17 11:24:37.396] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:37.506] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4dcca8
+[2026-07-17 11:24:37.506] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004dccd0:83)
+[2026-07-17 11:24:37.506] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4dcca8
+[2026-07-17 11:24:37.506] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x004dccd0:83)
+[2026-07-17 11:24:37.652] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x004dd92c:14b)	referencing pcodeOp: a0(0x004de174:527) = call ncxgbe_mpstcam_alloc(free)(s2(0x004dd79a:a),a1(0x004de170:525),a2(0x004de16c:523),a3(0x004dd92c:14b))
+[2026-07-17 11:24:37.652] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:37.655] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x004dd92c:14b)	referencing pcodeOp: a0(0x004de174:527) = call ncxgbe_mpstcam_alloc(free)(s2(0x004dd79a:a),a1(0x004de170:525),a2(0x004de16c:523),a3(0x004dd92c:14b))
+[2026-07-17 11:24:37.655] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:37.990] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff4e
+[2026-07-17 11:24:37.990] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:37.990] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff6e
+[2026-07-17 11:24:37.990] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff6e
+[2026-07-17 11:24:37.990] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff6e
+[2026-07-17 11:24:37.991] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4effb4
+[2026-07-17 11:24:37.991] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a6(0x004eff6e:2d9)
+[2026-07-17 11:24:37.991] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4effb4
+[2026-07-17 11:24:37.991] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a6(0x004eff6e:2d9)
+[2026-07-17 11:24:37.991] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.992] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.992] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.992] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.992] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff4e
+[2026-07-17 11:24:37.993] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:37.993] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff6e
+[2026-07-17 11:24:37.993] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff6e
+[2026-07-17 11:24:37.993] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4eff6e
+[2026-07-17 11:24:37.994] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4effb4
+[2026-07-17 11:24:37.994] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a6(0x004eff6e:2d9)
+[2026-07-17 11:24:37.994] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4effb4
+[2026-07-17 11:24:37.994] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a6(0x004eff6e:2d9)
+[2026-07-17 11:24:37.994] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.994] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.995] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:37.995] [riscv_vector] [warning] Vector vset found with no output register at 0x4f00c2
+[2026-07-17 11:24:38.207] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4f6d04
+[2026-07-17 11:24:38.207] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:38.207] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(0x004f6d12:49)
+[2026-07-17 11:24:38.211] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x4f6d04
+[2026-07-17 11:24:38.211] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:38.211] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(0x004f6d12:49)
+[2026-07-17 11:24:38.736] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0050cf1a:51)	referencing pcodeOp: return(#0x0) a0(0x0050cf1a:51)
+[2026-07-17 11:24:38.736] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:38.736] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0050cf1a:51)	referencing pcodeOp: return(#0x0) a0(0x0050cf1a:51)
+[2026-07-17 11:24:38.736] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:38.952] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x514fdc
+[2026-07-17 11:24:38.952] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x00514ff4:6c7)
+[2026-07-17 11:24:38.952] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x514fdc
+[2026-07-17 11:24:38.952] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x00514ff4:6c7)
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x515158
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(0x00515188:164)
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x514fdc
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x00514ff4:6c7)
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x514fdc
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x00514ff4:6c7)
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x515158
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:38.953] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(0x00515188:164)
+[2026-07-17 11:24:39.407] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x52bbce
+[2026-07-17 11:24:39.407] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0052bbf6:83)
+[2026-07-17 11:24:39.407] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x52bbce
+[2026-07-17 11:24:39.407] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0052bbf6:83)
+[2026-07-17 11:24:39.467] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x52f5fa
+[2026-07-17 11:24:39.467] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x52f5fa
+[2026-07-17 11:24:39.669] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00539750:c)	referencing pcodeOp: a0(0x0053975a:19) = a0(i) ? a0(i) ? a0(0x00539750:c)
+[2026-07-17 11:24:39.669] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x00539756:f)	referencing pcodeOp: a1(0x0053975a:1b) = a1(i) ? a1(i) ? a1(0x00539756:f)
+[2026-07-17 11:24:39.669] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:39.669] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00539750:c)	referencing pcodeOp: a0(0x0053975a:19) = a0(i) ? a0(i) ? a0(0x00539750:c)
+[2026-07-17 11:24:39.669] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x00539756:f)	referencing pcodeOp: a1(0x0053975a:1b) = a1(i) ? a1(i) ? a1(0x00539756:f)
+[2026-07-17 11:24:39.669] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x53a6e4
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x53a6e4
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x53a6e4
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x53a6e4
+[2026-07-17 11:24:39.695] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:39.871] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5423f2
+[2026-07-17 11:24:39.871] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:39.871] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5423f2
+[2026-07-17 11:24:39.871] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:39.871] [riscv_vector] [warning] Vector vset found with no output register at 0x542422
+[2026-07-17 11:24:39.871] [riscv_vector] [warning] Vector vset found with no output register at 0x542422
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Vector vset found with no output register at 0x542422
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5423f2
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5423f2
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Vector vset found with no output register at 0x542422
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Vector vset found with no output register at 0x542422
+[2026-07-17 11:24:39.872] [riscv_vector] [warning] Vector vset found with no output register at 0x542422
+[2026-07-17 11:24:39.995] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0054338e:347)	referencing pcodeOp: a0:4(0x005433ba:379) = call nhinic_global_func_id(free)(a0(i),a1(0x00543330:31a),a2(0x0054338e:347),a3(0x00543394:34a))
+[2026-07-17 11:24:39.995] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x00543394:34a)	referencing pcodeOp: a0:4(0x005433ba:379) = call nhinic_global_func_id(free)(a0(i),a1(0x00543330:31a),a2(0x0054338e:347),a3(0x00543394:34a))
+[2026-07-17 11:24:39.995] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:39.996] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0054338e:347)	referencing pcodeOp: a0:4(0x005433ba:379) = call nhinic_global_func_id(free)(a0(i),a1(0x00543330:31a),a2(0x0054338e:347),a3(0x00543394:34a))
+[2026-07-17 11:24:39.996] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x00543394:34a)	referencing pcodeOp: a0:4(0x005433ba:379) = call nhinic_global_func_id(free)(a0(i),a1(0x00543330:31a),a2(0x0054338e:347),a3(0x00543394:34a))
+[2026-07-17 11:24:39.996] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54dabe
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54dabe
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54db46
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54db46
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54dabe
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54dabe
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54db46
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x54db46
+[2026-07-17 11:24:40.135] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.377] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.377] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.377] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.377] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55b470
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x0055b4b8:39)
+[2026-07-17 11:24:40.378] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x0055b4ca:43)
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c06e
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c06e
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c06e
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c06e
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.386] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55c0be
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:40.387] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.478] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55f8fe
+[2026-07-17 11:24:40.478] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.478] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55f8fe
+[2026-07-17 11:24:40.478] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55fa2a
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55fa2a
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55f8fe
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55f8fe
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55fa2a
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x55fa2a
+[2026-07-17 11:24:40.479] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:41.039] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0057fde4:42)	referencing pcodeOp: call nrte_free(free)(a2(i),#0x0,a2(0x0057fde4:42),a3(0x0057fdea:45))
+[2026-07-17 11:24:41.039] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x0057fdea:45)	referencing pcodeOp: call nrte_free(free)(a2(i),#0x0,a2(0x0057fde4:42),a3(0x0057fdea:45))
+[2026-07-17 11:24:41.039] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:41.040] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0057fde4:42)	referencing pcodeOp: call nrte_free(free)(a2(i),#0x0,a2(0x0057fde4:42),a3(0x0057fdea:45))
+[2026-07-17 11:24:41.040] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x0057fdea:45)	referencing pcodeOp: call nrte_free(free)(a2(i),#0x0,a2(0x0057fde4:42),a3(0x0057fdea:45))
+[2026-07-17 11:24:41.040] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.091] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x0059f19e:14f)	referencing pcodeOp: a3(0x0059f1d0:1fe5) = a3(0x0059f19e:14f) ? u0x1000037f(0x0059f1ce:28f3)
+[2026-07-17 11:24:42.091] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.091] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x0059f1bc:162)	referencing pcodeOp: a4(0x0059f1d0:202e) = u0x10000377(0x0059f1aa:28f2) ? a4(0x0059f1bc:162)
+[2026-07-17 11:24:42.091] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x0059f1cc:169)	referencing pcodeOp: a5(0x0059f1d0:2068) = a5(0x0059f1a8:156) ? a5(0x0059f1cc:169)
+[2026-07-17 11:24:42.091] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.094] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x0059f19e:14f)	referencing pcodeOp: a3(0x0059f1d0:1fe5) = a3(0x0059f19e:14f) ? u0x1000037f(0x0059f1ce:28f3)
+[2026-07-17 11:24:42.094] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.094] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x0059f1bc:162)	referencing pcodeOp: a4(0x0059f1d0:202e) = u0x10000377(0x0059f1aa:28f2) ? a4(0x0059f1bc:162)
+[2026-07-17 11:24:42.094] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x0059f1cc:169)	referencing pcodeOp: a5(0x0059f1d0:2068) = a5(0x0059f1a8:156) ? a5(0x0059f1cc:169)
+[2026-07-17 11:24:42.094] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.609] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x005d16cc:bc)	referencing pcodeOp: a2(0x005d180a:3e0) = a2(0x005d16cc:bc) ? a2(0x005d16cc:bc) ? a2(0x005d17fa:24c)
+[2026-07-17 11:24:42.609] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x005d16cc:bc)	referencing pcodeOp: a2(0x005d180a:3e0) = a2(0x005d16cc:bc) ? a2(0x005d16cc:bc) ? a2(0x005d17fa:24c)
+[2026-07-17 11:24:42.609] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.609] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x005d1746:216)	referencing pcodeOp: a1(0x005d175c:3cc) = a1(0x005d181e:5cf) ? a1(0x005d1746:216)
+[2026-07-17 11:24:42.609] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.610] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x005d16cc:bc)	referencing pcodeOp: a2(0x005d180a:3e0) = a2(0x005d16cc:bc) ? a2(0x005d16cc:bc) ? a2(0x005d17fa:24c)
+[2026-07-17 11:24:42.610] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x005d16cc:bc)	referencing pcodeOp: a2(0x005d180a:3e0) = a2(0x005d16cc:bc) ? a2(0x005d16cc:bc) ? a2(0x005d17fa:24c)
+[2026-07-17 11:24:42.610] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.610] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x005d1746:216)	referencing pcodeOp: a1(0x005d175c:3cc) = a1(0x005d181e:5cf) ? a1(0x005d1746:216)
+[2026-07-17 11:24:42.610] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:42.637] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5d42d6
+[2026-07-17 11:24:42.637] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:42.637] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: u0x10000022(0x005d42d2:14e)
+[2026-07-17 11:24:42.637] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5d42d6
+[2026-07-17 11:24:42.637] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:42.637] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: u0x10000022(0x005d42d2:14e)
+[2026-07-17 11:24:42.842] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5ddd1e
+[2026-07-17 11:24:42.842] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5ddd1e
+[2026-07-17 11:24:43.314] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x005f3664:1c7)	referencing pcodeOp: a0(0x005f3686:1e5) = call nrte_hash_add_key(free)(a0(0x005f3672:1d4),a1(0x005f364e:ab7),a2(0x005f3664:1c7),a3(0x005f366a:1ca))
+[2026-07-17 11:24:43.314] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x005f366a:1ca)	referencing pcodeOp: a0(0x005f3686:1e5) = call nrte_hash_add_key(free)(a0(0x005f3672:1d4),a1(0x005f364e:ab7),a2(0x005f3664:1c7),a3(0x005f366a:1ca))
+[2026-07-17 11:24:43.314] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:43.315] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x005f3664:1c7)	referencing pcodeOp: a0(0x005f3686:1e5) = call nrte_hash_add_key(free)(a0(0x005f3672:1d4),a1(0x005f364e:ab7),a2(0x005f3664:1c7),a3(0x005f366a:1ca))
+[2026-07-17 11:24:43.315] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x005f366a:1ca)	referencing pcodeOp: a0(0x005f3686:1e5) = call nrte_hash_add_key(free)(a0(0x005f3672:1d4),a1(0x005f364e:ab7),a2(0x005f3664:1c7),a3(0x005f366a:1ca))
+[2026-07-17 11:24:43.315] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5fe608
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x005fe664:be)
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x005fe680:bf)
+[2026-07-17 11:24:43.519] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5fe608
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x005fe664:be)
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x005fe680:bf)
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5fe608
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x005fe664:be)
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x005fe680:bf)
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x5fe608
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x005fe664:be)
+[2026-07-17 11:24:43.520] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x005fe680:bf)
+[2026-07-17 11:24:43.645] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x602c32
+[2026-07-17 11:24:43.645] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.645] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.645] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(i)
+[2026-07-17 11:24:43.645] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x00602c50:15)
+[2026-07-17 11:24:43.645] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x602c32
+[2026-07-17 11:24:43.646] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.646] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:43.646] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a1(i)
+[2026-07-17 11:24:43.646] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x00602c50:15)
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x0060d6b6:3d)	referencing pcodeOp: a0(0x0060d6ce:4e) = call nidpf_vc_rss_key_set(free)(a0(0x0060d684:15),a1(i),a2(0x0060d6c6:44),a3(0x0060d6b6:3d),a4(0x0060d6c0:41))
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x0060d6c0:41)	referencing pcodeOp: a0(0x0060d6ce:4e) = call nidpf_vc_rss_key_set(free)(a0(0x0060d684:15),a1(i),a2(0x0060d6c6:44),a3(0x0060d6b6:3d),a4(0x0060d6c0:41))
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0060d6c6:44)	referencing pcodeOp: a0(0x0060d6ce:4e) = call nidpf_vc_rss_key_set(free)(a0(0x0060d684:15),a1(i),a2(0x0060d6c6:44),a3(0x0060d6b6:3d),a4(0x0060d6c0:41))
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x0060d6b6:3d)	referencing pcodeOp: a0(0x0060d6ce:4e) = call nidpf_vc_rss_key_set(free)(a0(0x0060d684:15),a1(i),a2(0x0060d6c6:44),a3(0x0060d6b6:3d),a4(0x0060d6c0:41))
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x0060d6c0:41)	referencing pcodeOp: a0(0x0060d6ce:4e) = call nidpf_vc_rss_key_set(free)(a0(0x0060d684:15),a1(i),a2(0x0060d6c6:44),a3(0x0060d6b6:3d),a4(0x0060d6c0:41))
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x0060d6c6:44)	referencing pcodeOp: a0(0x0060d6ce:4e) = call nidpf_vc_rss_key_set(free)(a0(0x0060d684:15),a1(i),a2(0x0060d6c6:44),a3(0x0060d6b6:3d),a4(0x0060d6c0:41))
+[2026-07-17 11:24:43.881] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:44.285] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x61d61a
+[2026-07-17 11:24:44.286] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x61d61a
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x00631016:21e)	referencing pcodeOp: call nrte_pktmbuf_free(free)(s5(0x00630e7a:d8),#0x0,#0x0,a3(0x00631020:222),a4(0x00631016:21e),a5(0x00631026:225))
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x00631020:222)	referencing pcodeOp: call nrte_pktmbuf_free(free)(s5(0x00630e7a:d8),#0x0,#0x0,a3(0x00631020:222),a4(0x00631016:21e),a5(0x00631026:225))
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x00631026:225)	referencing pcodeOp: call nrte_pktmbuf_free(free)(s5(0x00630e7a:d8),#0x0,#0x0,a3(0x00631020:222),a4(0x00631016:21e),a5(0x00631026:225))
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x63144e
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.779] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.780] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x00631016:21e)	referencing pcodeOp: call nrte_pktmbuf_free(free)(s5(0x00630e7a:d8),#0x0,#0x0,a3(0x00631020:222),a4(0x00631016:21e),a5(0x00631026:225))
+[2026-07-17 11:24:44.780] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x00631020:222)	referencing pcodeOp: call nrte_pktmbuf_free(free)(s5(0x00630e7a:d8),#0x0,#0x0,a3(0x00631020:222),a4(0x00631016:21e),a5(0x00631026:225))
+[2026-07-17 11:24:44.780] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x00631026:225)	referencing pcodeOp: call nrte_pktmbuf_free(free)(s5(0x00630e7a:d8),#0x0,#0x0,a3(0x00631020:222),a4(0x00631016:21e),a5(0x00631026:225))
+[2026-07-17 11:24:44.780] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:44.781] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x63144e
+[2026-07-17 11:24:44.781] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.781] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.781] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.781] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:44.892] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x639278
+[2026-07-17 11:24:44.892] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x006392ac:e25)
+[2026-07-17 11:24:44.892] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x639278
+[2026-07-17 11:24:44.892] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a4(0x006392ac:e25)
+[2026-07-17 11:24:46.108] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x675442
+[2026-07-17 11:24:46.108] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a3(0x0067546c:b2)
+[2026-07-17 11:24:46.108] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x675442
+[2026-07-17 11:24:46.108] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a3(0x0067546c:b2)
+[2026-07-17 11:24:46.244] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a7(0x0067a756:1a)	referencing pcodeOp: call nrte_log(free)(#0x8,a1(0x0067ab9e:3e5),u0x10000137(0x0067abc0:ab7),u0x1000016f(0x0067abc0:abe),#0x498,a5(0x0067aba2:3eb),a6(0x0067aba0:3e9),a7(0x0067a756:1a))
+[2026-07-17 11:24:46.244] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.246] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a7(0x0067a756:1a)	referencing pcodeOp: call nrte_log(free)(#0x8,a1(0x0067ab9e:3e5),u0x10000137(0x0067abc0:ab7),u0x1000016f(0x0067abc0:abe),#0x498,a5(0x0067aba2:3eb),a6(0x0067aba0:3e9),a7(0x0067a756:1a))
+[2026-07-17 11:24:46.246] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.719] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x0068f27c:2fd)	referencing pcodeOp: a5(0x0068f0f8:a5f) = a5(0x0068f0ea:f1) ? a5(0x0068f0ea:f1) ? a5(0x0068f27c:2fd)
+[2026-07-17 11:24:46.719] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.720] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x0068f27c:2fd)	referencing pcodeOp: a5(0x0068f0f8:a5f) = a5(0x0068f0ea:f1) ? a5(0x0068f0ea:f1) ? a5(0x0068f27c:2fd)
+[2026-07-17 11:24:46.720] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.892] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x00697bd0:68)	referencing pcodeOp: a0(0x00697bd6:6d) = call necore_mcp_get_link_capabilities(free)(a0(i),a1(0x00697bd0:68))
+[2026-07-17 11:24:46.892] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.894] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x00697bd0:68)	referencing pcodeOp: a0(0x00697bd6:6d) = call necore_mcp_get_link_capabilities(free)(a0(i),a1(0x00697bd0:68))
+[2026-07-17 11:24:46.894] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.988] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0069eb10:6)	referencing pcodeOp: a1(0x0069eb98:77) = a1(0x0069eb4c:25) ? a1(0x0069eb10:6)
+[2026-07-17 11:24:46.988] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.989] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0069eb4c:25)	referencing pcodeOp: a1(0x0069eb98:77) = a1(0x0069eb4c:25) ? a1(0x0069eb10:6)
+[2026-07-17 11:24:46.989] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0069eb4c:25)	referencing pcodeOp: q{0x00002058,0x00002050}:10(0x0069eb82:88) = CONCAT88(a1(0x0069eb4c:25),a0(0x0069eb7e:3f))
+[2026-07-17 11:24:46.989] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.990] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0069eb10:6)	referencing pcodeOp: a1(0x0069eb98:77) = a1(0x0069eb4c:25) ? a1(0x0069eb10:6)
+[2026-07-17 11:24:46.990] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:46.991] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0069eb4c:25)	referencing pcodeOp: a1(0x0069eb98:77) = a1(0x0069eb4c:25) ? a1(0x0069eb10:6)
+[2026-07-17 11:24:46.991] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0069eb4c:25)	referencing pcodeOp: q{0x00002058,0x00002050}:10(0x0069eb82:88) = CONCAT88(a1(0x0069eb4c:25),a0(0x0069eb7e:3f))
+[2026-07-17 11:24:46.991] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:48.082] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x006aa166:58)	referencing pcodeOp: a0(0x006aa194:1d8) = a0(0x006aa190:15e) ? a0(0x006aa166:58)
+[2026-07-17 11:24:48.082] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:48.082] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x006aa166:58)	referencing pcodeOp: a0(0x006aa194:1d8) = a0(0x006aa190:15e) ? a0(0x006aa166:58)
+[2026-07-17 11:24:48.082] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x006af5b2:24)	referencing pcodeOp: a4(0x006af5c6:d1) = a4(0x006af59a:12) ? a4(0x006af5b2:24)
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x006af5bc:28)	referencing pcodeOp: a5(0x006af5c6:df) = u0x10000011(0x006af5a8:103) ? a5(0x006af5bc:28)
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x006af5c2:2b)	referencing pcodeOp: a2(0x006af5c6:c9) = a2(i) ? a2(0x006af5c2:2b)
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x006af5b2:24)	referencing pcodeOp: a4(0x006af5c6:d1) = a4(0x006af59a:12) ? a4(0x006af5b2:24)
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a5(0x006af5bc:28)	referencing pcodeOp: a5(0x006af5c6:df) = u0x10000011(0x006af5a8:103) ? a5(0x006af5bc:28)
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a2(0x006af5c2:2b)	referencing pcodeOp: a2(0x006af5c6:c9) = a2(i) ? a2(0x006af5c2:2b)
+[2026-07-17 11:24:48.150] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.847] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.848] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6da5ba
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da642:14b)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da64a:14c)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da652:14d)
+[2026-07-17 11:24:48.849] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006da65a:14e)
+[2026-07-17 11:24:49.232] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a6(0x006ea5ac:11)	referencing pcodeOp: call nnicvf_rss_set_key(free)(a0(i),a1(0x006ea5c6:dd),a2(i),a3(0x006ea5b2:14),#0x0,#0x0,a6(0x006ea5ac:11))
+[2026-07-17 11:24:49.232] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x006ea5b2:14)	referencing pcodeOp: call nnicvf_rss_set_key(free)(a0(i),a1(0x006ea5c6:dd),a2(i),a3(0x006ea5b2:14),#0x0,#0x0,a6(0x006ea5ac:11))
+[2026-07-17 11:24:49.232] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:49.233] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a6(0x006ea5ac:11)	referencing pcodeOp: call nnicvf_rss_set_key(free)(a0(i),a1(0x006ea5c6:dd),a2(i),a3(0x006ea5b2:14),#0x0,#0x0,a6(0x006ea5ac:11))
+[2026-07-17 11:24:49.233] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a3(0x006ea5b2:14)	referencing pcodeOp: call nnicvf_rss_set_key(free)(a0(i),a1(0x006ea5c6:dd),a2(i),a3(0x006ea5b2:14),#0x0,#0x0,a6(0x006ea5ac:11))
+[2026-07-17 11:24:49.233] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6ec64a
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006ec68e:31)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x006ec6b0:44)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6ec64a
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006ec68e:31)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x006ec6b0:44)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6ec64a
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006ec68e:31)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x006ec6b0:44)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6ec64a
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006ec68e:31)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x006ec6b0:44)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6ec64a
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006ec68e:31)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x006ec6b0:44)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x6ec64a
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Unrecognized number of vector pcode arguments
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a5(0x006ec68e:31)
+[2026-07-17 11:24:49.293] [riscv_vector] [warning] Failed to extract Vector store pExternal varnode from Phi nodes
+	pRegister: a2(0x006ec6b0:44)
+[2026-07-17 11:24:50.336] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x723878
+[2026-07-17 11:24:50.336] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.336] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x723878
+[2026-07-17 11:24:50.336] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.336] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x7239a8
+[2026-07-17 11:24:50.336] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x7239a8
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x723878
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x723878
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x7239a8
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x7239a8
+[2026-07-17 11:24:50.337] [riscv_vector] [warning] Failed to extract Vector load pExternal varnode from Phi nodes
+[2026-07-17 11:24:50.584] [riscv_vector] [error] PcodeOps with free Varnodes still exist - decompiler will abort:
+[2026-07-17 11:24:50.584] [riscv_vector] [warning] 	Pcode at 0x733816:135  u0x10000093:2(0x00733816:135) = SUB82(a5(free),#0x0:4)
+[2026-07-17 11:24:50.584] [riscv_vector] [warning] 	Pcode at 0x733816:136  u0x10000095:2(0x00733816:136) = SUB82(a1(free),#0x0:4)
+[2026-07-17 11:24:50.673] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007382ea:46)	referencing pcodeOp: return(#0x0) a0(0x007382ea:46)
+[2026-07-17 11:24:50.673] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:50.673] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007382ea:46)	referencing pcodeOp: return(#0x0) a0(0x007382ea:46)
+[2026-07-17 11:24:50.673] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:50.713] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x007391aa:214)	referencing pcodeOp: a0(0x007391c0:22a) = call nrte_zmalloc(free)(#0x0,u0x0001f400:4(0x007391ae:218),#0x0,#0x0,a4(0x007391aa:214))
+[2026-07-17 11:24:50.713] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:50.714] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a4(0x007391aa:214)	referencing pcodeOp: a0(0x007391c0:22a) = call nrte_zmalloc(free)(#0x0,u0x0001f400:4(0x007391ae:218),#0x0,#0x0,a4(0x007391aa:214))
+[2026-07-17 11:24:50.714] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:50.963] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x74a1b6
+[2026-07-17 11:24:50.964] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0074a24e:60)	referencing pcodeOp: u0x10000019:10(0x0074a25a:88) = ZEXT816(a1(0x0074a24e:60))
+[2026-07-17 11:24:50.964] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:50.964] [riscv_vector] [warning] Unable to fully analyze potential complex vector loop stanza at 0x74a1b6
+[2026-07-17 11:24:50.964] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a1(0x0074a24e:60)	referencing pcodeOp: u0x10000019(0x0074a25a:98) = a1(0x0074a24e:60)
+[2026-07-17 11:24:50.964] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.606] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767576:813)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.606] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.607] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007675b4:8f9)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.607] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.610] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767636:8d3)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.610] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.610] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0076766c:741)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.610] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.614] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007677b8:766)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.614] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.615] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767872:842)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.615] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.618] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0076794c:99b)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.618] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.619] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0076796c:931)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.619] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.620] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007679a0:91d)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.620] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.621] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767b2a:987)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.621] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.622] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767576:813)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.622] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.622] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007675b4:8f9)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.622] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.623] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767636:8d3)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.623] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.623] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0076766c:741)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.623] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.624] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007677b8:766)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.624] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.624] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767872:842)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.624] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.625] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0076794c:99b)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.625] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.626] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x0076796c:931)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.626] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.626] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x007679a0:91d)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.626] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode
+[2026-07-17 11:24:51.627] [riscv_vector] [warning] Unable to complete transform due to reference to loop-local Varnode: 	local varnode: a0(0x00767b2a:987)	referencing pcodeOp: a0(0x00767488:e1f) = a0(0x00767e68:61f) ? a0(0x00767dea:6b0) ? a0(0x00767f04:6d3) ? a0(0x00767ed4:6f8) ? a0(0x00767e9a:71d) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x00767576:813) ? a0(0x00767872:842) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x0076732a:37) ? a0(0x007677b8:766) ? a0(0x0076766c:741) ? a0(0x00767636:8d3) ? a0(0x0076794c:99b) ? a0(0x00767b2a:987) ? a0(0x0076796c:931) ? a0(0x007679a0:91d) ? a0(0x007675b4:8f9)
+[2026-07-17 11:24:51.627] [riscv_vector] [warning] Unable to complete transform due to one or more references to a loop-local Varnode

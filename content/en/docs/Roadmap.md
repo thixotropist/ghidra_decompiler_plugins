@@ -84,6 +84,6 @@ Examine the `dpdk-pipeline` binary to suggest the next set of transforms.
 
 ### workspace rebasing
 
-* track Ghidra releases as they come
-* bump Bazel to version 9
-* compare GCC toolchain version 16 vectorization with that of our current GCC version 15.
+* [X] track Ghidra releases as they come
+* [X] bump Bazel to version 9
+* [ ] compare GCC toolchain version 16 vectorization with that of our current GCC version 15.
