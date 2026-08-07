@@ -6,6 +6,10 @@ weight: 20
 
 ## Source code analysis
 
+See [Spacemit and Llama]({{< relref "../notes/Spacemit_and_llama.md" >}}) page for a more
+detailed examination of how one RISC-V vendor implements Inference Engine code for use
+in Whisper.cpp and other AI applications.
+
 ## Ghidra and build summary
 
 * 2.0 MB binary file size, with debugging and symbols
