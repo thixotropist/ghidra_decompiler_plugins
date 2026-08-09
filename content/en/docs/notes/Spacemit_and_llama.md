@@ -1,7 +1,7 @@
 ---
 title: Spacemit's code for accelerating AI RISC-V applications
 description: Spacemit has contributed extensive RISC-V library accelerators for the AI Llama library.
-weight: 200
+weight: 180
 ---
 
 The `whisper.cpp` voice to text app uses the GGML and Llama libraries for most of the

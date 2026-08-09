@@ -40,3 +40,9 @@ The IDA Pro approach looks to concentrate on translating to C intrinsic function
 looking into.  A big challenge there is to cope with the vast number of RISC-V C instrinsic
 functions, all differentiated by type information that may or may not be available within
 the decompiler.
+
+### RISC-V intrinsic functions
+
+IDA Pro apparently translates vector instructions into C intrinsic functions.  There are a lot of
+them, according to a [RISCV Intrinsic]({{< relref "RISCV_intrinsic_functions.md" >}}) survey.
+As many as 100,000, due to all of the type and context combinatorics involved.
