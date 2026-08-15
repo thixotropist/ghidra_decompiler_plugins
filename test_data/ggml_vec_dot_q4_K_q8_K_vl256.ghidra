@@ -1,0 +1,6 @@
+restore test_data/ggml_vec_dot_q4_K_q8_K_vl256.xml
+map function 0x1062a2 ggml_vec_dot_q4_K_q8_K_vl256
+parse line extern long ggml_vec_dot_q4_K_q8_K_vl256(long param_1, float* param_2, long param_3, long param_4);
+decompile ggml_vec_dot_q4_K_q8_K_vl256
+print C
+print raw

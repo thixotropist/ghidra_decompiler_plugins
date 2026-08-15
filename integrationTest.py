@@ -272,7 +272,21 @@ class T1Datatests(unittest.TestCase):
         self.assertFalse(self.expectations_failed,
                          "At least one test reported an unexpected number of transforms")
 
-    def test_03_failing_exemplars(self):
+    def test_03_other_exemplars(self):
+        """
+        Verify other exemplars are processed cleanly
+        """
+        all_tests_successful = True
+        for i in ("ggml_vec_dot_q4_K_q8_K_vl256",):
+            result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}",
+                                  continue_on_failure=True)
+            if result.returncode != 0:
+                print(f"The other test {i} unexpectedly returned a failure error code")
+            all_tests_successful &= (result.returncode == 0)
+        self.assertTrue(all_tests_successful,
+                         "At least one 'other' test returned a non-zero exit code")
+
+    def test_04_failing_exemplars(self):
         """
         Run failing tests to isolate common faults..
         """
