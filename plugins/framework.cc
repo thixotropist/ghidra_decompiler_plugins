@@ -486,9 +486,24 @@ void FunctionEditor::replaceBlock(const BlockGraph* graph, FlowBlock* oldBlock, 
         if ((*iter)->getType() == FlowBlock::t_if)
         {
             BlockIf* blkIf = dynamic_cast<BlockIf*>(bg);
+            pLogger->info("\tFound a BlockIf and not sure what to do with it");
+        }
+        if ((*iter)->getType() == FlowBlock::t_ifelse)
+        {
+            BlockIfElse* blkIf = dynamic_cast<BlockIfElse*>(bg);
+            pLogger->info("\tFound a BlockIfElse and not sure what to do with it");
+        }
+        if ((*iter)->getType() == FlowBlock::t_ifnoexit)
+        {
+            BlockIfNoExit* blkIf = dynamic_cast<BlockIfNoExit*>(bg);
+            pLogger->info("\tFound a BlockIfNoExit and not sure what to do with it");
+        }
+        if ((*iter)->getType() == FlowBlock::t_ifgoto)
+        {
+            BlockIfGoto* blkIf = dynamic_cast<BlockIfGoto*>(bg);
             if (blkIf->getGotoTarget() == oldBlock)
             {
-                pLogger->info("\tReplacing oldBlock reference in BlockIf");
+                pLogger->info("\tReplacing oldBlock reference in BlockIfGoto");
                 blkIf->setGotoTarget(newBlock);
             }
         }

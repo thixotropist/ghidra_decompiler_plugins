@@ -1,8 +1,8 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index 97c33cd9f8..d2f7711eaf 100644
+index 6ddf1d140a..8d669cfd51 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-@@ -640,6 +640,13 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
+@@ -652,6 +652,13 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
    parseProcessorConfig(store);
    newtrans->setDefaultFloatFormats(); // If no explicit formats registered, put in defaults
    parseCompilerConfig(store);
@@ -17,7 +17,7 @@ index 97c33cd9f8..d2f7711eaf 100644
    buildAction(store);
  }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
-index ebd0e84343..b8d50b4e17 100644
+index 3c8d0ca61e..1f913a13ce 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
 @@ -33,6 +33,7 @@
@@ -28,7 +28,7 @@ index ebd0e84343..b8d50b4e17 100644
  
  namespace ghidra {
  
-@@ -209,6 +210,7 @@ public:
+@@ -210,6 +211,7 @@ public:
    UserOpManage userops;		///< Specifically registered user-defined p-code ops
    vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
    vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
@@ -37,10 +37,10 @@ index ebd0e84343..b8d50b4e17 100644
    bool loadersymbols_parsed;	///< True if loader symbols have been read
  #ifdef CPUI_STATISTICS
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-index aa154772f7..4e015acd7d 100644
+index 55fc9264ea..933b82d926 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.cc
-@@ -1247,6 +1247,12 @@ void BlockGraph::clear(void)
+@@ -1260,6 +1260,12 @@ void BlockGraph::clear(void)
    clearAllFlags();
  }
  
@@ -54,10 +54,10 @@ index aa154772f7..4e015acd7d 100644
  
  {
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-index 1cae714ed7..783915a7f5 100644
+index 4cae06ac47..babec5f35d 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/block.hh
-@@ -163,6 +163,7 @@ public:
+@@ -168,6 +168,7 @@ public:
    virtual ~FlowBlock(void) {}			///< Destructor
    int4 getIndex(void) const { return index; }	///< Get the index assigned to \b this block
    FlowBlock *getParent(void) { return parent; }	///< Get the parent FlowBlock of \b this
@@ -65,27 +65,35 @@ index 1cae714ed7..783915a7f5 100644
    FlowBlock *getImmedDom(void) const { return immed_dom; }	///< Get the immediate dominator FlowBlock
    FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock
    const FlowBlock *getParent(void) const { return (const FlowBlock *) parent; }	///< Get the parent FlowBlock of \b this
-@@ -386,6 +387,7 @@ protected:
- public:
+@@ -395,6 +396,7 @@ public:
+   BlockGraph(void) { leafCount = 0; }			///< Construct empty structure
    void clear(void);					///< Clear all component FlowBlock objects
    virtual ~BlockGraph(void) { clear(); }		///< Destructor
 +  void removeComponentLink(FlowBlock* bl); ///< Remove a component FlowBlock link without removing the FlowBlock itself
    const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
    int4 getSize(void) const { return list.size(); }	///< Get the number of components
    FlowBlock *getBlock(int4 i) const { return list[i]; }	///< Get the i-th component
-@@ -564,6 +566,7 @@ class BlockGoto : public BlockGraph {
+@@ -574,6 +576,7 @@ class BlockGoto : public BlockGraph {
  public:
    BlockGoto(FlowBlock *bl) { gototarget = bl; gototype = f_goto_goto; }	///< Construct given target block
    FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target block of the goto
-+  void setGotoTarget(FlowBlock *bl){ gototarget = bl; }		///< Set the target block of the goto
++  void setGotoTarget(FlowBlock *target) {gototarget = target;}	///< Set the target block of the goto
    uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured branch
    bool gotoPrints(void) const;						///< Should a formal goto statement be emitted
    virtual block_type getType(void) const { return t_goto; }
+@@ -721,6 +724,7 @@ class BlockIfGoto : public BlockIf {
+ public:
+   BlockIfGoto(FlowBlock *target) { gototype = f_goto_goto; gototarget = target; }	///< Constructor
+   FlowBlock *getGotoTarget(void) const { return gototarget; }		///< Get the target of the unstructured edge
++  void setGotoTarget(FlowBlock *target) {gototarget = target;}  ///< set the gototarget
+   uint4 getGotoType(void) const { return gototype; }			///< Get the type of unstructured edge
+   virtual block_type getType(void) const { return t_ifgoto; }
+   virtual void scopeBreak(int4 curexit,int4 curloopexit);
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index 3512f71359..af6596a3a3 100644
+index 15648f9663..e101da073b 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5572,7 +5572,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5797,7 +5797,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -94,7 +102,7 @@ index 3512f71359..af6596a3a3 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5653,6 +5653,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5878,6 +5878,11 @@ void ActionDatabase::universalAction(Architecture *conf)
        actmainloop->addAction( new ActionNonzeroMask("analysis") );
        actmainloop->addAction( new ActionInferTypes("typerecovery") );
        actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
@@ -106,7 +114,7 @@ index 3512f71359..af6596a3a3 100644
        actstackstall = new ActionGroup(Action::rule_repeatapply,"stackstall");
        {
  	actprop = new ActionPool(Action::rule_repeatapply,"oppool1");
-@@ -5861,6 +5866,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -6086,6 +6091,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleBitFieldIn("bitfields"));
      actcleanup->addRule( new RulePullAbsorb("bitfields"));
      actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
@@ -120,7 +128,7 @@ index 3512f71359..af6596a3a3 100644
  
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 new file mode 100644
-index 0000000000..d805b72f8a
+index 0000000000..46399f4eb8
 --- /dev/null
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.cc
 @@ -0,0 +1,129 @@
@@ -253,7 +261,6 @@ index 0000000000..d805b72f8a
 +    }
 +}
 +}
-\ No newline at end of file
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/plugin_manager.hh
 new file mode 100644
 index 0000000000..cc00677529

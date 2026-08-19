@@ -1,62 +1,240 @@
+<?xml version="1.0"?>
 <xml_savefile name="rte_vhost_notify_guest" target="default" adjustvma="0">
   <binaryimage arch="RISCV:LE:64:default:gcc">
-    <bytechunk space="ram" offset="0x2879b2" readonly="true">
-      9307f03f63eea70c9717ad0083b7
-      e70ab367f5209463e9c6130700109b87
-      05006369b708b3e7d7208c7fc1c51387
-      4502114619a00f0000011c438d8be5ff
-      af27c7048d8bc1e783c72502c9c70111
-      06ec938705160f001003238007008967
-      b69783b7879036852ee49c6b36e08297
-      8266a265dc4e93f7070411c9b9e3f157
-      138745022f20f702e2600561828085e7
-      8967b69783b7078b9c7bf5d3884e2ee0
-      82978265f157138745022f20f702e260
-      0561828082808547138785142f30f700
-      c1bf8547138785152f30f7004dbff157
-      2f20f7009db7f157138745022f20f702
-      82809717ad0083b7e7dd8c432a879717
-      740093872773976670009386a6ee1766
-      70001306a6ee114517a3e7ff670083d6
-    </bytechunk>
+    <bytechunk space="ram" offset="0x10331c" readonly="true">
+                        5d711303
+810236f49a8606ec3af83efcc2e0c6e4
+1ae497e02b00e780a0b4e26061618280
+
+</bytechunk>
+    <bytechunk space="ram" offset="0x298762" readonly="true">
+    9307f03f63efa70c9747b10083b7
+675d13173500ba979463e9c613070010
+9b8705006369b7088e07b6978c7fc1c5
+13874502114619a00f0000011c438d8b
+e5ffaf27c7048d8bc1e783c72502c9c7
+011106ec938705160f00100323800700
+8967b69783b7879036852ee49c6b36e0
+82978266a265dc4e93f7070411c9b9e3
+f157138745022f20f702e26005618280
+85e78967b69783b7078b9c7bf5d3884e
+2ee082978265f157138745022f20f702
+e2600561828082808547138785142f30
+f700c1bf8547138785152f30f7004dbf
+f1572f20f7009db7f157138745022f20
+f70282809747b10083b747308c432a87
+97c77700938707a497067400938606f8
+17067400130606f8114517b3e6ff6700
+23ab
+</bytechunk>
+    <bytechunk space="ram" offset="0xdacb48" readonly="true">
+                bc5ab40200000000
+
+</bytechunk>
+    <bytechunk space="ram" offset="0xdacd40" readonly="true">
+105bb40200000000
+</bytechunk>
   </binaryimage>
   <coretypes>
+    <type name="undefined4" size="4" metatype="unknown" id="0xc0000000000000c0"/>
+    <type name="undefined5" size="5" metatype="unknown" id="0xc0000000000000c1"/>
     <type name="code" size="1" metatype="code" id="0xe000000000000001"/>
-    <type name="bool" size="1" metatype="bool" id="0xc000000000000079"/>
-    <type name="byte" size="1" metatype="uint" id="0xc00000000000007a"/>
-    <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b"/>
+    <type name="undefined6" size="6" metatype="unknown" id="0xc0000000000000c2"/>
     <type name="double" size="8" metatype="float" id="0xc000000000000082"/>
+    <type name="undefined7" size="7" metatype="unknown" id="0xc0000000000000c3"/>
+    <type name="undefined8" size="8" metatype="unknown" id="0xc0000000000000c4"/>
     <type name="float10" size="10" metatype="float" id="0xc000000000000084"/>
     <type name="float16" size="16" metatype="float" id="0xc000000000000085"/>
     <type name="float2" size="2" metatype="float" id="0xc000000000000086"/>
+    <type name="uint16" size="16" metatype="uint" id="0xc0000000000000c8"/>
+    <type name="uint3" size="3" metatype="uint" id="0xc0000000000000c9"/>
+    <type name="uint5" size="5" metatype="uint" id="0xc0000000000000ca"/>
     <type name="float" size="4" metatype="float" id="0xc00000000000008a"/>
-    <type name="int16" size="16" metatype="int" id="0xc000000000000090"/>
-    <type name="int3" size="3" metatype="int" id="0xc000000000000091"/>
-    <type name="int5" size="5" metatype="int" id="0xc000000000000092"/>
-    <type name="int6" size="6" metatype="int" id="0xc000000000000093"/>
-    <type name="int7" size="7" metatype="int" id="0xc000000000000094"/>
-    <type name="int" size="4" metatype="int" id="0xc000000000000095"/>
-    <type name="long" size="8" metatype="int" id="0xc000000000000097"/>
-    <type name="short" size="2" metatype="int" id="0xc0000000000000a8"/>
-    <type name="sbyte" size="1" metatype="int" id="0xc0000000000000a9"/>
-    <type name="undefined1" size="1" metatype="unknown" id="0xc0000000000000b4"/>
-    <type name="undefined2" size="2" metatype="unknown" id="0xc0000000000000b5"/>
-    <type name="undefined3" size="3" metatype="unknown" id="0xc0000000000000b6"/>
-    <type name="undefined4" size="4" metatype="unknown" id="0xc0000000000000b7"/>
-    <type name="undefined5" size="5" metatype="unknown" id="0xc0000000000000b8"/>
-    <type name="undefined6" size="6" metatype="unknown" id="0xc0000000000000b9"/>
-    <type name="undefined7" size="7" metatype="unknown" id="0xc0000000000000ba"/>
-    <type name="undefined8" size="8" metatype="unknown" id="0xc0000000000000bb"/>
-    <type name="uint16" size="16" metatype="uint" id="0xc0000000000000bf"/>
-    <type name="uint3" size="3" metatype="uint" id="0xc0000000000000c0"/>
-    <type name="uint5" size="5" metatype="uint" id="0xc0000000000000c1"/>
-    <type name="uint6" size="6" metatype="uint" id="0xc0000000000000c2"/>
-    <type name="uint7" size="7" metatype="uint" id="0xc0000000000000c3"/>
-    <type name="uint" size="4" metatype="uint" id="0xc0000000000000c4"/>
-    <type name="ulong" size="8" metatype="uint" id="0xc0000000000000c6"/>
-    <type name="ushort" size="2" metatype="uint" id="0xc0000000000000c8"/>
-    <type name="void" size="0" metatype="void" id="0xc0000000000000c9"/>
-    <type name="wchar32" size="4" metatype="int" utf="true" id="0xc0000000000000cc"/>
-    <type name="wchar_t" size="2" metatype="int" utf="true" id="0xc0000000000000cd"/>
+    <type name="uint6" size="6" metatype="uint" id="0xc0000000000000cb"/>
+    <type name="uint7" size="7" metatype="uint" id="0xc0000000000000cc"/>
+    <type name="uint" size="4" metatype="uint" id="0xc0000000000000cd"/>
+    <type name="ulong" size="8" metatype="uint" id="0xc0000000000000cf"/>
+    <type name="ushort" size="2" metatype="uint" id="0xc0000000000000d2"/>
+    <type name="void" size="0" metatype="void" id="0xc0000000000000d3"/>
+    <type name="int16" size="16" metatype="int" id="0xc000000000000094"/>
+    <type name="int3" size="3" metatype="int" id="0xc000000000000095"/>
+    <type name="int5" size="5" metatype="int" id="0xc000000000000096"/>
+    <type name="wchar32" size="4" metatype="int" utf="true" id="0xc0000000000000d6"/>
+    <type name="int6" size="6" metatype="int" id="0xc000000000000097"/>
+    <type name="wchar_t" size="2" metatype="int" utf="true" id="0xc0000000000000d7"/>
+    <type name="int7" size="7" metatype="int" id="0xc000000000000098"/>
+    <type name="int" size="4" metatype="int" id="0xc000000000000099"/>
+    <type name="long" size="8" metatype="int" id="0xc00000000000009b"/>
+    <type name="short" size="2" metatype="int" id="0xc0000000000000ad"/>
+    <type name="sbyte" size="1" metatype="int" id="0xc0000000000000ae"/>
+    <type name="bool" size="1" metatype="bool" id="0xc000000000000079"/>
+    <type name="byte" size="1" metatype="uint" id="0xc00000000000007a"/>
+    <type name="char" size="1" metatype="int" char="true" id="0xc00000000000007b"/>
+    <type name="undefined1" size="1" metatype="unknown" id="0xc0000000000000bd"/>
+    <type name="undefined2" size="2" metatype="unknown" id="0xc0000000000000be"/>
+    <type name="undefined3" size="3" metatype="unknown" id="0xc0000000000000bf"/>
   </coretypes>
+  <save_state>
+    <typegrp structalign="4">
+      <type name="undefined" id="0xc000000000000000" metatype="unknown" size="1"/>
+      <type name="" metatype="ptr" size="8">
+        <typeref name="undefined" id="0xc000000000000000"/>
+      </type>
+      <type name="" metatype="array" size="4194304" arraysize="4194304">
+        <typeref name="undefined1" id="0xc0000000000000bd"/>
+      </type>
+    </typegrp>
+    <db scopeidbyname="false">
+      <scope name="" id="0x0">
+        <symbollist>
+          <mapsym>
+            <function id="0xe12" name="rte_vhost_notify_guest" size="8">
+              <addr space="ram" offset="0x298762"/>
+              <localdb lock="false" main="stack">
+                <scope name="rte_vhost_notify_guest">
+                  <parent id="0x0"/>
+                  <rangelist/>
+                  <symbollist>
+                    <mapsym>
+                      <symbol id="0x1b119" name="local_20" typelock="false" namelock="true" cat="-1">
+                        <typeref name="undefined8" id="0xc0000000000000c4"/>
+                      </symbol>
+                      <addr space="stack" offset="0xffffffffffffffe0" size="8"/>
+                      <rangelist/>
+                    </mapsym>
+                  </symbollist>
+                </scope>
+              </localdb>
+              <prototype extrapop="0" model="unknown">
+                <returnsym>
+                  <addr/>
+                  <void/>
+                </returnsym>
+              </prototype>
+            </function>
+            <addr space="ram" offset="0x298762" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol name="PTR_vhost_devices_ram_00dacd40" typelock="true" namelock="true" readonly="true" merge="false" cat="-1">
+              <type name="" metatype="ptr" size="8">
+                <typeref name="undefined" id="0xc000000000000000"/>
+              </type>
+            </symbol>
+            <addr space="ram" offset="0xdacd40" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <function id="0x51ab" name="rte_vlog" size="8">
+              <addr space="ram" offset="0x3c0e7c"/>
+              <localdb lock="false" main="stack">
+                <scope name="rte_vlog">
+                  <parent id="0x0"/>
+                  <rangelist/>
+                  <symbollist/>
+                </scope>
+              </localdb>
+              <prototype extrapop="0" model="unknown">
+                <returnsym>
+                  <addr/>
+                  <void/>
+                </returnsym>
+              </prototype>
+            </function>
+            <addr space="ram" offset="0x3c0e7c" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol name="PTR_vhost_config_log_level_ram_00dacb48" typelock="true" namelock="true" readonly="true" merge="false" cat="-1">
+              <type name="" metatype="ptr" size="8">
+                <typeref name="undefined" id="0xc000000000000000"/>
+              </type>
+            </symbol>
+            <addr space="ram" offset="0xdacb48" size="8"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x581b" name="vhost_config_log_level" typelock="true" namelock="true" merge="false" cat="-1">
+              <typeref name="undefined4" id="0xc0000000000000c0"/>
+            </symbol>
+            <addr space="ram" offset="0x2b45abc" size="4"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol name="s_device_ram_009d87d8" typelock="true" namelock="true" readonly="true" merge="false" cat="-1">
+              <type name="" metatype="array" size="7" arraysize="7">
+                <typeref name="char" id="0xc00000000000007b"/>
+              </type>
+            </symbol>
+            <addr space="ram" offset="0x9d87d8" size="7"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol name="s_VHOST_CONFIG:_(%s)_(%d)_device_n_ram_009d87e0" typelock="true" namelock="true" readonly="true" merge="false" cat="-1">
+              <type name="" metatype="array" size="47" arraysize="47">
+                <typeref name="char" id="0xc00000000000007b"/>
+              </type>
+            </symbol>
+            <addr space="ram" offset="0x9d87e0" size="47"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol name="DAT_ram_00a14290" typelock="true" namelock="true" readonly="true" merge="false" cat="-1">
+              <typeref name="undefined1" id="0xc0000000000000bd"/>
+            </symbol>
+            <addr space="ram" offset="0xa14290" size="1"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x6af7" name="ipv6_l3fwd_out_if" typelock="true" namelock="true" merge="false" cat="-1">
+              <type name="" metatype="array" size="4194304" arraysize="4194304">
+                <typeref name="undefined1" id="0xc0000000000000bd"/>
+              </type>
+            </symbol>
+            <addr space="ram" offset="0x1001980" size="4194304"/>
+            <rangelist/>
+          </mapsym>
+          <mapsym>
+            <symbol id="0x275d" name="vhost_devices" typelock="true" namelock="true" merge="false" cat="-1">
+              <typeref name="undefined8" id="0xc0000000000000c4"/>
+            </symbol>
+            <addr space="ram" offset="0x2b45b10" size="8"/>
+            <rangelist/>
+          </mapsym>
+        </symbollist>
+      </scope>
+    </db>
+    <context_points>
+      <context_pointset space="ram" offset="0x0">
+        <set name="reserved" val="0"/>
+        <set name="MXL" val="2"/>
+      </context_pointset>
+      <tracked_pointset space="ram" offset="0x298762">
+        <set space="register" offset="0x2018" size="8" val="0x1001cc0"/>
+      </tracked_pointset>
+      <tracked_pointset space="ram" offset="0x298762">
+        <set space="register" offset="0x2018" size="8" val="0x1001cc0"/>
+      </tracked_pointset>
+    </context_points>
+    <commentdb/>
+    <stringmanage>
+      <string>
+        <addr space="ram" offset="0x9d87d8"/>
+        <bytes trunc="false">64657669636500
+</bytes>
+      </string>
+      <string>
+        <addr space="ram" offset="0x9d87e0"/>
+        <bytes trunc="false">56484f53545f434f4e4649473a20282573292028
+  25642920646576696365206e6f7420666f756e64
+  2e0a252e307300
+</bytes>
+      </string>
+    </stringmanage>
+    <optionslist>
+      <readonly>on</readonly>
+      <setlanguage>c-language</setlanguage>
+      <protoeval>__stdcall</protoeval>
+    </optionslist>
+  </save_state>
 </xml_savefile>

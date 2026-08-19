@@ -9,6 +9,9 @@ bazel_dep(name = "rules_cc", version = "0.2.22")
 # Use the spdlog module for C++ logging support
 bazel_dep(name = "spdlog", version = "1.17.0")
 
+# Use the gtest module for C++ unit testing
+bazel_dep(name = "googletest", version = "1.18.0")
+
 # Use a recent development tip of Ghidra for decompiler sources
 git_repository = use_repo_rule("@@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
@@ -17,7 +20,7 @@ git_repository(
     name = "ghidra",
     remote = "git@github.com:thixotropist/ghidra.git",
     # This commit should be within the "isa_ext" branch
-    commit = "08d62e52ede2bfe2768ab6fd5e14026389ed5e80",
+    commit = "6e9da93f3a5cd26102ee0d413cef2e21f1a369a8",
     build_file = "//:BUILD.ghidra",
     patches = ["ghidra.pat"],
     patch_strip = 1,

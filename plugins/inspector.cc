@@ -81,14 +81,42 @@ void Inspector::log(const std::string& label, const FlowBlock* fb)
         break;
       case FlowBlock::t_if:
         {
-          // Goto targets within BlockIfs aren't considered subblocks, so we collect any such independently
+          // BlockIfs are now mostly virtual
             blockType = "BlockIf";
             parent = fb->getParent();
             const BlockIf* blkIf = dynamic_cast<const BlockIf*>(fb);
             BlockGraphEditor bgEditor = BlockGraphEditor(*blkIf);
             bgEditor.collectSubBlocks(list);
+        }
+        break;
+      case FlowBlock::t_ifgoto:
+        {
+          // Goto targets within BlockIfs aren't considered subblocks, so we collect any such independently
+            blockType = "BlockIfGoto";
+            parent = fb->getParent();
+            const BlockIfGoto* blkIf = dynamic_cast<const BlockIfGoto*>(fb);
+            BlockGraphEditor bgEditor = BlockGraphEditor(*blkIf);
+            bgEditor.collectSubBlocks(list);
             FlowBlock* gotoTarget = blkIf->getGotoTarget();
             if (gotoTarget != nullptr) list.push_back(gotoTarget);
+        }
+        break;
+      case FlowBlock::t_ifelse:
+        {
+            blockType = "BlockIfElse";
+            parent = fb->getParent();
+            const BlockIfElse* blkIf = dynamic_cast<const BlockIfElse*>(fb);
+            BlockGraphEditor bgEditor = BlockGraphEditor(*blkIf);
+            bgEditor.collectSubBlocks(list);
+        }
+        break;
+      case FlowBlock::t_ifnoexit:
+        {
+            blockType = "BlockIfNoExit";
+            parent = fb->getParent();
+            const BlockIfNoExit* blkIf = dynamic_cast<const BlockIfNoExit*>(fb);
+            BlockGraphEditor bgEditor = BlockGraphEditor(*blkIf);
+            bgEditor.collectSubBlocks(list);
         }
         break;
       case FlowBlock::t_ls:
