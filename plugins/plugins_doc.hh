@@ -22,13 +22,12 @@
  * * Refactor plugin code into ghidra extensions and Processor-specific components, using namespaces to identify the origin of
  *   types and classes.
  * * Avoid rebuilding Ghidra or the baseline Decompiler for each plugin test iteration
- * * Integration testing uses the existing Decompiler datatest infrastructure, often under `valgrind` or `gdb` control.
- * * Allow `std::c++` function calls in the decompiler window if they better represent vectorized sequences
+ * * Enable integration testing uses the existing Decompiler datatest infrastructure, often under `valgrind` or `gdb` control.
  *
  * The initial plugin explorations involve the RISC-V vector extensions, especially as applied to Inference Engine or
  * other Machine Learning/AI applications.  We'll use the `whisper-cpp` voice-to-text application as our first test case,
- * compiled with gcc 15 and the `whisper-cpp` recommended optimizations for a RISC-V 64 bit processor implementing the RVA23 instruction set extension profile.
- * A second test case explores vectorized embedded control structures, using the `dpdk-pipeline` application with significant vector byte manipulation but little
+ * compiled with gcc 16+ and the `whisper-cpp` recommended optimizations for a RISC-V 64 bit processor implementing the RVA23 instruction set extension profile.
+ * A second test case explores vectorized embedded control structures, using the `dpdk-l3fwd` application with significant vector byte manipulation but little
  * vector mathematics.
  * The Ghidra user is assumed to have an ELF executable binary and to be looking for possible malicious alterations or unrecognized vulnerabilities
  * in the application.  If they want emulation capability, they will use a RVA23-capable QEMU environment and not rely on Ghidra's emulator.
@@ -45,7 +44,7 @@
  * @subsection architectural-todo Architectural
  * Recovering the `context` in which vector instructions execute is a hard problem.  Without accurate knowledge of the
  * runtime values of the vector status registers, there is often no single correct SLEIGH representation of vector instruction
- * semantics.  The `M` Multiplier status register field modifies the number of vector registers that are considered active
+ * semantics.  The `LMUL` Multiplier status register field modifies the number of vector registers that are considered active
  * in any given instruction, modifying the Decompiler's Heritage and descendent calculations.  Mask and tail CSR field values
  * can change output Varnodes into read-modify-write Varnodes, changing the semantics of vector SLEIGH definitions.
  *
@@ -66,5 +65,5 @@
  *
  * @subsection incremental-todo Incremental
  * * refactor the existing code base to enable code re-use.
- * * add additional vectorized implementations of common glibc patterns like `strcmp`
+ * * add survey reports to help the user evaluate more complex vector stanzas.
  */

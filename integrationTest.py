@@ -263,12 +263,18 @@ class T1Datatests(unittest.TestCase):
         """
         Verify correct behavior without valgrind, with regular binaries
         """
+        failed_test_count = 0
         for i in REGULAR_TEST_SET:
             if i in DEFERRED_TESTS:
                 logger.info(f"Skipping test {i} as currently failing")
                 continue
-            result =  run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}")
+            result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}")
+            if result.returncode != 0:
+                print(f"The regular exemplar test {i} unexpectedly returned a failure error code")
+                failed_test_count += 1
             assert_expected_transform_count(self, i, result.stdout)
+        self.assertEqual(failed_test_count, 0,
+                         f"{failed_test_count} regular exemplars test(s) returned a non-zero exit code")
         self.assertFalse(self.expectations_failed,
                          "At least one test reported an unexpected number of transforms")
 
@@ -276,28 +282,30 @@ class T1Datatests(unittest.TestCase):
         """
         Verify other exemplars are processed cleanly
         """
-        all_tests_successful = True
+        failed_test_count = 0
         for i in ("ggml_vec_dot_q4_K_q8_K_vl256",):
             result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}",
                                   continue_on_failure=True)
             if result.returncode != 0:
                 print(f"The other test {i} unexpectedly returned a failure error code")
-            all_tests_successful &= (result.returncode == 0)
-        self.assertTrue(all_tests_successful,
-                         "At least one 'other' test returned a non-zero exit code")
+                failed_test_count += 1
+        self.assertEqual(failed_test_count, 0,
+                         f"{failed_test_count} 'other' test(s) returned a non-zero exit code")
 
     def test_04_failing_exemplars(self):
         """
-        Run failing tests to isolate common faults..
+        Run failing tests to isolate common faults.
         """
-        all_tests_successful = True
+        failed_test_count = 0
+        EXPECTED_FAILING_TESTS = len(DEFERRED_TESTS)
         for i in DEFERRED_TESTS:
             result = run_datatest(self, i, plugin=True, datatest_path=f"{DATATEST_PATH}",
                                   continue_on_failure=True)
             if result.returncode == 0:
                 print(f"The deferred test {i} unexpectedly returned a success error code")
-            all_tests_successful &= (result.returncode == 0)
-        self.assertTrue(all_tests_successful,
+            else:
+                failed_test_count += 1
+        self.assertEqual(failed_test_count, EXPECTED_FAILING_TESTS,
                          "At least one deferred test returned a non-zero exit code")
 
 if __name__ == "__main__":

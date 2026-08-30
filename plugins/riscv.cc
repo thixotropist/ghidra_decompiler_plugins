@@ -1,3 +1,8 @@
+/**
+ * @file riscv.cc
+ * @brief Provide the basic RISC-V plugin methods.
+ */
+
 #include <iostream>
 #include <utility>
 #include <fstream>
@@ -25,6 +30,7 @@
 #include "action_prepare.hh"
 #include "rule_vector_transform.hh"
 #include "riscv_sleigh.hh"
+#include "user_pcode.hh"
 #include "vector_ops.hh"
 
 static const bool DO_SURVEY = false;  ///< survey the loaded architecture
@@ -35,63 +41,10 @@ static const spdlog::level::level_enum LOG_LEVEL = spdlog::level::warn; ///< def
 
 namespace riscv_vector
 {
-int transformCountNonLoop; /// Maximum number of non-loop transforms to complete
-int transformCountLoop;    /// Maximum number of loop transforms to complete
-RiscvUserPcode::RiscvUserPcode(const std::string& op, int index) :
-    asmOpcode(op),
-    ghidraOp(index),
-    flags(0),
-    isFaultOnlyFirst(false)
-{
-    isVseti = asmOpcode.find("vsetivli_", 0) == 0;
-    isVset = asmOpcode.find("vsetvli_", 0) == 0;
-    if (isVseti || isVset)
-    {
-        if (asmOpcode.find("e8") != std::string::npos)
-            elementSize = 1;
-        else if (asmOpcode.find("e16") != std::string::npos)
-            elementSize = 2;
-        else if (asmOpcode.find("e32") != std::string::npos)
-            elementSize = 4;
-        else if (asmOpcode.find("e64") != std::string::npos)
-            elementSize = 8;
-        if ((asmOpcode.find("m1") != std::string::npos) ||
-            (asmOpcode.find("mf") != std::string::npos))
-            multiplier = 1;
-        else if (asmOpcode.find("m2") != std::string::npos)
-            multiplier = 2;
-        else if (asmOpcode.find("m4") != std::string::npos)
-            multiplier = 4;
-        else if (asmOpcode.find("m8") != std::string::npos)
-            multiplier = 8;
-    }
-    // Is this a basic vector load operation?
-    isLoad = (asmOpcode.find("vle", 0) == 0) &&
-        !(asmOpcode.find("vle8ff_v", 0) == 0);
-        // Is this a basic vector store operation?
-    isStore = (asmOpcode.find("vse", 0) == 0) &&
-        !(asmOpcode.find("vset", 0) == 0) &&
-        !(asmOpcode.find("vsext", 0) == 0);
-    isLoadImmediate = asmOpcode.find("vmv_v_i", 0) == 0;
-    // fix this, not all userpcode ops are vector ops
-    isMaskSet = (asmOpcode.find("vms", 0) == 0) &&
-                (asmOpcode.find("_vi", 4) != std::string::npos);
-    isVectorOp = true;
-};
+int transformCountNonLoop; ///<@brief Maximum number of non-loop transforms to complete
+int transformCountLoop;    ///<@brief Maximum number of loop transforms to complete
 
-const RiscvUserPcode* RiscvUserPcode::getUserPcode(const ghidra::PcodeOp& op)
-{
-    if (op.code() != ghidra::CPUI_CALLOTHER)
-        return nullptr;
-    if (op.numInput() < 1)
-        return nullptr;
-    ghidra::uintb userop_index = op.getIn(0)->getOffset();
-    return riscvPcodeMap[userop_index];
-}
-
-std::map<int, riscv_vector::RiscvUserPcode*> riscvPcodeMap;      /// lookup a user pcode given Ghidra's sleigh index
-std::map<std::string, ghidra::uintb> riscvNameToGhidraId;
-std::ofstream reportFile; /// A file holding summary data for each possible vector stanza
+std::ofstream reportFile;
 std::ofstream strlenSampleFile;
 std::ofstream strcmpSampleFile;
 
@@ -151,14 +104,26 @@ extern "C" int plugin_init(void *context)
     ramAddrSpace = arch->getSpaceByName("ram");
     stackAddrSpace = arch->getSpaceByName("stack");
     pLogger->info("Plugin framework initialized");
+    // build database of RISC-V vector instructions
+    // riscvNameToPcodeMap will provide mapping from instruction name to instruction handler
+    riscv_vector::RiscvUserPcode::loadAsmOpcodes();
+    pLogger->info("RiscvUserPcode handlers initialized");
     // The pcode index identifies the target of a CALLOTHER
-    for (int index=0; index<=MAX_USER_PCODES; index++) {
+    for (uintb index=0; index<=MAX_USER_PCODES; index++) {
         const UserPcodeOp* op = arch->userops.getOp(index);
         if (op == nullptr) break;
-        riscv_vector::riscvPcodeMap.insert(std::make_pair(index, new riscv_vector::RiscvUserPcode(op->getName(), index)));
-        riscv_vector::riscvNameToGhidraId.insert(std::make_pair(op->getName(), index));
+        std::string opName = op->getName();
+        riscv_vector::RiscvUserPcode* code = riscv_vector::riscvNameToPcodeMap[opName];
+        if (code != nullptr)
+        {
+            riscv_vector::riscvPcodeMap.insert(std::make_pair(index, code));
+            riscv_vector::riscvNameToGhidraId.insert(std::make_pair(opName, index));
+        }
+        if (SURVEY_USERPCODEOPS)
+        {
+            std::cout << "\"" << op->getName() << "\", ";
+        }
     }
-    pLogger->trace("Found {0} user pcode ops during plugin_init", riscv_vector::riscvPcodeMap.size());
 
     // handle any static initializers
     riscv_vector::VectorLoop::static_init();
@@ -265,11 +230,7 @@ extern "C" DatatypeUserOp* plugin_registerBuiltin(Architecture* glb, uint4 id)
 extern "C" void plugin_exit()
 {
     pLogger->trace("Exiting the RISC-V transform plugin");
-    for (auto p: riscv_vector::riscvPcodeMap)
-    {
-        delete p.second;
-    }
-    riscv_vector::riscvPcodeMap.clear();
+    riscv_vector::RiscvUserPcode::staticCleanup();
     pLogger->flush();
     riscv_vector::reportFile.close();
     if (riscv_vector::COLLECT_STRLEN_SAMPLES)

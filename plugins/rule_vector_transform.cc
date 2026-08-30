@@ -8,6 +8,7 @@
 #include "Ghidra/Features/Decompiler/src/decompile/cpp/userop.hh"
 
 #include "riscv.hh"
+#include "user_pcode.hh"
 #include "rule_vector_transform.hh"
 #include "vector_matcher.hh"
 #include "framework.hh"
@@ -41,9 +42,8 @@ ghidra::int4 RuleVectorTransform::applyOp(ghidra::PcodeOp *firstOp, ghidra::Func
     const RiscvUserPcode* vsetInfo =
         RiscvUserPcode::getUserPcode(*firstOp);
     if (vsetInfo == nullptr) return ghidra::RETURN_NO_TRANSFORM;
-
-    bool vsetImmediate = vsetInfo->isVseti;
-    bool vsetRegister = vsetInfo->isVset;
+    bool vsetImmediate = (vsetInfo->traits & OP_IS_VSET) &&  (vsetInfo->traits & OP_IS_IMMEDIATE);
+    bool vsetRegister =  (vsetInfo->traits & OP_IS_VSET) && !(vsetInfo->traits & OP_IS_IMMEDIATE);
     if (!(vsetImmediate || vsetRegister)) return ghidra::RETURN_NO_TRANSFORM;
     // we have a vsetivli or a vsetvli instruction
     ghidra::pLogger->trace("Entering applyOp with a recognized vset* user pcode op at 0x{0:x}",

@@ -205,7 +205,7 @@ void Inspector::log(const std::string& label, const Varnode* vn, int slot)
     ss.str("");
     if (vn->isAddrTied())
       logger->trace("\tThis Varnode is AddrTied");
-    SymbolEntry* sym = vn->getSymbolEntry();
+    const SymbolEntry* sym = vn->getSymbolEntry();
     if (sym != nullptr)
       logger->trace("\tFound a symbolEntry");
   }

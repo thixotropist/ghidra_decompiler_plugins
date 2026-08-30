@@ -142,7 +142,7 @@ Basic Block 4 0x000209ec-0x000209f2
 * - use the extracted common features to locate prolog, epilog, result registers, and temporary registers.
 * - if any temporary registers have been marked as parameters to subsequent function calls, abort the transform.
 *   The transform may be reattempted if that subsequent function call signature is trimmed to remove the assumed
-*   dependency.\
+*   dependency.
 * - resolve the linkages between loop-internal temporary registers and their external registers.  This
 *   usually gives the parameters to the transform code.
 * - delete all PcodeOps within the loop, replacing them with the transform `vector_*` function call.

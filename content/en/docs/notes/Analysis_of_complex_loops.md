@@ -434,52 +434,43 @@ void ggml_vec_dot_q4_K_q8_K_vl256.isra.0(long param_1,float *param_2,long param_
 
 ### Current plugin analytics output
 
-Convert this function into a datatest and run it through the decompiler plugin.  The results include:
+Convert this function into a datatest and run it through the decompiler plugin.  The results (whitespace added for clarity) include:
 
-```text
+```
 Vector Loop (simple):
         control structure is simple
         Loop start address: 0x106306
         Loop length: 0x222
-        setvli mode: element size=1, multiplier=1
-        vector loads: 14
+        Loop traits: 0x10a902f
+        setvli mode: element size=2, multiplier=2
+        vector instructions: 70
+        vector loads: 16
         vector stores: 1
         integer arithmetic ops: 34
         scalar comparisons: 1
         vector logical ops: 0
         vector integer ops: 0
         vector comparisons: 0
-        vector source operands: 14
+        vector source operands: 16
         vector destination operands: 1
         edges in: 1
-        Vector instructions (handled | unhandled | epilog): vle8_v, vsetvli_e8m1tama, vle8_v, vse8_v, vsetvli_e8m1tama, vle8_v, vsetvli_e8m1tama, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vsetvli_e8m1tama, | vsetivli_e16mf2tama, vlse16_v, vlse16_v, vsetivli_e8m1tama, vsetivli_e16mf2tama, vadd_vv, vsrl_vi, vsrl_vi, vsrl_vi, vand_vi, vand_vi, vand_vi, vand_vi, vsrl_vi, vsetivli_e8mf4tama, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv, vsetvli_e16m2tama, vredsum_vs, vredsum_vs, vredsum_vs, vredsum_vs, vredsum_vs, vredsum_vs, vsetivli_e16mf2tama, vzext_vf2, vsetvli_e16m2tama, vredsum_vs, vredsum_vs, vsetivli_e16mf2tama, vmv_x_s, vmv_x_s, vwmul_vv, vmv_x_s, vmv_x_s, vsetvli_e32m1tama, vredsum_vs, vsetivli_e16m1tama, vmv_x_s, vmv_x_s, vsetivli_e32m1tama, vmv_x_s, vsetivli_e16m2tama, vmv_x_s, vmv_x_s, | ?,
+        Vector instructions (handled | unhandled | epilog): vle8_v, vsetivli_e16mf2tama, vlse16_v, vlse16_v, vsetvli_e8m1tama,
+            vle8_v, vsetivli_e8m1tama, vse8_v, vsetvli_e8m1tama, vle8_v, vsetivli_e16mf2tama, vadd_vv, vsetvli_e8m1tama, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vle8_v, vsrl_vi, vsrl_vi, vsrl_vi, vand_vi, vand_vi, vand_vi, vand_vi,
+            vsrl_vi, vsetivli_e8mf4tama, vle8_v, vsetvli_e8m1tama, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv, vwmul_vv,
+            vwmul_vv, vwmul_vv, vwmul_vv, vsetvli_e16m2tama, vredsum_vs, vredsum_vs, vredsum_vs, vredsum_vs, vredsum_vs,
+            vredsum_vs, vsetivli_e16mf2tama, vzext_vf2, vsetvli_e16m2tama, vredsum_vs, vredsum_vs, vsetivli_e16mf2tama,
+            vmv_x_s, vmv_x_s, vwmul_vv, vmv_x_s, vmv_x_s, vsetvli_e32m1tama, vredsum_vs, vsetivli_e16m1tama, vmv_x_s, vmv_x_s,
+            vsetivli_e32m1tama, vmv_x_s, vsetivli_e16m2tama, vmv_x_s, vmv_x_s, | | ?,
         Loop control variable: u0x00031600:4(0x001064f6:13f) = t3:4(0x00106306:24e) + #0x1:4
-        Loop Local-scope Varnodes: a4(0x0010630a:51), a4(0x0010631a:59), a0(0x0010632e:63), a4(0x00106336:67), a7(0x0010633a:69), t1(0x0010633e:6b), a4(0x00106356:76), a4(0x00106362:82), a7(0x00106372:8a), a4(0x00106376:8c), s2(0x00106382:92), t1(0x00106392:9c), s2(0x00106396:9e), u0x00027400:4(0x0010645e:ee), u0x00027400:4(0x0010647a:f8), u0x00027400:4(0x00106496:104), u0x00020c00:4(0x001064a2:109), u0x00027400:4(0x001064b2:112), u0x00099900(0x001064c6:11b), u0x00027400:4(0x001064cc:121), u0x00020c00:4(0x001064d6:127), u0x00015b00(0x001064da:12a), u0x00099900(0x001064e2:130), u0x00027400:4(0x001064e6:133), u0x00020c00:4(0x001064f2:13c), u0x00031600:4(0x001064f6:13f), u0x00027400:4(0x00106500:14e), a2(0x00106506:154), u0x00020c00:4(0x0010650a:155), a3(0x0010650e:158), u0x00027400:4(0x00106512:159), u0x00020c00:4(0x00106516:15b), u0x00020c00:4(0x0010651a:15d), u0x00031900:4(0x0010651e:15f), a2(0x00106306:1c9), a4(0x0010631a:59), a0(0x0010632e:63), a4(0x00106336:67), a4(0x00106356:76), a7(0x0010633a:69), t1(0x0010633e:6b), a4(0x00106362:82), a7(0x00106372:8a), a4(0x00106376:8c), s2(0x00106382:92), s2(0x00106396:9e), t1(0x00106392:9c), s1(0x001062fa:255), sp(0x001062b2:254), u0x00031600:4(0x001064f6:13f),
+        Loop Local-scope Varnodes: a4(0x0010630a:51), a4(0x0010631a:59), a0(0x0010632e:63),
+            ...
 ```
 
-Notes: The loop survey results have limited value
+Notes: The loop survey results have modest value
 
-* Manual coding using RISC-V C intrinsics makes this complex loop technically a simple one - there are no interior branches or calls.  It is still a very long simple loop of 546 bytes.
-* The number of unhandled instructions makes the count of vector logical ops incorrect.
+* Manual coding using RISC-V C intrinsics makes this complex loop technically a simple one - there are no interior branches or calls.
+  It is still a very long simple loop of 546 bytes.
+* The reported number of vector integer ops is clearly much too low.
+* The number of vector reduction ops is what you might expect from an unrolled vector dot product.
 * The large number of vector multiply and vector sum reduction instructions suggests a striped multiply-add vector operation with a single scalar result
-* The loop shifts vector element length between 8, 16, and 32 bits in each iteration, with vector register grouping (`LMUL=2`) used at least once
-
-What can we add to the plugin to support user analysis of such functions? Possibilities include:
-* add handlers and trait assignments for common unhandled instructions,  For this loop, that might include:
-    * `vsetivli_e8m1tama`
-    * `vsetivli_e16mf2tama`
-    * `vsetivli_e16m2tama`
-    * `vsetivli_e32m1tama`
-    * `vsetvli_e32m1tama`
-    * `vsetvli_e16m2tama`
-    * `vlse16_v` - "Vector strided load"
-    * `vredsum_vs` - "Vector Single-Width Integer Reduction Instruction"
-    * `vmv_x_s` - "The vmv.x.s instruction copies a single SEW-wide element from index 0 of the source vector register to a destination integer register"
-    * `vwmul_vv` - "Widening signed-integer multiply"
-    * `vadd_vv` - "Vector Single-Width Integer Add"
-    * `vsrl_vi` - "Vector Single-Width Shift Right Instruction" (this may be considered a vector arithmetic op or a vector logical op)
-    * `vand_vi` - "Vector Bitwise Logical Instruction"
-* add summary lines if `LMUL>1` instructions are present
-* count interior vset* instructions
-* add an epilog to the survey file showing the 50 most common unhandled instructions encountered during the decompiler's lifetime.
-    * Note that this may double-count for functions that see multiple decompilations.
+* The loop shifts vector element length between 8, 16, and 32 bits in each iteration, with vector register grouping (`LMUL=2`) used at least once.

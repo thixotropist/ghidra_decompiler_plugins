@@ -18,6 +18,7 @@
 #include "inspector.hh"
 #include "framework.hh"
 #include "riscv.hh"
+#include "user_pcode.hh"
 
 /**
  * @file vector_ops.hh
@@ -102,6 +103,7 @@ enum OperationType      ///< Scalar and Vector operations fall into several cate
   vectorPairToVector,      ///< two vector operands to a vector result
   vectorToScalar,          ///< vector operand to scalar result
   vectorComparison,        ///< vector logical comparison
+  vectorBitLogic,          ///< vector bit logical comparison
 };
 
 /**
@@ -170,8 +172,6 @@ class VectorSeries
 class VectorLoop
 {
   public:
-    /// @brief @brief Lambda expressions used to process user pcode operators
-    using userPcodeOpHandler = std::function<void(VectorLoop& loop, int ghidraOp, ghidra::PcodeOp* op)>;
 
     static const uint32_t TERMINATES_ON_COUNTDOWN = 0x00000001;   ///< This loop counts down to zero
     static const uint32_t TERMINATES_ON_POINTER_TEST = 0x00000002;///< This loop exits on pointer test
@@ -229,14 +229,15 @@ class VectorLoop
     std::vector<VectorOperation*> vStoreOps;   ///< vector store operations found
     std::vector<ScalarOperation*> sIntegerOps; ///< scalar integer operations found
     std::vector<ScalarOperation*> sComparisonOps; ///< scalar comparison operations found
-    std::vector<VectorOperation*> vLogicalOps; ///< vector logical operations found
-    std::vector<VectorOperation*> vIntegerOps; ///< vector integer operations found
-    std::vector<VectorOperation*> vComparisonOps; ///< vector comparison operations found
+    int vLogicalOpsCount;                        ///< count of vector logical operations found
+    int vIntegerOpsCount;                        ///< count of vector integer operations found
+    int vComparisonOpsCount;                    ///< count of vector comparison operations found
     std::vector<VectorOperand*> vSourceOperands; ///< vector source operands and their loop context
     std::vector<VectorOperand*> vDestinationOperands; ///< vector destination operands and their loop context
     ghidra::Varnode* numElements;  ///< Varnode tracking the number of elements remaining to be processed
     std::map<ghidra::uintb, std::vector<ghidra::Varnode*>*> registerPhiMapping;  ///< map loop registers to their heritage Varnodes
     std::map<ghidra::uintb, std::vector<ghidra::Varnode*>*> csRegisterPhiMapping;  ///< map loop control and status registers to their heritage Varnodes
+    uint64_t traits; ///< bitwise or of vector instruction traits found within the loop
     /**
      * @brief Construct a new Vector Function object to hold model parameters
      * @param dataParam The Ghidra function data top level object
@@ -280,7 +281,6 @@ class VectorLoop
      */
     bool unresolvedDependencies(const ghidra::PcodeOp* result);
   private:
-
     int multiplier;                        ///< vset multiplier
     int elementSize;                       ///< vset element size
     ghidra::intb vlReg;                    ///< vector load destination register
@@ -294,8 +294,7 @@ class VectorLoop
      * @brief Invoke a vector instruction (user PcodeOp) handler to update the VectorLoop model.
      * @details This handler triggers on user PcodeOps when iterating through a vector loop.
      * Don't confuse it with a generic higher level vector operation.
-     *
-     * @param op The ghidra PcodeOp implementing the userPcodeOpHandler.
+     * @param op The ghidra PcodeOp
      */
     bool invokeVectorOpHandler(ghidra::PcodeOp* op);
     /**

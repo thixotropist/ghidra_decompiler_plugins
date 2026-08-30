@@ -144,7 +144,13 @@ VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_para
     if (transformCountNonLoop >= TRANSFORM_LIMIT_NONLOOPS)
         return;
     // firstOp is a vsetivli instruction
-    numBytes = firstOp->getIn(1)->getOffset() * vsetInfo->multiplier * vsetInfo->elementSize;
+    OpContext* context = vsetInfo->context;
+    if (context == nullptr)
+    {
+        ghidra::pLogger->error("no context found for vsetInfo object!");
+        return;
+    }
+    numBytes = firstOp->getIn(1)->getOffset() * context->getMultiplier() * context->getElementSize();
 
     // collect viable vector load instructions
     currentBlock = firstOp->getParent();
@@ -152,6 +158,9 @@ VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_para
     while ((nextOp != nullptr) && (nextOp->getParent() == currentBlock))
     {
         ghidra::PcodeOp* op = nextOp;
+        // Don't consider the initial vset op
+        if (op == firstOp)
+            continue;
         nextOp = op->nextOp();
         const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*op);
         // ignore ops that have no vector component
@@ -159,12 +168,14 @@ VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_para
         {
             continue;
         }
+        ghidra::pLogger->trace("Checking op at 0x{0:x} with traits 0x{1:x}",
+            op->getAddr().getOffset(), opInfo->traits);
         // stop scanning if we find another vset instruction
-        if (opInfo->isVset || opInfo->isVseti)
+        if (opInfo->traits & OP_IS_VSET)
         {
             break;
         }
-        if (opInfo->isLoad || opInfo->isLoadImmediate)
+        if ((opInfo->traits & OP_IS_LOAD) || (opInfo->traits & OP_IS_IMMEDIATE))
         {
             ghidra::pLogger->trace("Found a load or load immediate instruction at 0x{0:x}",
                 op->getAddr().getOffset());
@@ -179,7 +190,7 @@ VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_para
         reportFile << "Vector Series:\n\tSequence start address: 0x" << std::hex <<
             firstAddr << std::endl << std::dec <<
             "\tvset op: " << vsetInfo->asmOpcode << std::endl <<
-            "\telement size: " << vsetInfo->elementSize << std::endl <<
+            "\telement size: " << context->getElementSize() << std::endl <<
             "\tnumber of bytes: " << numBytes << std::endl <<
             "\tvector loads: " << loadSet.size() << std::endl;
     }
@@ -197,7 +208,9 @@ int VectorSeries::match()
     {
         ghidra::Varnode* sourceVn = loadOp->getIn(1);
         const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*loadOp);
-        bool isMemset = sourceVn->isConstant() && opInfo->isLoadImmediate;
+        ghidra::pLogger->trace("Checking whether opcode {0:s} is a load immediate", opInfo->asmOpcode);
+        bool isMemset = sourceVn->isConstant() && (opInfo->traits & OP_IS_IMMEDIATE) && (opInfo->traits & OP_IS_LOAD);
+        ghidra::pLogger->trace("\tisMemset = {0:d}", isMemset);
         ghidra::intb builtinOp;
         if (isMemset)
             builtinOp = VECTOR_MEMSET;
@@ -220,7 +233,7 @@ int VectorSeries::match()
             if (currentBlock != descOp->getParent()) continue;
             const RiscvUserPcode *descOpInfo = RiscvUserPcode::getUserPcode(*descOp);
             // we only transform vector store opcodes
-            if ((descOpInfo == nullptr) || (!descOpInfo->isStore)) {
+            if ((descOpInfo == nullptr) || !(descOpInfo->traits & OP_IS_STORE)) {
                 // we can't delete this vector load op
                 reportFile << "\tLoad op at 0x" << std::hex << loadOp->getAddr().getOffset() <<
                     " has a non-store dependency at 0x" << descOp->getAddr().getOffset() <<
@@ -288,141 +301,12 @@ int VectorSeries::match()
     return ghidra::RETURN_TRANSFORM_PERFORMED;
 }
 
-static std::map<int, VectorLoop::userPcodeOpHandler> opHandlers;
 static std::vector<std::string> fTypeToString;
 void VectorLoop::static_init()
 {
     VectorOperation::static_init();
         ghidra::pLogger->trace("Adding VectorLoop instruction handlers to opHandlers map");
 
-    // instructions found in many vector stanzas, starting with vector_memcpy
-    opHandlers[riscvNameToGhidraId["vsetvli_e8m1tama"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vle8_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vse8_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    // instructions found in vector_strlen stanzas
-    opHandlers[riscvNameToGhidraId["vle8ff_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            loop.loopFlags |= RISCV_VEC_INSN_FAULT_ONLY_FIRST;
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoadFF, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vmseq_vi"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            // First operand is a vector register, second operand is an integer immediate.
-            // Result is a vector register
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison, op);
-            loop.vectorOps.push_back(vOp);
-            loop.vComparisonOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vfirst_m"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison, op);
-            loop.vectorOps.push_back(vOp);
-            loop.vLogicalOps.push_back(vOp);
-        };
-    // instructions found in vector_strcmp stanzas
-    opHandlers[riscvNameToGhidraId["vmsne_vv"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-                VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison,  op);
-                loop.vectorOps.push_back(vOp);
-                loop.vComparisonOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vmseq_vi"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-                VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison, op);
-                loop.vectorOps.push_back(vOp);
-                loop.vComparisonOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vmor_mm"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-                VectorOperation* vOp = new VectorOperation(OperationType::vectorPairToVector, op);
-                loop.vectorOps.push_back(vOp);
-                loop.vLogicalOps.push_back(vOp);
-        };
-    // instructions found in typed range copy sequences
-    opHandlers[riscvNameToGhidraId["vsetvli_e8mf8tama"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vsetvli_e8mf4tama"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vsetvli_e8mf2tama"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vle16_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vse16_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vle32_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vse32_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vle64_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vse64_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    // vector whole register loads and stores
-    opHandlers[riscvNameToGhidraId["vl1re8_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vl1re16_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vl1re32_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vl1re64_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
-            loop.vectorOps.push_back(vOp);
-        };
-    opHandlers[riscvNameToGhidraId["vs1r_v"]] =
-        [](VectorLoop& loop, int a, ghidra::PcodeOp* op) {
-            VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
-            loop.vectorOps.push_back(vOp);
-        };
     fTypeToString = {"memcpy", "memset", "strlen",  "transform",  "reduce",
         "innerProduct", "unknown", "other"};
 }
@@ -443,7 +327,11 @@ VectorLoop::VectorLoop(ghidra::Funcdata& dataParam, bool traceParam) :
     terminationBranchOp(nullptr),
     comparisonOp(ghidra::CPUI_MAX),
     simpleFlowStructure(false),
+    vLogicalOpsCount(0),
+    vIntegerOpsCount(0),
+    vComparisonOpsCount(0),
     numElements(nullptr),
+    traits(0),
     multiplier(0),
     elementSize(0),
     vlReg(0),
@@ -487,19 +375,56 @@ void VectorLoop::analyze()
 bool VectorLoop::invokeVectorOpHandler(ghidra::PcodeOp* op)
 {
     const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
-    auto f = opHandlers.find(opInfo->ghidraOp);
-    if (f != opHandlers.end())
-    {
-        std::function<void(VectorLoop& loop, int ghidraOp, ghidra::PcodeOp* op)> handler = f->second;
-        (handler)(*this, opInfo->ghidraOp, op);
-        return true;
-    }
-    else
+    if (opInfo == nullptr)
     {
         ghidra::pLogger->info("Found no instruction handler, sending to unhandledVectorOps:");
         unhandledVectorOps.push_back(new VectorOperation(OperationType::unknown, op));
+        return false;
     }
-    return false;
+    traits |= opInfo->traits;
+    if (opInfo->traits & OP_IS_VSET)
+    {
+        VectorOperation* vOp = new VectorOperation(OperationType::vectorSetup, op);
+        vectorOps.push_back(vOp);
+        return true;
+    }
+    if (opInfo->traits & OP_IS_LOAD)
+    {
+        VectorOperation* vOp = new VectorOperation(OperationType::vectorLoad, op);
+        vectorOps.push_back(vOp);
+        if (opInfo->traits & OP_IS_FAULT_ONLY_FIRST)
+            loopFlags |= RISCV_VEC_INSN_FAULT_ONLY_FIRST;
+        return true;
+    }
+    if (opInfo->traits & OP_IS_STORE)
+    {
+        VectorOperation* vOp = new VectorOperation(OperationType::vectorStore, op);
+        vectorOps.push_back(vOp);
+        return true;
+    }
+    if (opInfo->traits & OP_IS_INTEGER_COMPARISON)
+    {
+        VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison, op);
+        vectorOps.push_back(vOp);
+        vComparisonOpsCount++;
+        return true;
+    }
+    if (opInfo->traits & OP_IS_MASK_COMPARISON)
+    {
+        VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison, op);
+        vectorOps.push_back(vOp);
+        vComparisonOpsCount++;
+        return true;
+    }
+    if (opInfo->traits & OP_IS_MASK_OTHER)
+    {
+        VectorOperation* vOp = new VectorOperation(OperationType::vectorComparison, op);
+        vectorOps.push_back(vOp);
+        vComparisonOpsCount++;
+        return true;
+    }
+    vectorOps.push_back(new VectorOperation(OperationType::unknown, op));
+    return true;
 }
 
 bool VectorLoop::isDefinedInLoop(const ghidra::Varnode* vn)
@@ -795,12 +720,13 @@ void VectorLoop::examine_loop_pcodeops()
           case ghidra::CPUI_CALLOTHER:
             {
                 const RiscvUserPcode* opInfo = RiscvUserPcode::getUserPcode(*op);
-                if ((opInfo == nullptr) || (!opInfo->isVectorOp))
+                if (opInfo == nullptr)
                 {
                     // may be other builtin pcodes
                     otherUserPcodes.push_back(op);
+                    ghidra::pLogger->info("Found other user pcode at 0x{0:x}", op->getAddr().getOffset());
                 }
-                else if (opInfo->isVset)
+                else if (opInfo->traits & OP_IS_VSET)
                 {
                     invokeVectorOpHandler(op);
                     break;
@@ -831,8 +757,8 @@ void VectorLoop::collect_common_elements()
         switch(vOp->type)
         {
             case OperationType::vectorSetup:
-                multiplier = vsetInfo->multiplier;
-                elementSize = vsetInfo->elementSize;
+                multiplier = vsetInfo->context->getMultiplier();
+                elementSize = vsetInfo->context->getElementSize();
                 heritageVarnodes = registerPhiMapping[vOp->arg0->getAddr().getOffset()];
                 if (heritageVarnodes != nullptr && heritageVarnodes->size() > 0)
                     numElements = (*heritageVarnodes)[0];
@@ -1012,15 +938,17 @@ void VectorLoop::generateReport()
         std::hex <<
         "\tLoop start address: 0x"<< firstAddr << std::endl <<
         "\tLoop length: 0x" << lastAddr - firstAddr << std::endl <<
+        "\tLoop traits: 0x" << traits << std::endl <<
         std::dec <<
         "\tsetvli mode: element size=" << elementSize << ", multiplier=" << multiplier << std::endl <<
+        "\tvector instructions: " << vectorOps.size() << std::endl <<
         "\tvector loads: " << vLoadOps.size() << std::endl <<
         "\tvector stores: " << vStoreOps.size() << std::endl <<
         "\tinteger arithmetic ops: " << sIntegerOps.size() << std::endl <<
         "\tscalar comparisons: " << sComparisonOps.size() << std::endl <<
-        "\tvector logical ops: " << vLogicalOps.size() << std::endl <<
-        "\tvector integer ops: " << vIntegerOps.size() << std::endl <<
-        "\tvector comparisons: " << vComparisonOps.size() << std::endl <<
+        "\tvector logical ops: " << vLogicalOpsCount << std::endl <<
+        "\tvector integer ops: " << vIntegerOpsCount << std::endl <<
+        "\tvector comparisons: " << vComparisonOpsCount << std::endl <<
         "\tvector source operands: " << vSourceOperands.size() << std::endl <<
         "\tvector destination operands: " << vDestinationOperands.size() << std::endl <<
         "\tedges in: " << relatedBlocks.size() << std::endl;

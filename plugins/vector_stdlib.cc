@@ -45,10 +45,11 @@ enum StrlenEpilogType
 
 bool VectorMatcher::isMemcpy()
 {
+    const uint64_t TRAIT_SIGNATURE = OP_IS_VSET | OP_IS_STORE | OP_IS_LOAD;
     // apply generic tests first
     bool pre_match =
-        (loopModel.loopFlags == 0x0) &&              // no flagged features
         loopModel.simpleFlowStructure &&             // no other  branches or calls
+        (loopModel.traits == TRAIT_SIGNATURE) &&     // expected operation traits
         (loopModel.vectorOps.size() == 3) &&         // vset, vload, vstore
         (loopModel.scalarOps.size() >= 5) &&         // expected pointer and counter arithmetic
         (loopModel.otherScalarOps.size() == 0) &&    // no other ghidra pcodeops
@@ -101,9 +102,11 @@ int VectorMatcher::transformMemcpy()
 
 bool VectorMatcher::isStrlen()
 {
+    const uint64_t TRAIT_SIGNATURE = OP_IS_MASK_OTHER | OP_IS_INTEGER_COMPARISON |
+        OP_IS_FAULT_ONLY_FIRST | OP_IS_VSET | OP_IS_LOAD;
     bool match =
-        (loopModel.loopFlags == RISCV_VEC_INSN_FAULT_ONLY_FIRST) && // vector fault only first load
         loopModel.simpleFlowStructure &&            // no other  branches or calls
+        (loopModel.traits == TRAIT_SIGNATURE) &&    // expected signature
         (loopModel.vectorOps.size() == 4) &&        // vset, vload, vseq, vfirst
         (loopModel.scalarOps.size() == 3) &&        // expected pointer and counter arithmetic
         (loopModel.otherScalarOps.size() == 0) &&   // no other ghidra pcodeops
@@ -341,17 +344,17 @@ int VectorMatcher::transformStrlen()
 
 bool VectorMatcher::isStrcmp()
 {
+    const uint64_t TRAIT_SIGNATURE = OP_IS_MASK_OTHER | OP_IS_MASK_COMPARISON |
+        OP_IS_INTEGER_COMPARISON | OP_IS_FAULT_ONLY_FIRST | OP_IS_VSET | OP_IS_LOAD;
     bool match =
-        (loopModel.loopFlags == RISCV_VEC_INSN_FAULT_ONLY_FIRST) && // vector fault only first load
         loopModel.simpleFlowStructure &&            // no other  branches or calls
+        (loopModel.traits == TRAIT_SIGNATURE) &&    // vector fault only first load
         (loopModel.vectorOps.size() == 7) &&        // vset, vload, vseq, vfirst
         (loopModel.otherScalarOps.size() == 0) &&   // no other ghidra pcodeops
         (loopModel.scalarOps.size() == 4) &&        // expected pointer and counter arithmetic
-        (loopModel.vLogicalOps.size() == 2) &&      // vmor, vfirst
-        (loopModel.vComparisonOps.size() == 2) &&   // vmsne, vmseq
         (loopModel.unhandledVectorOps.size() == 0) &&   // no unhandled vector instructions
         (loopModel.otherUserPcodes.size() == 0) &&  // no other CALL_OTHER
-        (loopModel.vSourceOperands.size() == 2);  // two recognized source operands
+        (loopModel.vSourceOperands.size() == 2);    // two recognized source operands
     return match;
 }
 

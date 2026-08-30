@@ -79,6 +79,7 @@ static const ghidra::uint4 VECTOR_STRCMP = 0x11000004;
 static const ghidra::uint4 VECTOR_STRNCMPNEQ = 0x11000005;
 static const ghidra::uint4 VECTOR_STRNCMP = 0x11000006;
 
+/// @brief A file holding summary data for each possible vector stanza
 extern std::ofstream reportFile;
 
 // Define epilog survey report infrastructure
@@ -91,49 +92,6 @@ extern std::ofstream strlenSampleFile;
 static const bool COLLECT_STRCMP_SAMPLES = true;
 /// @brief File stream for vector_strcmp sequence collections
 extern std::ofstream strcmpSampleFile;
-
-/**
- * @brief Group RISC-V user pcodes according to their generic roles
- * in common vector sequences
- */
-class RiscvUserPcode {
-    public:
-        const std::string& asmOpcode;    ///<@brief the name of this opcode as it appears in SLEIGH semantics
-        int ghidraOp;                    ///<@brief the index by which Ghidra identifies this User Pcode
-        int elementSize;                 ///<@brief number of bytes per vector element
-        int multiplier;                  ///<@brief vset multiplier if >= 1
-        uint flags;                      ///<@brief RISCV_VEC_INSN flags found within a loop
-        bool isVset;                     ///<@brief true if this is a vsetvli* instruction
-        bool isVseti;                    ///<@brief true if this is a vsetivli* instruction
-        bool isLoad;                     ///<@brief true if this is a simple vector load from memory
-        bool isFaultOnlyFirst;           ///<@brief true if this is a load with fault-only-first semantics
-        bool isStore;                    ///<@brief true if this is a simple vector store
-        bool isLoadImmediate;            ///<@brief true if this is a simple vector load immediate
-        bool isVectorOp;                 ///<@brief true if this op depends on a prior vset* instruction
-        bool isMaskSet;                  ///<@brief true if this is a conditional mask set vector op
-        /**
-         * @brief Construct a new Riscv User Pcode object
-         *
-         * @param op the name of this opcode as it appears in SLEIGH semantics
-         * @param index the index by which Ghidra identifies this User Pcode
-         */
-        RiscvUserPcode(const std::string& op, int index);
-        /**
-         * @brief Get the User Pcode object from a Ghidra PcodeOp
-         *
-         * @param op
-         * @return a RiscvUserPcode* describing the UserPcodeOp
-         */
-        static const RiscvUserPcode* getUserPcode(const ghidra::PcodeOp& op);
-};
-/**
- * @brief Map providing RiscvUserPcode information given the ghidra identifier as a key
- */
-extern std::map<int, RiscvUserPcode*> riscvPcodeMap;
-/**
- * @brief Map providing the ghidra identifier for a given Risc-v opcode name
- */
-extern std::map<std::string, ghidra::uintb> riscvNameToGhidraId;
 
 }
 #endif /* RISCV_HH_ */

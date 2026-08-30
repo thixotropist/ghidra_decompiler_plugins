@@ -14,6 +14,7 @@
 
 #include "framework.hh"
 #include "riscv.hh"
+#include "user_pcode.hh"
 #include "vector_matcher.hh"
 #include "vector_ops.hh"
 
@@ -40,12 +41,12 @@ VectorMatcher::VectorMatcher(ghidra::Funcdata& fData, ghidra::PcodeOp* initialVs
     if (vsetOp == nullptr) return;
     // get basic info on the vsetop trigger
     const RiscvUserPcode* vsetInfo = RiscvUserPcode::getUserPcode(*vsetOp);
-    numElementsConstant = vsetInfo->isVseti;
-    numElementsVariable = vsetInfo->isVset;
-    // we only want to trigger on two classes of vector ops
-    if (!(vsetInfo->isVseti || vsetInfo->isVset)) return;
-    multiplier = vsetInfo->multiplier;
-    elementSize = vsetInfo->elementSize;
+    if (!(vsetInfo->traits & OP_IS_VSET)) return;
+    numElementsConstant = (vsetInfo->traits & OP_IS_IMMEDIATE);
+    numElementsVariable = !(vsetInfo->traits & OP_IS_IMMEDIATE);
+
+    multiplier = vsetInfo->context->getMultiplier();
+    elementSize = vsetInfo->context->getElementSize();
     if (vsetOp->numInput() < 2)
     {
         ghidra::pLogger->warn("Found a vsetOp at 0x{0:x}:{1:x} with no Varnodes",
@@ -156,10 +157,10 @@ void VectorMatcher::collect_loop_registers()
             const RiscvUserPcode *opInfo = RiscvUserPcode::getUserPcode(*op);
             if (opInfo != nullptr)
             {
-                if (opInfo->isVset)
+                if (opInfo->traits & OP_IS_VSET)
                 {
-                    multiplier = opInfo->multiplier;
-                    elementSize = opInfo->elementSize;
+                    multiplier = opInfo->context->getMultiplier();
+                    elementSize = opInfo->context->getElementSize();
                     vectorNumElemVn = op->getIn(1);
                     vNumPerLoop = op->getOut();
                     if (vNumPerLoop == nullptr)
@@ -171,7 +172,7 @@ void VectorMatcher::collect_loop_registers()
                     ghidra::pLogger->trace("    Vset found: numElementsRegister=0x{0:x}",
                                       vectorNumElemVn->getOffset());
                 }
-                else if (opInfo->isLoad)
+                else if (opInfo->traits & OP_IS_LOAD)
                 {
                     vectorLoadRegisterVn = op->getOut();
                     if (vectorLoadRegisterVn == nullptr)
@@ -185,7 +186,7 @@ void VectorMatcher::collect_loop_registers()
                     ghidra::pLogger->trace("    Vload register=0x{0:x}",
                                       vectorLoadRegisterVn->getOffset());
                 }
-                else if (opInfo->isStore)
+                else if (opInfo->traits & OP_IS_STORE)
                 {
                     vectorStoreRegisterVn = op->getIn(1);
                     vectorStoreAddrVn = op->getIn(2);
