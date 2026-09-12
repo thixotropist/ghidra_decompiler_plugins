@@ -20,7 +20,7 @@ git_repository(
     name = "ghidra",
     remote = "git@github.com:thixotropist/ghidra.git",
     # This commit should be within the "isa_ext" branch
-    commit = "6e9da93f3a5cd26102ee0d413cef2e21f1a369a8",
+    commit = "cc1a1a11405da459cb8554ec1d73451da135a463",
     build_file = "//:BUILD.ghidra",
     patches = ["ghidra.pat"],
     patch_strip = 1,
