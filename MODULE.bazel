@@ -27,12 +27,12 @@ git_repository(
 )
 
 # Extras include a RISC-V crosscompiler and whisper inference engine sources
-bazel_dep(name="gcc_riscv_suite", version="15.2.0.1")
+##bazel_dep(name="gcc_riscv_suite", version="15.2.0.1")
 
-register_toolchains(
-    # an extended gcc riscv compiler suite with march supporting the rva23 profile
-    "//extras/toolchains/riscv:riscv64-rva23",
-)
+##register_toolchains(
+##    # an extended gcc riscv compiler suite with march supporting the rva23 profile
+##    "//extras/toolchains/riscv:riscv64-rva23",
+##)
 
 # whisper voice to text apps make good exemplars of AI and inference engine code.
 http_archive = use_repo_rule("@@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

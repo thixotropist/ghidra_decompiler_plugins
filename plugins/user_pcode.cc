@@ -98,6 +98,7 @@ static const std::string vector_setup[] =
     "vsetivli_e64m2tama", "vsetivli_e64m4tama", "vsetivli_e64m8tama",
     "vsetivli_e64mf8tama", "vsetivli_e64mf4tama", "vsetivli_e64mf2tama",
 };
+
 ///@brief Basic vector loads defined in Section 7.4 of risc-v-spec-1.0
 static const std::string vector_unit_stride_loads[] =
 {
@@ -109,52 +110,61 @@ static const std::string vector_unit_stride_stores[] =
 {
     "vse8_v", "vse16_v", "vse32_v", "vse64_v"
 };
+
 ///@brief Vector mask loads defined in Section 7.4 of risc-v-spec-1.0
 static const std::string vector_unit_stride_mask_loads[] =
 {
     "vlm_v"
 };
+
 ///@brief Vector mask stores defined in Section 7.4 of risc-v-spec-1.0
 static const std::string vector_unit_stride_mask_stores[] =
 {
     "vsm_v"
 };
+
 ///@brief Strided vector loads defined in Section 7.5 of risc-v-spec-1.0
 static const std::string vector_strided_loads[] =
 {
     "vlse8_v", "vlse16_v", "vlse32_v", "vlse64_v"
 };
+
 ///@brief Strided vector stores defined in Section 7.5 of risc-v-spec-1.0
 static const std::string vector_strided_stores[] =
 {
     "vsse8_v", "vsse16_v", "vsse32_v", "vsse64_v"
 };
+
 ///@brief Strided indexed unordered loads defined in Section 7.6 of risc-v-spec-1.0
 static const std::string vector_strided_indexed_unordered_loads[] =
 {
     "vluxei8_v", "vluxei16_v", "vluxei32_v", "vluxei64_v"
 };
+
 ///@brief Strided indexed ordered loads defined in Section 7.6 of risc-v-spec-1.0
 static const std::string vector_strided_indexed_ordered_loads[] =
 {
     "vloxei8_v", "vloxei16_v", "vloxei32_v", "vloxei64_v"
 };
+
 ///@brief Strided indexed unordered stores defined in Section 7.6 of risc-v-spec-1.0
 static const std::string vector_strided_indexed_unordered_stores[] =
 {
     "vsuxei8_v", "vsuxei16_v", "vsuxei32_v", "vsuxei64_v"
 };
+
 ///@brief Strided indexed ordered stores defined in Section 7.6 of risc-v-spec-1.0
 static const std::string vector_strided_indexed_ordered_stores[] =
 {
     "vsoxei8_v", "vsoxei16_v", "vsoxei32_v", "vsoxei64_v"
 };
+
 ///@brief Fault-only-first loads defined in Section 7.7 of risc-v-spec-1.0
 static const std::string vector_fault_only_first_loads[] =
 {
     "vle8ff_v", "vle16ff_v", "vle32ff_v", "vle64ff_v"
 };
-///@todo consider splitting instructions like "vlseg2se8_v" into a separate group
+
 ///@brief Vector unit stride segmented loads in Section 7.8.1 of risc-v-spec-1.0
 ///@details instructions like `vlseg<nf>e<eew>.v vd, (rs1), vm` or `vsseg<nf>e<eew>.v vs3, (rs1), vm`
 static const std::string vector_segmented_loads[] =
@@ -185,7 +195,6 @@ static const std::string vector_segmented_fault_only_first_loads[] =
     "vlseg6se8ff_v", "vlseg7se8ff_v", "vlseg8se8ff_v",
 };
 
-///@todo consider splitting instructions like "vsseg2se8_v" into a separate group
 ///@brief Vector unit stride segmented stores in Section 7.8.1 of risc-v-spec-1.0
 ///@details instructions like `vsseg<nf>e<eew>.v vd, (rs1), vm` or `vsseg<nf>e<eew>.v vs3, (rs1), vm`
 static const std::string vector_segmented_stores[] =
@@ -296,6 +305,7 @@ static const std::string vector_unordered_indexed_segmented_stores[] =
     "vsuxseg5ei64_v", "vsuxseg6ei64_v", "vsuxseg7ei64_v",
     "vsuxseg8ei64_v",
 };
+
 ///@brief Vector indexed ordered segmented stores in section 7.8.3 of risc-v-spec-1.0
 ///@details instructions like vsoxseg<nf>ei<eew>.v
 static const std::string vector_ordered_indexed_segmented_stores[] =
@@ -327,7 +337,6 @@ static const std::string vector_whole_register_stores[] =
     "vs1r_v", "vs2r_v", "vs4r_v", "vs8r_v",
 };
 
-///@todo assign traits
 ///@brief Vector integer compare instructions defined in section 11.8 of risc-v-spec-1.0
 static const std::string vector_integer_compare[] =
 {
@@ -338,7 +347,7 @@ static const std::string vector_integer_compare[] =
     "vmsle_vi", "vmsle_vv", "vmsle_vx",
     "vmsgtu_vi", "vmsgtu_vx", "vmsgt_vi", "vmsgt_vx",
 };
-///@todo assign traits
+
 ///@brief Vector mask register instructions defined in section 15.1 of risc-v-spec-1.0
 static const std::string vector_mask_register[] =
 {
@@ -346,7 +355,6 @@ static const std::string vector_mask_register[] =
     "vmnor_mm", "vmorn_mm", "vmxnor_mm"
 };
 
-///@todo assign traits
 ///@brief other vector mask instructions defined in section 15 of risc-v-spec-1.0
 static const std::string vector_mask_other[] =
 {
@@ -462,6 +470,34 @@ static const std::string vector_integer_load_immediate[] =
     "vmv_v_i",
 };
 
+///@brief vector saturating integer  add and subtract from section 12.1
+static const std::string vector_saturating_integer_arithmetic[] =
+{
+    "vsadd_vi", "vsadd_vv", "vsadd_vx", "vsaddu_vi", "vsaddu_vv",
+    "vsaddu_vx", "vssub_vv", "vssub_vx", "vssubu_vv", "vssubu_vx",
+};
+
+///@brief vector averaging integer add and subtract from section 12.2
+static const std::string vector_averaging_integer_arithmetic[] =
+{
+    "vaadd_vv", "vaadd_vx", "vaaddu_vv", "vaaddu_vx",
+    "vasub_vv", "vasub_vx", "vasubu_vv", "vasubu_vx",
+};
+
+///@brief vector Single-Width Fractional Multiply with Rounding and Saturation
+/// from section 12.3
+static const std::string vector_single_fractional_multiply[] =
+{
+    "vsmul_vv", "vsmul_vx",
+};
+
+///@brief Vector Single-Width Scaling Shift from section 12.4
+static const std::string vector_single_width_scaling_shift[] =
+{
+    "vssra_vi", "vssra_vv", "vssra_vx", "vssrl_vi",
+    "vssrl_vv", "vssrl_vx",
+};
+
 ///@brief Vector Single-Width Integer Reduction Instructions from section 14.1
 static const std::string vector_integer_reduction[] =
 {
@@ -479,7 +515,7 @@ static const std::string vector_widening_integer_reduction[] =
 static const std::string vector_permutation[] =
 {
     "vmv_s_x", "vmv_x_s",  "vslide1down_vx", "vslide1up_vx",
-    "vslidedown_vi", "vslidedown_vx", "vslideup_vi",
+    "vslidedown_vi", "vslidedown_vx", "vslideup_vi vslideup_vx",
 };
 ///@brief Vector Gather Instructions from section 16.4
 static const std::string vector_gather[] =
@@ -499,32 +535,10 @@ static const std::string vector_whole_register_move[] =
     "vmv1r_v", "vmv2r_v", "vmv4r_v", "vmv8r_v",
 };
 
-const std::vector<std::string> other_user_pcodeOps = {
-    "unimp", "trap", "ebreak", "ecall", "fence", "fence.i",
-    "fence_tso", "add_uw", "clmul", "clmulh", "clmulr",
-    "clz", "clzw", "ctz", "ctzw", "orc_b", "rev8", "rev_b",
-    "minu", "maxu", "min", "max", "pack", "packh", "packw",
-    "zext_h", "cpop", "cpopw", "rol", "rolw", "ror", "rorw",
-    "rori", "roriw", "bclr", "bclri", "bexti", "binv", "binvi",
-    "bset", "bseti", "sext_b", "sext_h", "unzip", "zip",
-    "xperm_b", "xperm_n", "insb", "maxw", "mulr64", "pkbb16",
-    "pkbt16", "sub64", "swap8", "wexti", "wfi", "sfence.vm",
-    "sfence.vma", "sfence.w.inval", "sfence.inval.ir",
-    "hfence.vvma", "hfence.gvma",
-    "vaadd_vv", "vaadd_vx", "vaaddu_vv", "vaaddu_vx",
-    "vamoaddei16_v", "vamoaddei32_v", "vamoaddei64_v",
-    "vamoaddei8_v", "vamoandei16_v", "vamoandei32_v",
-    "vamoandei64_v", "vamoandei8_v", "vamomaxei16_v",
-    "vamomaxei32_v", "vamomaxei64_v", "vamomaxei8_v",
-    "vamomaxuei16_v", "vamomaxuei32_v", "vamomaxuei64_v",
-    "vamomaxuei8_v", "vamominei16_v", "vamominei32_v",
-    "vamominei64_v", "vamominei8_v", "vamominuei16_v",
-    "vamominuei32_v", "vamominuei64_v", "vamominuei8_v",
-    "vamoorei16_v", "vamoorei32_v", "vamoorei64_v", "vamoorei8_v",
-    "vamoswapei16_v", "vamoswapei32_v", "vamoswapei64_v",
-    "vamoswapei8_v", "vamoxorei16_v", "vamoxorei32_v",
-    "vamoxorei64_v", "vamoxorei8_v", "vasub_vv", "vasub_vx", "vasubu_vv", "vasubu_vx",
-    "vdot_vv", "vdotu_vv", "vfadd_vf", "vfadd_vv", "vfclass_v",
+///@brief Vector floating point instructions from section 13
+static const std::string vector_floating_point[] =
+{
+    "vfadd_vf", "vfadd_vv", "vfclass_v",
     "vfcvt_fxv", "vfcvt_fxuv", "vfcvt_rtzxfv", "vfcvt_rtzxufv",
     "vfcvt_xfv", "vfcvt_xufv", "vfdiv_vf", "vfdiv_vv", "vfdot_vv",
     "vfmacc_vf", "vfmacc_vv", "vfmadd_vf", "vfmadd_vv",
@@ -549,14 +563,26 @@ const std::vector<std::string> other_user_pcodeOps = {
     "vlm8_v", "vlxei16_v", "vlxei32_v", "vlxei64_v", "vlxei8_v",
     "vmfeq_vf", "vmfeq_vv", "vmfge_vf", "vmfgt_vf", "vmfle_vf", "vmfle_vv",
     "vmflt_vf", "vmflt_vv", "vmfne_vf", "vmfne_vv",
+};
+
+///@brief other Ghidra user PcodeOps included by default in the RISC-V 64 bit SLEIGH
+static const std::vector<std::string> other_user_pcodeOps = {
+    "unimp", "trap", "ebreak", "ecall", "fence", "fence.i",
+    "fence_tso", "add_uw", "clmul", "clmulh", "clmulr",
+    "clz", "clzw", "ctz", "ctzw", "orc_b", "rev8", "rev_b",
+    "minu", "maxu", "min", "max", "pack", "packh", "packw",
+    "zext_h", "cpop", "cpopw", "rol", "rolw", "ror", "rorw",
+    "rori", "roriw", "bclr", "bclri", "bexti", "binv", "binvi",
+    "bset", "bseti", "sext_b", "sext_h", "unzip", "zip",
+    "xperm_b", "xperm_n", "insb", "maxw", "mulr64", "pkbb16",
+    "pkbt16", "sub64", "swap8", "wexti", "wfi", "sfence.vm",
+    "sfence.vma", "sfence.w.inval", "sfence.inval.ir",
+    "hfence.vvma", "hfence.gvma",
+    "vdot_vv", "vdotu_vv",
     "vnclip_wi", "vnclip_wv", "vnclip_wx",
     "vnclipu_wi", "vnclipu_wv", "vnclipu_wx", "vncvt_xxw",
     "vqmacc_vv", "vqmacc_vx", "vqmaccsu_vv",
     "vqmaccsu_vx", "vqmaccu_vv", "vqmaccu_vx", "vqmaccus_vx",
-    "vsadd_vi", "vsadd_vv", "vsadd_vx", "vsaddu_vi", "vsaddu_vv",
-    "vsaddu_vx", "vslideup_vx", "vsmul_vv", "vsmul_vx",
-    "vssra_vi", "vssra_vv", "vssra_vx", "vssrl_vi", "vssrl_vv", "vssrl_vx",
-    "vssub_vv", "vssub_vx", "vssubu_vv", "vssubu_vx",
     "vwcvt_xxv", "vwcvtu_xxv",
     "aes64ds", "aes64dsm", "aes64im", "aes64ks1i", "aes64ks2", "loadfp_const",
     "fmin_m", "fmax_m", "copybitsH", "trunc_h", "trunc_hu", "fmv_x_h",
@@ -572,13 +598,33 @@ const std::vector<std::string> other_user_pcodeOps = {
     "vaesdm_vs", "vaesem_vv", "vaesem_vs", "vaesef_vv", "vaesef_vs",
     "vaeskf1_vi", "vaeskf2_vi", "vaesz_vs", "vsha2ch_vv", "vsha2cl_vv",
     "vsha2ms_vv", "vghsh_vv", "vgmul_vv", "vsm3c_vi", "vsm3me_vv",
-    "vsm4k_vi", "vsm4r_vv", "vsm4r_vs", "custom0", "custom0.rs1",
-    "custom0.rs1.rs2", "custom0.rd", "custom0.rd.rs1",
-    "custom0.rd.rs1.rs2", "custom1", "custom1.rs1", "custom1.rs1.rs2",
-    "custom1.rd", "custom1.rd.rs1", "custom1.rd.rs1.rs2", "custom2",
-    "custom2.rs1", "custom2.rs1.rs2", "custom2.rd", "custom2.rd.rs1",
-    "custom2.rd.rs1.rs2", "custom3", "custom3.rs1", "custom3.rs1.rs2",
-    "custom3.rd", "custom3.rd.rs1", "custom3.rd.rs1.rs2"
+    "vsm4k_vi", "vsm4r_vv", "vsm4r_vs",
+};
+
+///@brief vector atomic instructions once part of the vector spec
+static const std::vector<std::string> vector_atomics = {
+    "vamoaddei16_v", "vamoaddei32_v", "vamoaddei64_v",
+    "vamoaddei8_v", "vamoandei16_v", "vamoandei32_v",
+    "vamoandei64_v", "vamoandei8_v", "vamomaxei16_v",
+    "vamomaxei32_v", "vamomaxei64_v", "vamomaxei8_v",
+    "vamomaxuei16_v", "vamomaxuei32_v", "vamomaxuei64_v",
+    "vamomaxuei8_v", "vamominei16_v", "vamominei32_v",
+    "vamominei64_v", "vamominei8_v", "vamominuei16_v",
+    "vamominuei32_v", "vamominuei64_v", "vamominuei8_v",
+    "vamoorei16_v", "vamoorei32_v", "vamoorei64_v", "vamoorei8_v",
+    "vamoswapei16_v", "vamoswapei32_v", "vamoswapei64_v",
+    "vamoswapei8_v", "vamoxorei16_v", "vamoxorei32_v",
+    "vamoxorei64_v", "vamoxorei8_v",
+};
+
+///@brief pcodes covering reserved code points
+static const std::vector<std::string> reserved_custom_pcodeOps = {
+    "custom0", "custom0.rs1", "custom0.rs1.rs2", "custom0.rd",
+    "custom0.rd.rs1", "custom0.rd.rs1.rs2", "custom1", "custom1.rs1",
+    "custom1.rs1.rs2", "custom1.rd", "custom1.rd.rs1", "custom1.rd.rs1.rs2",
+    "custom2", "custom2.rs1", "custom2.rs1.rs2", "custom2.rd",
+    "custom2.rd.rs1", "custom2.rd.rs1.rs2", "custom3", "custom3.rs1",
+    "custom3.rs1.rs2", "custom3.rd", "custom3.rd.rs1", "custom3.rd.rs1.rs2"
 };
 
 std::map<int, RiscvUserPcode*> riscvPcodeMap;      /// lookup a user pcode given Ghidra's sleigh index
@@ -718,7 +764,14 @@ void RiscvUserPcode::loadAsmOpcodes()
         riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_INTEGER_MOVE)));
     for (const auto& opName: vector_integer_load_immediate)
         riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_LOAD|OP_IS_IMMEDIATE)));
-    ///@todo need to research traits for the following instructions
+    for (const auto& opName: vector_saturating_integer_arithmetic)
+        riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_INTEGER_ARITH)));
+    for (const auto& opName: vector_averaging_integer_arithmetic)
+        riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_INTEGER_ARITH)));
+    for (const auto& opName: vector_single_fractional_multiply)
+        riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_INTEGER_ARITH)));
+    for (const auto& opName: vector_single_width_scaling_shift)
+        riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_INTEGER_ARITH)));
     for (const auto& opName: vector_integer_reduction)
         riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, 0x0LU)));
     for (const auto& opName: vector_widening_integer_reduction)
@@ -731,6 +784,8 @@ void RiscvUserPcode::loadAsmOpcodes()
         riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, 0x0LU)));
     for (const auto& opName: vector_whole_register_move)
         riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, 0x0LU)));
+    for (const auto& opName: vector_floating_point)
+        riscvNameToPcodeMap.insert(std::make_pair(opName, new RiscvUserPcode(opName, OP_IS_FLOATING_POINT)));
 }
 RiscvUserPcode::RiscvUserPcode(const std::string& asmName, uint64_t traitsParam) :
     asmOpcode(asmName),
