@@ -1,6 +1,6 @@
 ---
-title: Decompiler approaches to handling RVV semantics
-description: How do decompilers handle risc-v vector instruction semantics?
+title: Other decompiler approaches to handling RVV semantics
+description: How do [other] decompilers handle risc-v vector instruction semantics?
 weight: 10
 ---
 

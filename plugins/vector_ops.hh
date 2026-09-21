@@ -384,8 +384,8 @@ class VectorEpilogProcessor
      */
     void getIntersectionVector(std::vector<ghidra::Varnode*>& results, const ghidra::Varnode* root1, const ghidra::Varnode* root2);
   private:
-    std::set<ghidra::Varnode*> stopSet;
-    ResultFilter resultFilter;
+    std::set<ghidra::Varnode*> stopSet; ///< Varnodes which halt dependency searches
+    ResultFilter resultFilter; ///< Lambda function to limit accepted results
     std::stringstream ss; ///< buffer for log messages
     const int MAX_DEPENDENCY_DEPTH = 12; ///< maximum number of links in a Varnode dependency chain
     const int EPILOG_SEARCH_DEPTH = 16; ///< maximum distance, in bytes, from the of loop to result PcodeOP

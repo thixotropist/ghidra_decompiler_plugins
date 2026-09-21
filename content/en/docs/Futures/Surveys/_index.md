@@ -1,8 +1,11 @@
 ---
 title: Full Executable Surveys
 linkTitle: Surveys
-description: Ghidra decompiler plugins can help generate surveys of binary executables
-weight: 30
+description: |
+    Ghidra decompiler plugins can help generate surveys of binary executables.
+    Building and analyzing current LLM and device control firmware examples can
+    help train the Ghidra user in what to expect with future analyses.
+weight: 10
 ---
 
 A Ghidra plugin can transform executable applications into something more easily understood.

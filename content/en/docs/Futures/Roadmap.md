@@ -1,7 +1,9 @@
 ---
 title: Roadmap
-description: There are many paths forward radiating outward from this project - which ones are worth researching?
-weight: 80
+description: |
+  There are many paths forward radiating outward from this project - which ones are worth
+  researching?  How do we prune path options with lesser likelihood of becoming reality?
+weight: 30
 ---
 
 We want to capture intermediate and longer term goals, and to start measuring the speed at which those goals might be
@@ -35,19 +37,10 @@ This Roadmap is complicated by the multiple, overlapping goals implicit in this 
 
 * Show the cost/benefit tradeoffs for adding new features to the Ghidra Decompiler *without* waiting for decompiler Pull
   Requests to be reviewed and approved.
-    * [X] Add a basic decompiler plugin capability adding new Rules to the `cleanup` `ActionGroup`.
-    * [X] Add a basic decompiler logging capability
-    * [X] Add decompiler `Inspector` classes to help explore runtime data structures
-    * [X] Add decompiler graph editor classes to rewrite nodes in the `BlockGraph`, altering or absorbing higher level C
-      structures like `do ... while` blocks.
-    * [ ] Document the complexity of each of these added capabilities, giving lines of code and estimated stability.
 * Demonstrate a RISC-V processor-specific decompiler plugin capable of recognizing common vector instruction sequences
   and condensing them into user-friendly typed function calls.
     * [X] Start with vectorized common C library routines like `memcpy` and `strlen`
     * [ ] Explore more complicated and mutable transform and reduction patterns.
-* Demonstrate possible workflows for applying Ghidra to networked AI-enhanced embedded systems.
-    * This is likely an iterative process starting with the executable to be analyzed and adapting the computer toolchain
-      and Ghidra decompiler to better align with that executable.
 * Explore options for deferring instruction semantic decoding from initial binary import (via SLEIGH file definitions) until
   after basic control flow analysis provides a better view of the context in which instructions execute.
     * Instruction semantics today are not fully known and decodable until runtime, where R/W fields in certain Control and
@@ -59,31 +52,3 @@ This Roadmap is complicated by the multiple, overlapping goals implicit in this 
   Qemu RISC-V vector emulation code exceeds 20K lines of code that don't need to be replicated within Ghidra.
 * Don't try to solve the general problem of decompiling vectorized code.  Instead, concentrate on the most common loop
   vectorizations of a single Gnu compiler building for a single (but generic) microarchitecture).
-
-## Current initiatives
-
-### refactoring and inspection
-
-The current code recognizes and transforms common `memset`, `memcpy`, `strlen`, and `strcmp` vector instruction sequences.
-The implementation is poor, with duplicate code and ad hoc methods for identifying and transforming instruction sequences.
-
-* Refactor and normalize the code and test cases, perhaps starting with the more complex `strcmp` transform and restructuring
-  the other transforms to look like subsets of the `strcmp` steps.
-* Find ways to move common code out of VectorMatcher into the `framework` files.
-* Normalize the test case code, moving `savestate` elements from the `*_save.xml` files into the corresponding `*.ghidra` files.
-  This should include function definitions and signatures.
-* Review the stdlog messages emitted at `warn` level, so see if these indicate a problem or potential refinements.
-* Make small steps towards recognition of multi-block vector loops, such as those found in `vector_strncmp` sequences.  The place
-  to start is with VectorLoop features, postponing things like block graph editing.
-
-### survey
-
-Examine the `dpdk-pipeline` binary to suggest the next set of transforms.
-* Are there more stdlib functions showing common vector sequences?
-* What are the relative priorities of reduction loops, arrays of structures loops, and loops involving complex width conversions?
-
-### workspace rebasing
-
-* [X] track Ghidra releases as they come
-* [X] bump Bazel to version 9
-* [ ] compare GCC toolchain version 16 vectorization with that of our current GCC version 15.

@@ -162,7 +162,7 @@ extern "C" int plugin_getrules(std::vector<Rule*>& rules)
     pLogger->flush();
     return 1;
 }
-
+///@brief collect loop survey data if set
 static bool runSurvey = true;
 /**
  * @brief register any new builtins

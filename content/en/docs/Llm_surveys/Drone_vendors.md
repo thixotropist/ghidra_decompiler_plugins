@@ -5,7 +5,7 @@ weight: 20
 ---
 
 ## User Request
-which vendors are likely to use risc-v processors in drones?
+Which vendors are likely to use risc-v processors in drones?
 
 ---
 

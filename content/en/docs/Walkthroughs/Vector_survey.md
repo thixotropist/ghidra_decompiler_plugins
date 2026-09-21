@@ -28,7 +28,7 @@ We can also include survey examples from the Data Path Development Kit distribut
 vector math components but many loops over arrays of structures that get compiled into
 surprisingly complex vector sequences.
 
-Ghidra finds 275K instructions in this `whisper-cpp` executable, with roughly 8% being vector instructions.  
+Ghidra finds 275K instructions in this `whisper-cpp` executable, with roughly 8% being vector instructions.
 
 ## Loop-free patterns
 
@@ -38,7 +38,7 @@ This block includes seven `vsetivli` instructions, three vector memory loads, a 
 The block occurs during the initialization of `main`, so it is likely important to transform into something easily understood.
 
 ```as
-LAB_0002104e: 
+LAB_0002104e:
 jal      ra,whisper_full_default_params
 lw       a5,-0x5f8=>local_5f8(s0)
 c.mv     a1,s1
@@ -47,7 +47,7 @@ sw       a5,-0x280=>whisper_params.field32_0x20(s0)
 jal      ra,whisper_full_default_params
 auipc    a3,0xe7
 addi     a3=>DAT_00107f20,a3,-0x142
-vsetivli zero,0x4,e32,m1,ta,ma 
+vsetivli zero,0x4,e32,m1,ta,ma
 vle32.v  v3,(a3)
 auipc    a4,0xe7
 addi     a4,a4,-0x65a
@@ -55,10 +55,10 @@ vsetivli zero,0x2,e32,mf2,ta,ma
 vle32.v  v2,(a4)
 auipc    a5,0xe7
 addi     a5,a5,-0x662
-vsetivli zero,0x8,e8,mf2,ta,ma 
+vsetivli zero,0x8,e8,mf2,ta,ma
 vle8.v   v1,(a5)
 lw       a5,-0x5f4=>local_5f4(s0)
-vsetivli zero,0x10,e8,m1,ta,ma  
+vsetivli zero,0x10,e8,m1,ta,ma
 vmv.v.i  v4,0x0
 sw       a5,-0x27c=>whisper_params.field36_0x24(s0)
 addi     a5,s0,-0x800
@@ -70,7 +70,7 @@ vse8.v   v4,(a5)
 auipc    a4,0xd9
 flw      fa5,0x84(a4=>DAT_000fa13c)
 addi     a5,s0,-0x274
-vsetivli zero,0x4,e32,m1,ta,ma 
+vsetivli zero,0x4,e32,m1,ta,ma
 vse32.v  v3,(a5)
 addi     a5,s0,-0x264
 vsetivli zero,0x2,e32,mf2,ta,ma
@@ -78,7 +78,7 @@ vse32.v  v2,(a5)
 auipc    a1,0xdd
 addi     a1=>DAT_000fdbd8,a1,-0x500
 addi     a5,s0,-0x248
-vsetivli zero,0x8,e8,mf2,ta,ma 
+vsetivli zero,0x8,e8,mf2,ta,ma
 vse8.v   v1,(a5)
 sw       zero,-0x278=>whisper_params.field40_0x28(s0)
 fsw      fa5,-0x25c=>whisper_params.field68_0x44(s0)
@@ -98,7 +98,7 @@ This sometimes means `vset` instructions are issued twice, before each load or s
 Any Rule set operating on this might break it down as:
 
 ```as
-vsetivli zero,0x4,e32,m1,ta,ma 
+vsetivli zero,0x4,e32,m1,ta,ma
 vle32.v  v3,(a3)
 ...                             // instructions which do not alter v3 but may alter vset parameters
 vsetivli zero,0x4,e32,m1,ta,ma  // refresh vset parameters
@@ -118,17 +118,17 @@ vse32.v  v2,(a5)
 These instructions should be transformed to `vector_memcpy(a5, a4, 8)`.
 
 ```as
-vsetivli zero,0x8,e8,mf2,ta,ma 
+vsetivli zero,0x8,e8,mf2,ta,ma
 vle8.v   v1,(a5)
 ...
-vsetivli zero,0x8,e8,mf2,ta,ma 
+vsetivli zero,0x8,e8,mf2,ta,ma
 vse8.v   v1,(a5)
 ```
 
 These instructions *might* be transformed to `vector_memcpy(a5, a5, 8)`, but the a5 register has changed with the intermediate instructions.
 
 ```as
-vsetivli zero,0x10,e8,m1,ta,ma  
+vsetivli zero,0x10,e8,m1,ta,ma
 vmv.v.i  v4,0x0
 ...
 vse8.v   v4,(a5)                 // no vset refresh needed
@@ -163,9 +163,9 @@ process via a new Ghidra Rule.
     c.sdsp       ra,0x8(sp)
     c.addi4spn   s0,sp,0x10
     bge          zero,a0,LAB_000d490e
-    vsetvli      a4,zero,e64,m1,ta,ma 
+    vsetvli      a4,zero,e64,m1,ta,ma
     vmv.v.i      v2,0x0
-LAB_000d48ca          XREF[1]:     000d48ec(j)  
+LAB_000d48ca          XREF[1]:     000d48ec(j)
     vsetvli      a4,a0,e32,mf2,tu,ma
     vle32.v      v3,(a3)
     vle32.v      v1,(a5)
@@ -176,7 +176,7 @@ LAB_000d48ca          XREF[1]:     000d48ec(j)
     vmv1r.v      v3,v2
     vfwadd.wv    v2,v3,v1
     c.bnez       a0,LAB_000d48ca
-    vsetvli      a5,zero,e64,m1,ta,ma 
+    vsetvli      a5,zero,e64,m1,ta,ma
     vmv.s.x      v1,zero
     c.ldsp       ra,0x8(sp)
     vfredusum.vs v2,v2,v1
@@ -186,7 +186,7 @@ LAB_000d48ca          XREF[1]:     000d48ec(j)
     fsw          fa5,0x0(a1)
     c.addi       sp,0x10
     ret
-LAB_000d490e          XREF[1]:     000d48be(j)  
+LAB_000d490e          XREF[1]:     000d48be(j)
     fmv.w.x      fa5,zero
     c.ldsp       ra,0x8(sp)
     c.ldsp       s0,0x0(sp=>local_10)

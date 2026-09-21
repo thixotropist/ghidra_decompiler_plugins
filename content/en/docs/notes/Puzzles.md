@@ -14,7 +14,7 @@ of a decompiler Block with two or more input edges.  Any change to existing Pcod
 In general, this site uses Phi and MULTIEQUAL interchangeably, often referring to these PcodeOps as 'nodes'.  Decompiler code mentioning 'heritage' likely refers to the process'
 of generating these PcodeOps.  Code mentioning 'descendents' likely refers to traversing the nodes of this MULTIEQUAL PcodeOp graph.
 
-See the [Raw_Pcode]({{< relref "../Raw_Pcode.md" >}}) page for Pcode examples, including `CPUI_MULTIEQUAL` PcodeOps.
+See the [Raw_Pcode]({{< relref "../Ghidra_references/Raw_Pcode.md" >}}) page for Pcode examples, including `CPUI_MULTIEQUAL` PcodeOps.
 
 ### Phi node equivalent terms
 

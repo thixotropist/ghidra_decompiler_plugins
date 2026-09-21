@@ -1,7 +1,7 @@
 ---
 title: Updating to new Ghidra releases
 description: A new Ghidra release - or major change to the development tip - means multiple updates to the plugin framework and individual plugins.  That process has many steps.
-weight: 100
+weight: 40
 ---
 
 A working decompiler plugin relies on synchronization between many moving parts:

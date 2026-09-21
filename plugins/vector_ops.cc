@@ -27,6 +27,7 @@ namespace riscv_vector{
 
 VectorOperand::~VectorOperand() {}
 
+///@brief map the operandType enumberation value to a printable string
 static std::vector<std::string> opTypeToString;
 
 void VectorOperand::static_init()
@@ -62,6 +63,7 @@ void VectorOperand::printRaw(std::stringstream& ss)
     ss << "\tpointer Register: " << pointer_register_name << std::endl;
 }
 
+///@brief Map the operationType enumeration value to a printable string
 static std::vector<std::string> operationTypeToString;
 
 void VectorOperation::static_init()
@@ -137,7 +139,8 @@ ScalarOperation::ScalarOperation(OperationType typeParam, ghidra::PcodeOp* opPar
     }
 }
 
-static std::set<ghidra::intb> seriesAnalyzed; // only report on a series on the first visit.
+///@brief only report on a series on the first visit, using the first code address as a key
+static std::set<ghidra::intb> seriesAnalyzed;
 VectorSeries::VectorSeries(ghidra::PcodeOp *firstOp, ghidra::Funcdata &data_param, const RiscvUserPcode* vsetInfo) :
     data(data_param)
 {
@@ -301,6 +304,7 @@ int VectorSeries::match()
     return ghidra::RETURN_TRANSFORM_PERFORMED;
 }
 
+///@brief map function type enumeration values to a printable string
 static std::vector<std::string> fTypeToString;
 void VectorLoop::static_init()
 {
@@ -920,6 +924,7 @@ void VectorLoop::collect_related_blocks()
     }
 }
 
+/// @brief Analyze loops only on the first visit, identified by their first code address
 static std::set<ghidra::intb> loopsAnalyzed;
 void VectorLoop::generateReport()
 {

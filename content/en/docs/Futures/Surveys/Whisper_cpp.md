@@ -6,7 +6,7 @@ weight: 20
 
 ## Source code analysis
 
-See [Spacemit and Llama]({{< relref "../notes/Spacemit_and_llama.md" >}}) page for a more
+See [Spacemit and Llama]({{< relref "../Spacemit_and_llama.md" >}}) page for a more
 detailed examination of how one RISC-V vendor implements Inference Engine code for use
 in Whisper.cpp and other AI applications.
 
@@ -180,8 +180,8 @@ The most common 50 are:
 
 **Unhandled loop instructions**
 
-Handled vector instructions each have a lambda expression providing for their basic semantics.
-Unhandled instructions have no such lambda defined, and can not be used in a transform match.
+Handled vector instructions each have a set of traits and optional context to capture their basic semantics.
+Unhandled instructions have no such traits defined, and can not be used in a transform match.
 
 The most common 50 are:
 

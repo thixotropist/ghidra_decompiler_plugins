@@ -104,7 +104,7 @@ class Inspector
   private:
   /**
    * @brief Audit the Funcdata BlockGraph to check for consistency errors
-   * @param data The Funcdata context for this function
+   * @param bl The FlowBlock to audit
    * @param ss The stringstream to receive the audit
    * @param level indentation level to use
    */

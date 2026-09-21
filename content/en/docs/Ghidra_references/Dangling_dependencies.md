@@ -1,7 +1,9 @@
 ---
 title: Dangling Dependencies
-weight: 20
-description: PCodeOp transforms can create dangling - or 'free' dependencies, which throw exceptions later.
+weight: 30
+description: |
+    PCodeOp transforms can create dangling - or 'free' dependencies, which throw exceptions later.
+    The exception is thrown after deleting a PcodeOp whose output Varnode is referenced in other PcodeOps.
 ---
 
 Functions like `vector_memcpy` use registers to hold temporaries like loop counters, source and destination pointers, and vector results.  Ghidra will likely propagate these via Phi node references.

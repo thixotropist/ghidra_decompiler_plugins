@@ -7,6 +7,8 @@ weight: 10
 
 {{% blocks/section color='white' %}}
 
->Note: pages here are very rough, and need to be edited into something more coherent.
+This project researches feasible Ghidra decompiler evolutions, with an emphasis on supporting processor features
+that do not fit easily within the current decompiler/SLEIGH architecture.  Project documentation factors into
+these sections:
 
 {{% /blocks/section %}}

@@ -20,7 +20,7 @@ That means any transforms created here should be tested and applied locally, not
 in the distributed Ghidra source archives.  This project captures those transforms as C++ plugins to be loaded
 into a Ghidra decompiler patched to support general purpose plugins.
 
-Our initial scope is in support of Ghidra analysis of RISC-V 64 bit binaries, compiled with a current gcc-15 compiler for processors matching
+Our initial scope is in support of Ghidra analysis of RISC-V 64 bit binaries, compiled with a current gcc-16+ compiler for processors matching
 the general purpose [RVA23U64](https://github.com/riscv/riscv-profiles/blob/main/src/rva23-profile.adoc#rva23u64-mandatory-extensions) profile.
 This includes vector (aka SIMD) instructions as well as instruction extensions useful in AI or inference engine applications.
 Ghidra's SLEIGH subsystem should include user pcodeops for those instructions, such as those provided by Ghidra [PR #5778](https://github.com/NationalSecurityAgency/ghidra/pull/5778).
@@ -61,22 +61,32 @@ this kind of transform?
 
 ## Installation
 
->Note: This project is tested against Ghidra 11.4.1 and 12.0-DEV.  Documentation may refer to any release with no known release dependencies.
+>Note: This project is tested against Ghidra 12.2-DEV.  Documentation may refer to any release with no known release dependencies.
 
 This project patches an existing Ghidra deployment, replacing the standard decompiler executable
 with one supporting a simple plugin manager.  It also provides a framework for developing and
 testing decompiler plugins capable of adding new rules, actions, and transformations.
 
-1. Install Ghidra from any source.  For this project, we install the `isa_ext` branch from `git@github.com:thixotropist/ghidra.git` to `/opt/ghidra_12.0_DEV`.
+1. Install Ghidra from any source.  For this project, we install the `isa_ext` branch from `git@github.com:thixotropist/ghidra.git` to `/opt/ghidra_12.2_DEV`.
    This will provide every Ghidra component *except* for the decompiler.
 2. Allow changes to the decompiler directory.
    ```console
-   $ chown -R username:groupname /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
+   $ chown -R username:groupname /opt/ghidra_12.2_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
    ```
 3. Install [Bazel](https://bazel.build/) as a workspace/build manager on your system.
 4. Download this project from the github repository.
-5. Select the Ghidra tarball providing decompiler source, then edit the path into `MODULE.bazel`.
-   We will use `Ghidra_11.4.1_build.tar.gz` from Github.
+5. Select the Ghidra commit providing decompiler source, then edit the git repository data into `MODULE.bazel`.
+    ```python
+    git_repository(
+    name = "ghidra",
+    remote = "git@github.com:thixotropist/ghidra.git",
+    # This commit should be within the "isa_ext" branch
+    commit = "cc1a1a11405da459cb8554ec1d73451da135a463",
+    build_file = "//:BUILD.ghidra",
+    patches = ["ghidra.pat"],
+    patch_strip = 1,
+    )
+    ```
 6. Build the patched decompiler and its associated datatest and unittest executables
     ```console
     $ bazel build -c dbg @ghidra//:decompile @ghidra//:decompile_datatest @ghidra//:decompile_unittest
@@ -84,15 +94,11 @@ testing decompiler plugins capable of adding new rules, actions, and transformat
 7. Replace the original decompiler with the patched decompiler
     ```console
     $ cp -f bazel-out/k8-dbg/bin/external/+_repo_rules+ghidra/{decompile,decompile_datatest,decompile_unittest} \
-    /opt/ghidra_12.0_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
+    /opt/ghidra_12.2_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
     ```
 
 Notes:
 
-* This project interworks two Ghidra versions, so there is a possibility of version skew.  The Ghidra GUI and processor/SLEIGH
-  code is currently built from a fork of the Ghidra development code, e.g. `ghidra_12.0_DEV`.  The decompiler is built from
-  a patched full release, e.g. `ghidra_11.4.1`.  The API between the two changes slowly, and is unlikely to raise serious issues
-  during experiments.
 * Bazel will fetch and locally cache the Ghidra source archive on the first build.
     * If you later want to alter the decompiler patch file `ghidra.pat`, you should execute `bazel clean --expunge` to update the cached and patched
       archive.

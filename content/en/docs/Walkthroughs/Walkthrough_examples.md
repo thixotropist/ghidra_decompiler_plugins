@@ -21,7 +21,7 @@ The ghidra listing view shows us:
 *                          FUNCTION                          *
 **************************************************************
 undefined memcpy_i2()
-    vsetivli                       zero,0x2,e8,mf8,ta,ma 
+    vsetivli                       zero,0x2,e8,mf8,ta,ma
     vle8.v                         v1,(a1)
     vse8.v                         v1,(a0)
     ret
@@ -55,8 +55,8 @@ void  __stdcall memcpy_v1(void * dest, void * src, longlong size)
   a0:8           dest
   a1:8           src
   a2:8           size
-memcpy_v1                                       XREF[1]:     0010005a(j)  
-    vsetvli                        a3,size,e8,m1,ta,ma  
+memcpy_v1                                       XREF[1]:     0010005a(j)
+    vsetvli                        a3,size,e8,m1,ta,ma
     vle8.v                         v1,(src)
     c.sub                          size,a3
     c.add                          dest,a3
@@ -145,8 +145,8 @@ of which the second is a memcpy loop.  The control flow is relatively simple.
 The listing for the block we want to transform is:
 
 ```as
-LAB_00020a3e                                    XREF[1]:        00020a50(j)  
-    vsetvli                        a3,param_2,e8,m1,ta,ma  
+LAB_00020a3e                                    XREF[1]:        00020a50(j)
+    vsetvli                        a3,param_2,e8,m1,ta,ma
     vle8.v                         v1,(param_1)
     c.sub                          param_2,a3
     c.add                          param_1,a3
@@ -221,7 +221,7 @@ Restructure the `vector_loop_match` code to provide a clear separation between p
 to deleted pcodeops.Rerun the integration test:
 
 ```console
-ghidra_decompiler_plugins$ ./integrationTest.py 
+ghidra_decompiler_plugins$ ./integrationTest.py
 INFO:root:Cleaning the executable directory /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/
 INFO:root:Running rm -f /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile /opt/ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile_datatest
 INFO:root:Running bazel build -c opt @ghidra//:decompile
@@ -306,7 +306,7 @@ Unable to proceed with function: main
 Execution error: No function selected
 [decomp]> print raw
 Execution error: No function selected
-[decomp]> 
+[decomp]>
 ```
 
 Examine the logs to decide on next steps:
@@ -357,8 +357,8 @@ Therefore we need a better way to handle descendants appearing in CALL pcodes.
 The offending vector stanza looks like this:
 
 ```text
-                     LAB_00021b64                                    XREF[1]:        00021b76(j)  
-00021b64 d7 77 05 0c     vsetvli                        a5,a0,e8,m1,ta,ma  
+                     LAB_00021b64                                    XREF[1]:        00021b76(j)
+00021b64 d7 77 05 0c     vsetvli                        a5,a0,e8,m1,ta,ma
 00021b68 87 80 08 02     vle8.v                         v1,(a7)
 00021b6c 1d 8d           c.sub                          a0,a5
 00021b6e be 98           c.add                          a7,a5
@@ -544,11 +544,11 @@ Pcode after trimming PcodeOp: s2(0x000b9d64:505) = s2(0x000b9c94:496) + <null>; 
 The disassembly includes:
 
 ```as
-LAB_000b9d4c                                    XREF[1]:        000ba45c(j)  
+LAB_000b9d4c                                    XREF[1]:        000ba45c(j)
     c.mv                           a6,a5
     c.mv                           param_1,s2
-LAB_000b9d50                                    XREF[1]:        000b9d62(j)  
-    vsetvli                        a4,param_1,e8,m1,ta,ma  
+LAB_000b9d50                                    XREF[1]:        000b9d62(j)
+    vsetvli                        a4,param_1,e8,m1,ta,ma
     vle8.v                         v1,(s1)
     c.sub                          param_1,a4
     c.add                          s1,a4
@@ -645,16 +645,16 @@ instruction -  after we find the `c.sub` instruction.
 ```as
 LAB_00030750:
     li         a4,-0x80
-    vsetvli    a5,zero,e8,mf4,ta,ma 
+    vsetvli    a5,zero,e8,mf4,ta,ma
     vmv.v.x    v3,a4
 
 LAB_0003075c:
-    vsetvli    a5,a2,e8,mf4,ta,ma 
+    vsetvli    a5,a2,e8,mf4,ta,ma
     vle8.v     v2,(a1)
     c.sub      a2,a5
     c.add      a1,a5
     vadd.vv    v2,v2,v3
-    vsetvli    zero,zero,e32,m1,ta,ma 
+    vsetvli    zero,zero,e32,m1,ta,ma
     vsext.vf4  v1,v2
     vsll.vi    v1,v1,0x18
     vse32.v    v1,(a0)
@@ -767,7 +767,7 @@ a `vector_memcpy`.
 
 ```as
 LAB_000ba13a:
-    vsetvli  a4,a5,e8,m1,ta,ma  
+    vsetvli  a4,a5,e8,m1,ta,ma
     vle8.v   v1,(param_4)
     c.sub    a5,a4
     c.add    param_4,a4
@@ -849,7 +849,7 @@ examples include several of these. A good example is
 # copy fixed 15 bytes
 .extern memcpy_i15
 memcpy_i15:
-    vsetivli zero,0xf,e8,m1,ta,ma  
+    vsetivli zero,0xf,e8,m1,ta,ma
     vle8.v   v1,(a1)
     nop
     nop
@@ -975,21 +975,21 @@ transform is executed.
         elementSize = 1
         multiplier = 1
         code size = 0x12
-[2025-06-26 20:16:05.505] [riscv_vector] [info] 
+[2025-06-26 20:16:05.505] [riscv_vector] [info]
         Number of Phi nodes affected by loop = 3   // Phi nodes track writes to registers and memory
         Number of other UserPcodes = 0
         Number of arithmetic ops = 3               // We expect two pointers and one counter to be updated within the loop
-[2025-06-26 20:16:05.507] [riscv_vector] [info] 
+[2025-06-26 20:16:05.507] [riscv_vector] [info]
         Number of elements is constant = false
         Number of elements is variable = true
         Found simple comparison = true             // Found a simple loop condition test
         Found unexpected opcode = false            // No unexpected PcodeOps found
-[2025-06-26 20:16:05.507] [riscv_vector] [info] 
+[2025-06-26 20:16:05.507] [riscv_vector] [info]
         Found other user  opcode = false           // No other vector instructions found
         Found simple flow structure = true         // No other calls, returns, or branches
         Found simple load/store pattern = true     // One load, one store
         Found vector registers match = true        // Load and Store share the same vector register
-[2025-06-26 20:16:05.508] [riscv_vector] [info] 
+[2025-06-26 20:16:05.508] [riscv_vector] [info]
         Number of elements varnode identified = true          // Varnode input holding total number of elements found
         Number of elements per loop varnode identified = true // Varnode register holding number of elements per iteration
         Vector load address varnode identified = true         // Varnode input holding source address

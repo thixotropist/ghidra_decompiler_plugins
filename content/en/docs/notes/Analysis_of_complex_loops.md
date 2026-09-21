@@ -35,7 +35,7 @@ for the RISC-V vector instruction set.  This function is likely one of the 'hott
 >to might degrade key visual processing subsystems.
 >
 >Another big use-case for Ghidra analysis of such functions is to locate subtle bugs leading to likely data corruption.
->See [AI survey of gcc RISC-V intrinsics bugs]({{< relref "Llm_surveys/Gcc16_riscv_bugs.md" >}}) for an AI-generated
+>See [AI survey of gcc RISC-V intrinsics bugs]({{< relref "../Llm_surveys/Gcc16_riscv_bugs.md" >}}) for an AI-generated
 >summary of a likely buggy compilation.
 
 ### Generic and RVV source code
@@ -429,7 +429,7 @@ void ggml_vec_dot_q4_K_q8_K_vl256.isra.0(long param_1,float *param_2,long param_
 
 >Note: Ghidra shows an odd compiler behavior here.  The first iteration of the loop sees vector CSR registers set with `vsetivli_e8m1tama(0xc)`,
 >      while subsequent iterations of the loop see `vsetivli_e16m2tama(0xc)`.  This will affect the vle8 instruction at the top of the loop.
->      See [AI survey of gcc RISC-V intrinsics bugs]({{< relref "Llm_surveys/Gcc16_riscv_bugs.md" >}}) for an AI-generated
+>      See [AI survey of gcc RISC-V intrinsics bugs]({{< relref "../Llm_surveys/Gcc16_riscv_bugs.md" >}}) for an AI-generated
 >      summary of a likely buggy compilation or subtle coding errors.
 
 ### Current plugin analytics output

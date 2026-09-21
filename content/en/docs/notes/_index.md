@@ -1,7 +1,8 @@
 ---
 title: Notes
-linkTitle: Notes
-description: Working notes to be turned into documentation or discarded
-menu: {main: {weight:20}}
+linkTitle: Notes, Logs, and potential Appendices
+description: |
+    An unstructured set of notes and logs which *might* eventually be incorporated into the primary documentation.  Do not expect
+    significant consistency between these notes.
 weight: 990
 ---

@@ -1,7 +1,12 @@
 ---
 title: Spacemit's code for accelerating AI RISC-V applications
-description: Spacemit has contributed extensive RISC-V library accelerators for the AI Llama library.
-weight: 180
+description: |
+  Spacemit has contributed extensive RISC-V library accelerators for the AI Llama library.
+  Their contributions help show how they expect RISC-V code can be used in Inference Engine
+  designs and possibly in autonomous vehicle firmware.  These contributions also show some
+  of the difficulties (bugs) lurking when using RISC-V C intrinsic functions in complex and
+  optimized loops.
+weight: 20
 ---
 
 The `whisper.cpp` voice to text app uses the GGML and Llama libraries for most of the

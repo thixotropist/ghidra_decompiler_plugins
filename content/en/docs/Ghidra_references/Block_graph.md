@@ -1,7 +1,9 @@
 ---
 title: BlockGraph transforms
+description: |
+  Changing the default C-like control flow requires BlockGraph transforms.  Replacing a simple loop with
+  a builtin function call involves deleting a Block and adjusting containing blocks and edge references.
 weight: 40
-description: Changing the default C-like control flow requires BlockGraph transforms
 ---
 
 >Summary: For this example we want to understand how to edit BlockGraph objects to remove useless DoWhile blocks.

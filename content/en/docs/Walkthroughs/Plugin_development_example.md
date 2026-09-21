@@ -158,7 +158,7 @@ constant and variable size values.
 # copy fixed 2 bytes
 .extern memcpy_i2
 memcpy_i2:
-    vsetivli zero,0x2,e8,mf8,ta,ma 
+    vsetivli zero,0x2,e8,mf8,ta,ma
     vle8.v   v1,(a1)
     vse8.v   v1,(a0)
     ret
@@ -166,7 +166,7 @@ memcpy_i2:
 # copy fixed 4 bytes
 .extern memcpy_i4
 memcpy_i4:
-    vsetivli  zero,0x4,e8,mf4,ta,ma 
+    vsetivli  zero,0x4,e8,mf4,ta,ma
     nop
     nop
     vle8.v    v1,(a1)
@@ -177,7 +177,7 @@ memcpy_i4:
 # copy fixed 8 bytes
 .extern memcpy_i8
 memcpy_i8:
-    vsetivli  zero,0x8,e8,mf2,ta,ma 
+    vsetivli  zero,0x8,e8,mf2,ta,ma
     nop
     nop
     vle8.v    v1,(a1)
@@ -188,7 +188,7 @@ memcpy_i8:
 # copy fixed 15 bytes
 .extern memcpy_i15
 memcpy_i15:
-    vsetivli zero,0xf,e8,m1,ta,ma  
+    vsetivli zero,0xf,e8,m1,ta,ma
     vle8.v   v1,(a1)
     nop
     nop
@@ -231,7 +231,7 @@ $ SLEIGHHOME=/opt/ghidra_11.4_DEV/ \
 ==75773== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
 ==75773== Using Valgrind-3.24.0 and LibVEX; rerun with -h for copyright info
 ==75773== Command: /home/thixotropist/projects/github/ghidra_transforms/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/decomp_dbg
-==75773== 
+==75773==
 [decomp]> restore test/memcpy_exemplars_save.xml
 test/memcpy_exemplars_save.xml successfully loaded: RISC-V 64 little general purpose compressed
 [decomp]> map function 0x00000 memcpy_i2
@@ -348,7 +348,7 @@ void memcpy_v1(void *to,void *from,ulong size)
 {
   long lVar1;
   undefined auVar2 [256];
-  
+
   do {
     lVar1 = vsetvli_e8m1tama(size);
     auVar2 = vle8_v(from);
@@ -380,14 +380,14 @@ Basic Block 1 0x00000048-0x0000005a
 0x0000005a:9:	goto r0x00000048:1(free) if (u0x00018500:1(0x0000005a:8) != 0)
 Basic Block 2 0x0000005c-0x0000005c
 0x0000005c:a:	return(#0x0)
-[decomp]> 
-==75773== 
+[decomp]>
+==75773==
 ==75773== HEAP SUMMARY:
 ==75773==     in use at exit: 0 bytes in 0 blocks
 ==75773==   total heap usage: 227,449 allocs, 227,449 frees, 21,201,502 bytes allocated
-==75773== 
+==75773==
 ==75773== All heap blocks were freed -- no leaks are possible
-==75773== 
+==75773==
 ==75773== For lists of detected and suppressed errors, rerun with: -s
 ==75773== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 ```
@@ -476,11 +476,11 @@ That breaks down into several survey steps:
       the `constsequence` rules are added to the cleanup group.
     * Establish a basic logging output stream for use during debugging.  We could use `std::cout` for
       the console version of the decompiler, but that won't work for the Ghidra client version of the
-      decompiler as std::cout is needed for the socket to the Ghidra Java GUI.  We'll add [spdlog](https://github.com/gabime/spdlog)spdlog
+      decompiler as std::cout is needed for the socket to the Ghidra Java GUI.  We'll add [spdlog](https://github.com/gabime/spdlog)
       support to the decompiler, where it can be used by both the PluginManager and individual plugins.
 
 >Note: `vector_memcpy` is different from a `builtin_memcpy` or `memcpy` in that it returns void instead of the address of
-       the destination parameter 
+       the destination parameter
 
 ## Plugin specifics
 
