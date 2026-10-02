@@ -17,3 +17,8 @@ go.sum
 .vscode
 # ignore Doxygen generated output
 plugins/html
+# ngm modules
+node_modules
+package-lock.json
+package.json
+packages

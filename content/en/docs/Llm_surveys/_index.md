@@ -54,3 +54,11 @@ As many as 100,000, due to all of the type and context combinatorics involved.
 
 The current GCC compiler can miscompile code that uses many RISC-V instrinsic functions within a large and complex loop.
 This [survey]({{< relref "Gcc16_riscv_bugs.md" >}}) explores how far the community may be towards fixing that problem.
+
+### Mock Ghidra PR Review and decision tree
+
+This project explores the boundaries of future Ghidra capabilities.  That's not a topic the core Ghidra developer team likes to publicly comment on, so let's
+synthesize a plausible decision tree they might follow in responding to
+this project and decompiler PRs already active on the Github Ghidra site.
+This [survey]({{< relref "Mock_Ghidra_PR_Review.md" >}}) starts that process.  The synthetic decision tree the core team *might* follow is
+{{< figure src=/docs/images/decision_tree.svg align="center" >}}
