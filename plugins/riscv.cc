@@ -138,8 +138,9 @@ extern "C" int plugin_init(void *context)
  */
 extern "C" int plugin_getactions(std::vector<Action*>& actions)
 {
-    pLogger->trace("Adding new Actions to pluginrules");
-    actions.push_back(new riscv_vector::ActionPluginPrepare("pluginrules"));
+    //pLogger->trace("Adding new Actions to pluginrules");
+    pLogger->info("No new Actions added to pluginrules");
+    //actions.push_back(new riscv_vector::ActionPluginPrepare("pluginrules"));
     // load definitions specific to a given SLEIGH definition file
     ghidra::riscv_sleigh_init(arch);
     if (trace)

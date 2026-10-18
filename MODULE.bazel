@@ -1,7 +1,7 @@
 
 module(
     name = "decompiler_plugins",
-    version = "0.5.3",
+    version = "0.5.4",
 )
 # Declare an explicit dependency on rules_cc
 bazel_dep(name = "rules_cc", version = "0.2.22")
@@ -20,7 +20,7 @@ git_repository(
     name = "ghidra",
     remote = "git@github.com:thixotropist/ghidra.git",
     # This commit should be within the "isa_ext" branch
-    commit = "cc1a1a11405da459cb8554ec1d73451da135a463",
+    commit = "114291194371ba9cea05716d0df206788ca80e4e",
     build_file = "//:BUILD.ghidra",
     patches = ["ghidra.pat"],
     patch_strip = 1,

@@ -15,6 +15,9 @@ namespace riscv_vector
  */
 /**
  * @brief Provide an Action to adjust CSR values and heritage
+ * @details This Action is currently unusable due to recent changes to the way Indirect
+ * PcodOps are handled.  They are now in a dedicated container which does not allow easy
+ * selective deletion of Indirects citing a CSR variable.
  */
 class ActionPluginPrepare : public ghidra::Action {
   public:

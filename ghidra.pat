@@ -1,8 +1,8 @@
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-index 6ddf1d140a..8d669cfd51 100644
+index 10f5da088a..a3e74a86b2 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.cc
-@@ -652,6 +652,13 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
+@@ -642,6 +642,13 @@ void Architecture::restoreFromSpec(DocumentStorage &store)
    parseProcessorConfig(store);
    newtrans->setDefaultFloatFormats(); // If no explicit formats registered, put in defaults
    parseCompilerConfig(store);
@@ -17,7 +17,7 @@ index 6ddf1d140a..8d669cfd51 100644
    buildAction(store);
  }
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
-index 3c8d0ca61e..1f913a13ce 100644
+index a27f842620..ab83e3e85d 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/architecture.hh
 @@ -33,6 +33,7 @@
@@ -28,7 +28,7 @@ index 3c8d0ca61e..1f913a13ce 100644
  
  namespace ghidra {
  
-@@ -210,6 +211,7 @@ public:
+@@ -209,6 +210,7 @@ public:
    UserOpManage userops;		///< Specifically registered user-defined p-code ops
    vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
    vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
@@ -90,10 +90,10 @@ index 4cae06ac47..babec5f35d 100644
    virtual block_type getType(void) const { return t_ifgoto; }
    virtual void scopeBreak(int4 curexit,int4 curloopexit);
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-index 15648f9663..e101da073b 100644
+index 4642049149..82e13f26fc 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/coreaction.cc
-@@ -5797,7 +5797,7 @@ void ActionDatabase::buildDefaultGroups(void)
+@@ -5787,7 +5787,7 @@ void ActionDatabase::buildDefaultGroups(void)
  			    "deadcode", "typerecovery", "stackptrflow",
  			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
  			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
@@ -102,7 +102,7 @@ index 15648f9663..e101da073b 100644
  			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
  			    "unreachable", "subvar", "floatprecision",
  			    "conditionalexe", "" };
-@@ -5878,6 +5878,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -5868,6 +5868,11 @@ void ActionDatabase::universalAction(Architecture *conf)
        actmainloop->addAction( new ActionNonzeroMask("analysis") );
        actmainloop->addAction( new ActionInferTypes("typerecovery") );
        actmainloop->addAction( new ActionRestructureVarnode("localrecovery") );
@@ -114,7 +114,7 @@ index 15648f9663..e101da073b 100644
        actstackstall = new ActionGroup(Action::rule_repeatapply,"stackstall");
        {
  	actprop = new ActionPool(Action::rule_repeatapply,"oppool1");
-@@ -6086,6 +6091,11 @@ void ActionDatabase::universalAction(Architecture *conf)
+@@ -6077,6 +6082,11 @@ void ActionDatabase::universalAction(Architecture *conf)
      actcleanup->addRule( new RuleBitFieldIn("bitfields"));
      actcleanup->addRule( new RulePullAbsorb("bitfields"));
      actcleanup->addRule( new RuleInsertAbsorb("bitfields"));
@@ -380,10 +380,10 @@ index 0000000000..cc00677529
 +}
 +#endif /* __PLUGIN_MANAGER_HH__ */
 diff --git a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
-index c9074bfa6c..67523dced8 100644
+index 43bcd87b74..6c51ffe871 100644
 --- a/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
 +++ b/Ghidra/Features/Decompiler/src/decompile/cpp/userop.cc
-@@ -477,7 +477,11 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
+@@ -501,7 +501,11 @@ UserPcodeOp *UserOpManage::registerBuiltin(uint4 i)
        break;
      }
      default:

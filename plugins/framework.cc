@@ -398,7 +398,7 @@ void FunctionEditor::simplifyBlocks(const std::vector<PcodeOp*>& opsToDelete, Bl
 bool FunctionEditor::fixup(const std::stringstream& fixups)
 {
     bool fixupsPerformed = false;
-    std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};
+    std::ranges::subrange viewOps{data.beginOpMain(), data.endOpMain()};
     for (auto [seqNum,op] : viewOps)
     {
         ghidra::OpCode opcode = op->code();

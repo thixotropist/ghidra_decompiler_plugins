@@ -15,7 +15,7 @@ import re
 logging.basicConfig(level=logging.INFO)
 logger = logging
 
-GHIDRA_INSTALL_DIR = "/opt/ghidra_12.2_DEV/"
+GHIDRA_INSTALL_DIR = "/opt/ghidra_12.3_DEV/"
 DECOMPILER_DIR = GHIDRA_INSTALL_DIR + "Ghidra/Features/Decompiler/os/linux_x86_64/"
 DECOMPILER_PATH = DECOMPILER_DIR + "decompile"
 DATATEST_PATH = DECOMPILER_DIR + "decompile_datatest"
@@ -34,17 +34,20 @@ DISABLE_VALGRIND = True
 VALGRIND_TEST_SET = ("memcpy_exemplars", "whisper_sample_4")
 REGULAR_TEST_SET = ("strlen_exemplars",  "strcmp_exemplars", "whisperInit",
                     "whisper_sample_1a", "whisper_sample_1b", "whisper_sample_2",
-                    "whisper_sample_3", "whisper_sample_5", "whisper_sample_6", "whisper_sample_7",
-                    "whisper_sample_8", "whisper_sample_10", "whisper_sample_11",
-                    "whisper_sample_12", "whisper_sample_13a", "whisper_sample_13b",
+                    "whisper_sample_3", "whisper_sample_5", "whisper_sample_6",
+                    "whisper_sample_7", "whisper_sample_8", "whisper_sample_10",
+                    "whisper_sample_11", "whisper_sample_12", "whisper_sample_13a", "whisper_sample_13b",
                     "whisper_sample_14", "whisper_sample_15", "whisper_sample_16",
-                    "whisper_sample_17", "whisper_sample_18", "whisper_sample_19",
+                    "whisper_sample_17", "whisper_sample_18","whisper_sample_19",
                     "whisper_main",
                     "dpdk_sample_1", "dpdk_sample_2", "dpdk_sample_3",
-                    "dpdk_sample_4", "dpdk_sample_5", "dpdk_sample_6", "dpdk_sample_7")
+                    "dpdk_sample_4", "dpdk_sample_5", "dpdk_sample_6", "dpdk_sample_7",
+                    "dpdk_sample_8",
+                    )
 
 # if some tests fail, defer them
 DEFERRED_TESTS = ("dpdk_sample_5", "dpdk_sample_6", "dpdk_sample_8")
+STALLED_TESTS = ()
 # show the expected number of matches in each test
 expected = {
     'memcpy_exemplars':  {'vector_memcpy':5},

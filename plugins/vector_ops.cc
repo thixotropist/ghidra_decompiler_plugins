@@ -527,8 +527,8 @@ void VectorLoop::examine_control_flow(ghidra::PcodeOp* vsetOpParam)
 void VectorLoop::collect_phi_nodes()
 {
     ghidra::Address loopStart = vsetOp->getParent()->getStart();
-    ghidra::PcodeOpTree::const_iterator iter = data.beginOp(loopStart);
-    ghidra::PcodeOpTree::const_iterator enditer = data.endOp(loopStart);
+    ghidra::PcodeOpTree::const_iterator iter = data.beginOpMain(loopStart);
+    ghidra::PcodeOpTree::const_iterator enditer = data.endOpMain(loopStart);
     // This loop collects PcodeOps that begin a loop holding a vsetop
     ghidra::pLogger->trace("  Iterating over vset phi pcodes");
     std::stringstream ss;

@@ -317,7 +317,7 @@ void Inspector::auditBlockGraph(const FlowBlock* bl, std::ofstream& ss, int leve
 void Inspector::auditMultiequals(const Funcdata& data, std::stringstream& ss)
 {
   ss << "auditMultiequals:" << std::endl;
-  std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};
+  std::ranges::subrange viewOps{data.beginOpMain(), data.endOpMain()};
   for (auto [seqNum,op] : viewOps)
   {
     OpCode opcode = op->code();

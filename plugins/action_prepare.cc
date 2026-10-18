@@ -35,7 +35,7 @@ ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
     }
 
     std::vector<ghidra::PcodeOp*> opsToDelete;
-    std::ranges::subrange viewOps{data.beginOpAll(), data.endOpAll()};
+    std::ranges::subrange viewOps{data.beginOpMain(), data.endOpMain()};
     for (auto [seqNum,op] : viewOps)
     {
         ghidra::OpCode opcode = op->code();
@@ -115,7 +115,7 @@ ghidra::int4 ActionPluginPrepare::apply(ghidra::Funcdata &data)
         data.opUnlink(op);
     }
     // Now clean up any 'free' varnode inputs and replace them with indirect equivalents.
-    std::ranges::subrange allOps{data.beginOpAll(), data.endOpAll()};
+    std::ranges::subrange allOps{data.beginOpMain(), data.endOpMain()};
     for (auto [seqNum,op] : allOps)
     {
         if (op->isDead()) continue;
