@@ -1,8 +1,9 @@
 # The Ghidra decompiler builds three native executables we want to alter.
-#  * decompile - the decompiler subprocess accessed by Ghidra's Java front end.  This gets installed at
+#  * decompile - the decompiler subprocess accessed by Ghidra"s Java front end.  This gets installed at
 #    `.../ghidra_11.4_DEV/Ghidra/Features/Decompiler/os/linux_x86_64/decompile`.
 #  * decompile_unittest - a decompiler unit test framework
 #  * decompile_datatest - a decompiler console used in data tests and plugin development
+# Derived from Ghidra/Features/Decompiler/src/decompile/cpp/Makefile and Ghidra/Features/Decompiler/buildNatives.gradle
 
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -10,174 +11,119 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 # decompiler source file location in the imported Ghidra release tar file
 SRCDIR = "Ghidra/Features/Decompiler/src/decompile/cpp/"
 
-# The decompiler usually builds with c++-11, but we want something with a bit more utility
+# The decompiler usually builds with c++-11, but we want something with a bit more utility.
+# This update allows better log formatting and standard C++ vector handling.
 CPP_STANDARD = "c++20"
 
-# Common source files, each with a .cc extension
-DECOMP_CPP_FILES = [
-    "action",
-    "address",
-    "architecture",
-    "bitfield",
-    "block",
-    "blockaction",
-    "capability",
-    "cast",
-    "comment",
-    "condexe",
-    "constseq",
-    "coreaction",
-    "cover",
-    "cpool",
-    "crc32",
-    "database",
-    "double",
-    "dynamic",
-    "emulate",
-    "expression",
-    "emulateutil",
-    "float",
-    "flow",
-    "fspec",
-    "funcdata",
-    "funcdata_block",
-    "funcdata_op",
-    "funcdata_varnode",
-    "grammar",
-    "globalcontext",
-    "graph",
-    "heritage",
-    "jumptable",
-    "loadimage",
-    "marshal",
-    "memstate",
-    "merge",
-    "metatype",
-    "modelrules",
-    "multiprecision",
-    "op",
-    "opbehavior",
-    "opcodes",
-    "options",
-    "override",
-    "paramid",
-    "pcodeinject",
-    "pcoderaw",
+# Test with a command like:
+#     bazelisk build -c dbg @ghidra//:decompile @ghidra//:decompile_datatest plugins/riscv_vector @ghidra//:decompile_unittest
+
+# Most decompiler library files have .hh and .cc components:
+DECOMP_LIB_ROOTS = [
+    "action",  # DECCORE
+    "address",  # CORE
+    "architecture",  # DECCORE
+    "bitfield",  # DECCORE
+    "block",  # DECCORE
+    "blockaction",  # DECCORE
+    "capability",  # DECCORE
+    "cast",  # DECCORE
+    "comment",  # DECCORE
+    "condexe",  # DECCORE
+    "constseq",  # DECCORE
+    "coreaction",  # DECCORE
+    "cover",  # DECCORE
+    "cpool",  # DECCORE
+    "crc32",  # DECCORE
+    "database",  # DECCORE
+    "double",  # DECCORE
+    "dynamic",  # DECCORE
+    "emulate",  # DECCORE
+    "emulateutil",  # DECCORE
+    "expression",  # DECCORE
+    "float",  # CORE
+    "flow",  # DECCORE
+    "fspec",  # DECCORE
+    "funcdata",  # DECCORE
+    "globalcontext",  # CORE
+    "graph",  # DECCORE
+    "heritage",  # DECCORE
+    "jumptable",  # DECCORE
+    "loadimage",  # DECCORE
+    "marshal",  # CORE
+    "memstate",  # DECCORE
+    "merge",  # DECCORE
+    "metatype",  # CORE
+    "modelrules",  # DECCORE
+    "multiprecision",  # DECCORE
+    "op",  # DECCORE
+    "opbehavior",  # DECCORE
+    "opcodes",  # CORE
+    "options",  # DECCORE
+    "override",  # DECCORE
+    "paramid",  # DECCORE
+    "pcodeinject",  # DECCORE
+    "pcoderaw",  # CORE
     "plugin_manager",
-    "prefersplit",
-    "prettyprint",
-    "printc",
-    "printjava",
-    "printlanguage",
-    "rangeutil",
-    "ruleaction",
-    "signature",
-    "space",
-    "stringmanage",
-    "subflow",
-    "transform",
-    "translate",
-    "type",
-    "typeop",
-    "unionresolve",
-    "userop",
-    "variable",
-    "varmap",
-    "varnode",
-    "xml",
+    "prefersplit",  # DECCORE
+    "prettyprint",  # DECCORE
+    "printc",  # DECCORE
+    "printjava",  # DECCORE
+    "printlanguage",  # DECCORE
+    "rangeutil",  # DECCORE
+    "ruleaction",  # DECCORE
+    "signature",  # DECCORE
+    "space",  # CORE
+    "stringmanage",  # DECCORE
+    "subflow",  # DECCORE
+    "transform",  # DECCORE
+    "translate",  # CORE
+    "type",  # DECCORE
+    "typeop",  # DECCORE
+    "unionresolve",  # DECCORE
+    "userop",  # DECCORE
+    "variable",  # DECCORE
+    "varmap",  # DECCORE
+    "varnode",  # DECCORE
+    "xml",  # CORE
 ]
 
-# Common source header files, each with a .hh extension
-DECOMP_HDRS = [
-    "action",
-    "address",
-    "architecture",
-    "bitfield",
-    "block",
-    "blockaction",
-    "capability",
-    "cast",
-    "comment",
+# Some decomp library files only exist in the .hh form
+DECOMP_LIB_HH_ONLY = [
     "compression",
-    "condexe",
     "context",
-    "constseq",
-    "coreaction",
-    "cover",
-    "cpool",
-    "crc32",
-    "database",
-    "double",
-    "dynamic",
-    "emulate",
-    "emulateutil",
-    "expression",
     "error",
     "filemanage",
-    "float",
-    "flow",
-    "fspec",
-    "funcdata",
-    "globalcontext",
     "grammar",
-    "graph",
-    "heritage",
-    "jumptable",
-    "loadimage",
-    "marshal",
-    "memstate",
-    "metatype",
-    "merge",
-    "modelrules",
-    "multiprecision",
-    "op",
-    "opbehavior",
-    "opcodes",
-    "options",
-    "override",
-    "paramid",
     "partmap",
-    "plugin_manager",
-    "pcodeinject",
-    "pcoderaw",
-    "prefersplit",
-    "prettyprint",
-    "printc",
-    "printjava",
-    "printlanguage",
     "rangemap",
-    "rangeutil",
-    "ruleaction",
     "semantics",
-    "signature",
     "slaformat",
     "sleigh",
     "sleigh_arch",
     "sleighbase",
+    "slghpatexpress",
     "slghpattern",
     "slghsymbol",
-    "slghpatexpress",
-    "space",
-    "stringmanage",
-    "subflow",
-    "transform",
-    "translate",
-    "type",
-    "typeop",
-    "unionresolve",
-    "userop",
-    "variable",
-    "varnode",
-    "xml",
-    "varmap",
 ]
+
+# Some decomp library files only exist in the .cc form
+DECOMP_LIB_CC_ONLY = [
+    "funcdata_block",
+    "funcdata_op",
+    "funcdata_varnode",
+]
+
+# generate lists of all decomp lib CC and HHfiles
+DECOMP_CC_FILES = DECOMP_LIB_ROOTS + DECOMP_LIB_CC_ONLY
+DECOMP_HH_FILES = DECOMP_LIB_ROOTS + DECOMP_LIB_HH_ONLY
 
 # Build rules for common source files
 # Note: only those headers declared under `hdrs` will be visible to plugin builds.
 cc_library(
     name = "decomp_lib",
-    srcs = [SRCDIR + f + ".cc" for f in DECOMP_CPP_FILES],
-    hdrs = [SRCDIR + f + ".hh" for f in DECOMP_HDRS] + [
+    srcs = [SRCDIR + f + ".cc" for f in DECOMP_CC_FILES],
+    hdrs = [SRCDIR + f + ".hh" for f in DECOMP_HH_FILES] + [
         SRCDIR + "types.h",
     ],
     copts = [
@@ -191,35 +137,36 @@ cc_library(
 )
 
 # The decompiler process invoked by ghidra and fed via a socket,
-# usually installed in a directory like /opt/ghidra_12.1_DEV/Ghidra/Features/Decompiler/os/linux_x86_64
+# usually installed in a directory like /opt/ghidra_12.3_DEV/Ghidra/Features/Decompiler/os/linux_x86_64
 cc_binary(
     name = "decompile",
     srcs = [
         SRCDIR + f
         for f in [
-            "comment_ghidra.hh",
-            "comment_ghidra.cc",
-            "cpool_ghidra.hh",
-            "cpool_ghidra.cc",
-            "database_ghidra.hh",
-            "database_ghidra.cc",
-            "ghidra_arch.hh",
-            "ghidra_arch.cc",
-            "ghidra_context.hh",
-            "ghidra_context.cc",
-            "ghidra_process.hh",
-            "ghidra_process.cc",
-            "ghidra_translate.hh",
-            "ghidra_translate.cc",
-            "inject_ghidra.hh",
-            "inject_ghidra.cc",
-            "loadimage_ghidra.hh",
-            "loadimage_ghidra.cc",
-            "plugin_manager.cc",
-            "string_ghidra.hh",
-            "string_ghidra.cc",
-            "typegrp_ghidra.hh",
-            "typegrp_ghidra.cc",
+            "comment_ghidra.cc",  # GHIDRA
+            "comment_ghidra.hh",  # GHIDRA
+            "cpool_ghidra.cc",  # GHIDRA
+            "cpool_ghidra.hh",  # GHIDRA
+            "database_ghidra.cc",  # GHIDRA
+            "database_ghidra.hh",  # GHIDRA
+            "ghidra_arch.cc",  # GHIDRA
+            "ghidra_arch.hh",  # GHIDRA
+            "ghidra_context.cc",  # GHIDRA
+            "ghidra_context.hh",  # GHIDRA
+            "ghidra_process.cc",  # GHIDRA
+            "ghidra_process.hh",  # GHIDRA
+            "ghidra_translate.cc",  # GHIDRA
+            "ghidra_translate.hh",  # GHIDRA
+            "inject_ghidra.cc",  # GHIDRA
+            "inject_ghidra.hh",  # GHIDRA
+            "loadimage_ghidra.cc",  # GHIDRA
+            "loadimage_ghidra.hh",  # GHIDRA
+            "signature_ghidra.cc",  # GHIDRA
+            "signature_ghidra.hh",  # GHIDRA
+            "string_ghidra.cc",  # GHIDRA
+            "string_ghidra.hh",  # GHIDRA
+            "typegrp_ghidra.cc",  # GHIDRA
+            "typegrp_ghidra.hh",  # GHIDRA
         ]
     ],
     copts = [
@@ -238,54 +185,83 @@ cc_binary(
     ],
 )
 
-# Unit test framework
+# The unit test and datatest executables share a number of source files, grouped together here
+TEST_SRCS = [
+    "callgraph.cc",  # GHIDRA_NAMES_DBG
+    "callgraph.hh",  # GHIDRA_NAMES_DBG
+    "compression.cc",  # SLEIGH
+    "context.cc",  # SLEIGH
+    "filemanage.cc",  # SLEIGH
+    "grammar.cc",  # DECCORE
+    "ifacedecomp.cc",  # GHIDRA_NAMES_DBG
+    "ifacedecomp.hh",  # GHIDRA_NAMES_DBG
+    "ifaceterm.hh",  # GHIDRA_NAMES_DBG
+    "ifaceterm.cc",  # GHIDRA_NAMES_DBG
+    "inject_sleigh.cc",
+    "inject_sleigh.hh",
+    "interface.cc",  # GHIDRA_NAMES_DBG
+    "interface.hh",  # GHIDRA_NAMES_DBG
+    "libdecomp.cc",
+    "libdecomp.hh",
+    "pcodecompile.cc",  # SLEIGH
+    "pcodecompile.hh",  # SLEIGH
+    "pcodeparse.cc",  # SLEIGH
+    "pcodeparse.hh",  # SLEIGH
+    "semantics.cc",  # SLEIGH
+    "slaformat.cc",  # SLEIGH
+    "slaformat.hh",  # SLEIGH
+    "sleigh.cc",  # SLEIGH
+    "sleigh.hh",  # SLEIGH
+    "sleighbase.cc",  # SLEIGH
+    "sleigh_arch.cc",
+    "sleigh_arch.hh",
+    "slghpatexpress.cc",  # SLEIGH
+    "slghpattern.cc",  # SLEIGH
+    "slghsymbol.cc",  # SLEIGH
+    "testfunction.cc",  # GHIDRA_NAMES_DBG
+    "testfunction.hh",  # GHIDRA_NAMES_DBG
+]
+
+# Source files only used by unit tests
+UNIT_TEST_SRCS = [
+    "test.cc",
+    "test.hh",
+]
+
+# Source files only used by data tests
+DATA_TEST_SRCS = [
+    "loadimage_xml.cc",
+    "loadimage_xml.hh",
+    "slghsymbol.hh",
+    "consolemain.cc",
+    "xml_arch.cc",
+    "xml_arch.hh",
+]
+
+# Test library of common files only used in testing
+cc_library(
+    name = "test_lib",
+    srcs = [SRCDIR + f for f in TEST_SRCS],
+    copts = [
+        "-Wall",
+        "-Wno-sign-compare",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":decomp_lib",
+        "@spdlog",
+    ],
+)
+
+# Unit test framework - not routinely exercises here
 cc_binary(
     name = "decompile_unittest",
     srcs = [
         SRCDIR + f
-        for f in [
-            "callgraph.hh",
-            "callgraph.cc",
-            "compression.cc",
-            "context.cc",
-
-            "filemanage.cc",
-            "ifacedecomp.hh",
-            "ifacedecomp.cc",
-            "ifaceterm.hh",
-            "inject_sleigh.hh",
-            "inject_sleigh.cc",
-            "interface.hh",
-            "interface.cc",
-            "libdecomp.hh",
-            "libdecomp.cc",
-            "loadimage_xml.hh",
-            "loadimage_xml.cc",
-            "pcodeparse.hh",
-            "pcodeparse.cc",
-            "pcodecompile.hh",
-            "pcodecompile.cc",
-            "plugin_manager.cc",
-            "semantics.cc",
-            "slaformat.hh",
-            "slaformat.cc",
-            "sleigh.cc",
-            "slghpatexpress.cc",
-            "slghpattern.cc",
-            "slghsymbol.cc",
-            "sleighbase.hh",
-            "sleighbase.cc",
-            "sleigh_arch.hh",
-            "sleigh_arch.cc",
-            "test.hh",
-            "test.cc",
-            "testfunction.hh",
-            "testfunction.cc",
-            "xml_arch.hh",
-            "xml_arch.cc",
-        ]
+        for f in UNIT_TEST_SRCS
     ],
     copts = [
+        "-O2",
         "-Wall",
         "-Wno-sign-compare",
         "-std=" + CPP_STANDARD,
@@ -299,6 +275,7 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
+        ":test_lib",
         "@spdlog",
     ],
 )
@@ -308,53 +285,10 @@ cc_binary(
     name = "decompile_datatest",
     srcs = [
         SRCDIR + f
-        for f in [
-            "callgraph.hh",
-            "callgraph.cc",
-            "compression.cc",
-            "consolemain.cc",
-            "context.cc",
-            "expression.hh",
-            "expression.cc",
-            "filemanage.cc",
-            "float.cc",
-            "ifacedecomp.hh",
-            "ifacedecomp.cc",
-            "ifaceterm.hh",
-            "ifaceterm.cc",
-            "inject_sleigh.hh",
-            "inject_sleigh.cc",
-            "interface.hh",
-            "interface.cc",
-            "libdecomp.hh",
-            "libdecomp.cc",
-            "loadimage_xml.hh",
-            "loadimage_xml.cc",
-            "pcodecompile.hh",
-            "pcodecompile.cc",
-            "pcodeparse.hh",
-            "pcodeparse.cc",
-            "plugin_manager.cc",
-            "semantics.cc",
-            "slaformat.hh",
-            "slaformat.cc",
-            "slghpatexpress.cc",
-            "slghpattern.cc",
-            "sleigh_arch.hh",
-            "sleigh_arch.cc",
-            "sleigh.hh",
-            "sleigh.cc",
-            "sleighbase.hh",
-            "sleighbase.cc",
-            "slghsymbol.hh",
-            "slghsymbol.cc",
-            "testfunction.hh",
-            "testfunction.cc",
-            "xml_arch.hh",
-            "xml_arch.cc",
-        ]
+        for f in DATA_TEST_SRCS
     ],
     copts = [
+        "-O2",
         "-Wall",
         "-Wno-sign-compare",
         "-std=" + CPP_STANDARD,
@@ -368,6 +302,7 @@ cc_binary(
     ],
     deps = [
         ":decomp_lib",
+        ":test_lib",
         "@spdlog",
     ],
 )
